@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '@/stores/appStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -69,6 +69,7 @@ function getDateString(date: Date): string {
 export function DailyReportPage() {
   const { currentStore } = useAppStore()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   // 获取日报数据
   const { data: reportData, isLoading } = useQuery({
@@ -134,27 +135,35 @@ export function DailyReportPage() {
             >
               <ChevronLeft className="w-5 h-5 text-apple-600" />
             </button>
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-apple-50 px-3 py-1.5 rounded-lg transition-colors group">
-              <Calendar className="w-4 h-4 text-apple-400 group-hover:text-apple-600" />
+            <button
+              onClick={() => {
+                console.log('Date button clicked, ref:', dateInputRef.current)
+                dateInputRef.current?.click()
+              }}
+              className="flex items-center gap-2 hover:bg-apple-50 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Calendar className="w-4 h-4 text-apple-400" />
               <span className="font-medium text-apple-900">
                 {getDateString(selectedDate)}
               </span>
               <span className="text-sm text-apple-400">
                 {selectedDate.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
               </span>
-              <input
-                type="date"
-                value={formatDate(selectedDate)}
-                max={formatDate(new Date())}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setSelectedDate(new Date(e.target.value))
-                  }
-                }}
-                className="fixed opacity-0 w-0 h-0"
-                style={{ pointerEvents: 'none' }}
-              />
-            </label>
+            </button>
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={formatDate(selectedDate)}
+              max={formatDate(new Date())}
+              onChange={(e) => {
+                console.log('Date input changed:', e.target.value)
+                if (e.target.value) {
+                  setSelectedDate(new Date(e.target.value))
+                }
+              }}
+              className="absolute opacity-0 w-0 h-0"
+              style={{ zIndex: -1 }}
+            />
             <button 
               onClick={goToNextDay}
               className="p-2 rounded-full hover:bg-apple-100 transition-colors"
