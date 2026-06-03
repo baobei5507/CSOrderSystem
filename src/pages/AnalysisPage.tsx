@@ -12,19 +12,21 @@ import {
   Users, 
   Heart, 
   Package, 
-  Tag, 
   Clock,
   TrendingUp,
   AlertCircle,
   Search,
   X,
   ChevronLeft,
-  Crown
+  Crown,
+  LineChart
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 // 时间范围选项
-type TimeRange = 'month' | '3months' | '6months' | 'all'
+type TimeRange = 'month' | '3months' | '6months' | 'year'
+type TrendDimension = 'count' | 'income'
 
 interface CustomerPreference {
   customerId: string
@@ -56,15 +58,6 @@ interface PackagePreference {
   totalRevenue: number
 }
 
-interface TagAnalysis {
-  tagId: string
-  tagName: string
-  tagColor: string
-  customerCount: number
-  totalSpent: number
-  avgOrderValue: number
-}
-
 interface InactiveCustomer {
   customerId: string
   customerName: string
@@ -78,7 +71,6 @@ interface AnalysisData {
   customerRankings: CustomerPreference[]
   girlPreferences: GirlPreference[]
   packagePreferences: PackagePreference[]
-  tagAnalysis: TagAnalysis[]
   inactiveCustomers: InactiveCustomer[]
 }
 
@@ -112,16 +104,27 @@ interface CustomerDetailData {
   }[]
 }
 
+interface TrendData {
+  trendData: {
+    date: string
+    label: string
+    [key: string]: number | string
+  }[]
+  girlLegend: { id: string; name: string; color: string }[]
+  groupBy: 'day' | 'week' | 'month'
+}
+
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: 'month', label: '本月' },
   { value: '3months', label: '近3月' },
   { value: '6months', label: '近半年' },
-  { value: 'all', label: '全部' },
+  { value: 'year', label: '近一年' },
 ]
 
 export function AnalysisPage() {
   const { currentStore } = useAppStore()
-  const [timeRange, setTimeRange] = useState<TimeRange>('month')
+  const [timeRange, setTimeRange] = useState<TimeRange>('6months')
+  const [trendDimension, setTrendDimension] = useState<TrendDimension>('count')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerPreference | null>(null)
 
@@ -129,8 +132,21 @@ export function AnalysisPage() {
   const { data: analysisData, isLoading } = useQuery({
     queryKey: ['customerAnalysis', currentStore?.id, timeRange],
     queryFn: async (): Promise<AnalysisData> => {
-      if (!currentStore?.id) return { customerRankings: [], girlPreferences: [], packagePreferences: [], tagAnalysis: [], inactiveCustomers: [] }
+      if (!currentStore?.id) return { customerRankings: [], girlPreferences: [], packagePreferences: [], inactiveCustomers: [] }
       const res = await fetch(`https://cs-order-api.550759734-d15.workers.dev/api/analysis/customer-preferences?storeId=${currentStore.id}&range=${timeRange}`)
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+      return json.data
+    },
+    enabled: !!currentStore?.id,
+  })
+
+  // 获取趋势数据
+  const { data: trendData, isLoading: isLoadingTrend } = useQuery({
+    queryKey: ['girlTrends', currentStore?.id, timeRange],
+    queryFn: async (): Promise<TrendData> => {
+      if (!currentStore?.id) return { trendData: [], girlLegend: [], groupBy: 'month' }
+      const res = await fetch(`https://cs-order-api.550759734-d15.workers.dev/api/trends/girl-trends?storeId=${currentStore.id}&range=${timeRange}`)
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
       return json.data
@@ -472,6 +488,115 @@ export function AnalysisPage() {
             </div>
           ) : null}
 
+          {/* 妹妹趋势图 */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <LineChart className="w-4 h-4 text-apple-blue" />
+                  妹妹趋势分析
+                </CardTitle>
+                {/* 维度切换 */}
+                <div className="flex bg-apple-100 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setTrendDimension('count')}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-md transition-all",
+                      trendDimension === 'count' 
+                        ? "bg-white text-apple-900 shadow-sm" 
+                        : "text-apple-500 hover:text-apple-700"
+                    )}
+                  >
+                    单量
+                  </button>
+                  <button
+                    onClick={() => setTrendDimension('income')}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-md transition-all",
+                      trendDimension === 'income' 
+                        ? "bg-white text-apple-900 shadow-sm" 
+                        : "text-apple-500 hover:text-apple-700"
+                    )}
+                  >
+                    收入
+                  </button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {isLoadingTrend ? (
+                <Skeleton className="h-64" />
+              ) : trendData?.trendData.length ? (
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ReLineChart data={trendData.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="label" 
+                        tick={{ fontSize: 10, fill: '#6b7280' }}
+                        tickMargin={8}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 10, fill: '#6b7280' }}
+                        tickFormatter={(value) => trendDimension === 'income' ? `¥${value}` : value}
+                      />
+                      <Tooltip 
+                        formatter={(value: number, name: string) => {
+                          const girlName = name.replace(`_${trendDimension}`, '')
+                          return [trendDimension === 'income' ? `¥${value}` : value, girlName]
+                        }}
+                        labelFormatter={(label) => label}
+                        contentStyle={{ 
+                          borderRadius: 8, 
+                          border: 'none', 
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          fontSize: 12
+                        }}
+                      />
+                      <Legend 
+                        wrapperStyle={{ fontSize: 10, paddingTop: 10 }}
+                        iconType="square"
+                      />
+                      {trendData.girlLegend.map((girl) => (
+                        <Line
+                          key={girl.id}
+                          type="monotone"
+                          dataKey={`${girl.name}_${trendDimension}`}
+                          name={girl.name}
+                          stroke={girl.color}
+                          strokeWidth={2}
+                          dot={{ r: 3, strokeWidth: 0 }}
+                          activeDot={{ r: 5 }}
+                        />
+                      ))}
+                    </ReLineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="text-center text-apple-400 py-8">暂无趋势数据</p>
+              )}
+              
+              {/* 图例说明 */}
+              {trendData?.girlLegend && trendData.girlLegend.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-apple-100">
+                  {trendData.girlLegend.slice(0, 8).map((girl) => (
+                    <div key={girl.id} className="flex items-center gap-1.5">
+                      <div 
+                        className="w-3 h-3 rounded-sm"
+                        style={{ backgroundColor: girl.color }}
+                      />
+                      <span className="text-xs text-apple-600">{girl.name}</span>
+                    </div>
+                  ))}
+                  {trendData.girlLegend.length > 8 && (
+                    <span className="text-xs text-apple-400">+{trendData.girlLegend.length - 8} 更多</span>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* 妹妹收入排行 - 全量显示，按收入排序 */}
           <Card>
             <CardHeader className="pb-3">
@@ -551,46 +676,6 @@ export function AnalysisPage() {
                         <p className="text-xs text-apple-500">{pkg.orderCount}单</p>
                       </div>
                       <p className="font-semibold text-apple-900">¥{pkg.totalRevenue.toLocaleString()}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-apple-400 py-8">暂无数据</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 标签群体分析 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Tag className="w-4 h-4 text-purple-500" />
-                标签群体消费分析
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {isLoading ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-12" />
-                  ))}
-                </div>
-              ) : analysisData?.tagAnalysis.length ? (
-                <div className="space-y-2">
-                  {analysisData.tagAnalysis.map((tag) => (
-                    <div
-                      key={tag.tagId}
-                      className="flex items-center gap-3 p-3 bg-apple-50 rounded-lg"
-                    >
-                      <div
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: tag.tagColor }}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-apple-900">{tag.tagName}</p>
-                        <p className="text-xs text-apple-500">{tag.customerCount}人 · 客均¥{Math.round(tag.avgOrderValue)}</p>
-                      </div>
-                      <p className="font-semibold text-apple-900">¥{tag.totalSpent.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>

@@ -11,6 +11,7 @@ import ordersRoute from './routes/orders'
 import dashboardRoute from './routes/dashboard'
 import analysisRoute from './routes/analysis'
 import customerAnalysisRoute from './routes/customerAnalysis'
+import trendsRoute from './routes/trends'
 import dailyReportRoute from './routes/dailyReport'
 
 // 环境变量类型
@@ -47,6 +48,7 @@ app.route('/api/orders', ordersRoute)
 app.route('/api/dashboard', dashboardRoute)
 app.route('/api/analysis', analysisRoute)
 app.route('/api/analysis', customerAnalysisRoute)
+app.route('/api/trends', trendsRoute)
 app.route('/api/daily-report', dailyReportRoute)
 
 // 错误处理
