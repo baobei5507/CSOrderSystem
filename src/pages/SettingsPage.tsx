@@ -151,11 +151,16 @@ function PackagesSettings() {
               />
             </div>
             <div className="grid gap-2">
-              <Label>基础价格</Label>
+              <Label>基础价格 (¥)</Label>
               <Input
                 type="number"
+                min={0}
+                step={0.01}
                 value={formData.basePrice}
-                onChange={(e) => setFormData({ ...formData, basePrice: Number(e.target.value) })}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                  setFormData({ ...formData, basePrice: value })
+                }}
               />
             </div>
           </div>
