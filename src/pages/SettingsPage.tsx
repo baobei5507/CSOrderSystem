@@ -13,6 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Package as PackageType, Tag as TagType } from '@/types'
 
 // 套餐设置页面
@@ -336,15 +343,40 @@ function TagsSettings() {
 
 // 提成设置页面
 function CommissionSettings() {
-  const { currentStore } = useAppStore()
-  const [commission, setCommission] = useState(10)
+  const { currentStore, updateStore } = useAppStore()
+  const { updateStore: updateStoreApi } = useApi()
+  const [commissionType, setCommissionType] = useState<'percent' | 'fixed'>('fixed')
+  const [commissionValue, setCommissionValue] = useState('10')
   const [isSaving, setIsSaving] = useState(false)
 
+  useEffect(() => {
+    if (currentStore) {
+      setCommissionType(currentStore.serviceCommissionType as 'percent' | 'fixed' || 'fixed')
+      setCommissionValue(currentStore.serviceCommissionValue?.toString() || '10')
+    }
+  }, [currentStore])
+
   const handleSave = async () => {
+    if (!currentStore) return
     setIsSaving(true)
-    // TODO: 实现保存逻辑
-    await new Promise(r => setTimeout(r, 500))
-    setIsSaving(false)
+    try {
+      await updateStoreApi(currentStore.id, {
+        serviceCommissionType: commissionType,
+        serviceCommissionValue: commissionValue === '' ? 0 : parseFloat(commissionValue),
+      })
+      // 更新本地状态
+      updateStore({
+        ...currentStore,
+        serviceCommissionType,
+        serviceCommissionValue: commissionValue === '' ? 0 : parseFloat(commissionValue),
+      })
+      alert('保存成功')
+    } catch (err) {
+      console.error('保存失败:', err)
+      alert('保存失败')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   if (!currentStore) {
@@ -357,12 +389,31 @@ function CommissionSettings() {
       <div className="bg-white rounded-2xl p-4 shadow-sm">
         <div className="grid gap-4">
           <div>
-            <Label htmlFor="commission">每单提成金额 (¥)</Label>
+            <Label>提成类型</Label>
+            <Select
+              value={commissionType}
+              onValueChange={(v: 'percent' | 'fixed') => setCommissionType(v)}
+            >
+              <SelectTrigger className="mt-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fixed">固定金额 (¥)</SelectItem>
+                <SelectItem value="percent">按比例 (%)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="commissionValue">
+              {commissionType === 'percent' ? '提成比例 (%)' : '提成金额 (¥)'}
+            </Label>
             <Input
-              id="commission"
+              id="commissionValue"
               type="number"
-              value={commission}
-              onChange={(e) => setCommission(Number(e.target.value))}
+              min={0}
+              step={commissionType === 'percent' ? 1 : 0.01}
+              value={commissionValue}
+              onChange={(e) => setCommissionValue(e.target.value)}
               className="mt-2"
             />
           </div>

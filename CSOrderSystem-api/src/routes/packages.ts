@@ -44,7 +44,8 @@ app.post('/', async (c) => {
     updatedAt: now,
   })
 
-  return c.json({ success: true, data: { id } }, 201)
+  const pkg = await db.select().from(packages).where(eq(packages.id, id)).get()
+  return c.json({ success: true, data: pkg }, 201)
 })
 
 // PUT /api/packages?id=xxx

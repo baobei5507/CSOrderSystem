@@ -32,6 +32,13 @@ export function useApi() {
     })
   }, [])
 
+  const updateStore = useCallback(async (id: string, data: Partial<Store>): Promise<Store> => {
+    return fetchApi(`/stores?id=${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }, [])
+
   // Girls
   const getGirls = useCallback(async (storeId: string): Promise<Girl[]> => {
     return fetchApi(`/girls?storeId=${storeId}`)
@@ -179,12 +186,25 @@ export function useApi() {
   const getDashboard = useCallback(async (storeId: string): Promise<{
     todayRevenue: number
     todayOrders: number
+    todayCompleted: number
+    todayCancelled: number
     monthRevenue: number
     monthOrders: number
-    girlRanking: { id: string; name: string; orderCount: number; revenue: number }[]
+    monthCompleted: number
+    monthCancelled: number
+    monthServiceCommission: number
+    totalCustomers: number
+    newCustomersThisMonth: number
+    girlRanking: { id: string; name: string; orderCount: number; revenue: number; serviceCommission: number }[]
     customerRanking: { id: string; name: string; orderCount: number; revenue: number }[]
+    tagStats: { id: string; name: string; color: string | null; count: number }[]
   }> => {
     return fetchApi(`/dashboard?storeId=${storeId}`)
+  }, [])
+
+  // Girl Package Prices
+  const getGirlPackagePrices = useCallback(async (girlId: string): Promise<{ packageId: string; price: number; packageName: string; packageCode: string }[]> => {
+    return fetchApi(`/girl-package-prices?girlId=${girlId}`)
   }, [])
 
   return {
@@ -193,6 +213,7 @@ export function useApi() {
     // Stores
     getStores,
     createStore,
+    updateStore,
     // Girls
     getGirls,
     createGirl,
@@ -220,6 +241,8 @@ export function useApi() {
     deleteOrder,
     // Dashboard
     getDashboard,
+    // Girl Package Prices
+    getGirlPackagePrices,
   }
 }
 

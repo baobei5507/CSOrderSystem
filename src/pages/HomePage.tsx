@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User } from 'lucide-react'
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User, CheckCircle2, XCircle, Tag } from 'lucide-react'
 import { StoreSelector } from '@/components/StoreSelector'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn, formatMoney } from '@/lib/utils'
@@ -9,10 +9,18 @@ import { useAppStore } from '@/stores/appStore'
 interface DashboardData {
   todayRevenue: number
   todayOrders: number
+  todayCompleted: number
+  todayCancelled: number
   monthRevenue: number
   monthOrders: number
-  girlRanking: { id: string; name: string; orderCount: number; revenue: number }[]
+  monthCompleted: number
+  monthCancelled: number
+  monthServiceCommission: number
+  totalCustomers: number
+  newCustomersThisMonth: number
+  girlRanking: { id: string; name: string; orderCount: number; revenue: number; serviceCommission: number }[]
   customerRanking: { id: string; name: string; orderCount: number; revenue: number }[]
+  tagStats: { id: string; name: string; color: string | null; count: number }[]
 }
 
 export function HomePage() {
@@ -120,6 +128,7 @@ export function HomePage() {
                 <StatCard
                   title="今日订单"
                   value={data.todayOrders}
+                  subtitle={`${data.todayCompleted}完成 · ${data.todayCancelled}取消`}
                   icon={Calendar}
                 />
               </div>
@@ -138,7 +147,21 @@ export function HomePage() {
                 <StatCard
                   title="本月订单"
                   value={data.monthOrders}
+                  subtitle={`${data.monthCompleted}完成 · ${data.monthCancelled}取消`}
                   icon={Users}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <StatCard
+                  title="客服提成"
+                  value={formatMoney(data.monthServiceCommission)}
+                  icon={DollarSign}
+                />
+                <StatCard
+                  title="新增顾客"
+                  value={data.newCustomersThisMonth}
+                  subtitle={`共${data.totalCustomers}位顾客`}
+                  icon={User}
                 />
               </div>
             </section>
@@ -228,6 +251,30 @@ export function HomePage() {
                 ))}
               </div>
             </section>
+
+            {/* Tag Stats */}
+            {data.tagStats && data.tagStats.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-apple-900">标签统计</h2>
+                </div>
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                  <div className="flex flex-wrap gap-2">
+                    {data.tagStats.map((tag) => (
+                      <div
+                        key={tag.id}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm text-white"
+                        style={{ backgroundColor: tag.color || '#3B82F6' }}
+                      >
+                        <Tag className="w-3 h-3" />
+                        <span>{tag.name}</span>
+                        <span className="opacity-80">({tag.count})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
           </>
         ) : (
           <div className="text-center py-12 text-apple-400">暂无数据</div>

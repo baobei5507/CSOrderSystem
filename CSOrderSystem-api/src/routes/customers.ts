@@ -47,7 +47,7 @@ app.get('/', async (c) => {
   // 获取每个顾客的账号和标签
   const customersWithDetails = await Promise.all(
     allCustomers.map(async (customer: any) => {
-      const accounts = await db.select().from(customerAccounts)
+      const accountList = await db.select().from(customerAccounts)
         .where(eq(customerAccounts.customerId, customer.id))
         .all()
 
@@ -55,6 +55,12 @@ app.get('/', async (c) => {
         .from(customerTags)
         .where(eq(customerTags.customerId, customer.id))
         .all()
+
+      // 将 account 字段映射为 accountId
+      const accounts = accountList.map(acc => ({
+        ...acc,
+        accountId: acc.account,
+      }))
 
       return {
         ...customer,
@@ -117,9 +123,37 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
+  const now = new Date()
+
+  // 更新顾客基本信息
   await db.update(customers)
-    .set({ nickname: body.name, updatedAt: new Date() })
+    .set({ nickname: body.name, updatedAt: now })
     .where(eq(customers.id, id))
+
+  // 删除旧账号，插入新账号
+  await db.delete(customerAccounts).where(eq(customerAccounts.customerId, id))
+  if (body.accounts && body.accounts.length > 0) {
+    for (const acc of body.accounts) {
+      await db.insert(customerAccounts).values({
+        id: crypto.randomUUID(),
+        customerId: id,
+        platform: acc.platform as 'wechat' | 'telegram',
+        account: acc.accountId,
+        createdAt: now,
+      })
+    }
+  }
+
+  // 删除旧标签关联，插入新标签关联
+  await db.delete(customerTags).where(eq(customerTags.customerId, id))
+  if (body.tagIds && body.tagIds.length > 0) {
+    for (const tagId of body.tagIds) {
+      await db.insert(customerTags).values({
+        customerId: id,
+        tagId,
+      })
+    }
+  }
 
   return c.json({ success: true })
 })

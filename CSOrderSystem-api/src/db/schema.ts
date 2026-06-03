@@ -29,6 +29,7 @@ export const packages = sqliteTable('packages', {
   storeId: text('store_id').notNull().references(() => stores.id),
   code: text('code').notNull(),
   name: text('name').notNull(),
+  basePrice: real('base_price').notNull().default(0),
   status: text('status', { enum: ['active', 'inactive'] }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),

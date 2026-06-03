@@ -4,6 +4,7 @@ import { logger } from 'hono/logger'
 import storesRoute from './routes/stores'
 import girlsRoute from './routes/girls'
 import packagesRoute from './routes/packages'
+import girlPackagePricesRoute from './routes/girlPackagePrices'
 import customersRoute from './routes/customers'
 import tagsRoute from './routes/tags'
 import ordersRoute from './routes/orders'
@@ -36,6 +37,7 @@ app.get('/', (c) => c.json({ success: true, message: 'CS Order API is running' }
 app.route('/api/stores', storesRoute)
 app.route('/api/girls', girlsRoute)
 app.route('/api/packages', packagesRoute)
+app.route('/api/girl-package-prices', girlPackagePricesRoute)
 app.route('/api/customers', customersRoute)
 app.route('/api/tags', tagsRoute)
 app.route('/api/orders', ordersRoute)

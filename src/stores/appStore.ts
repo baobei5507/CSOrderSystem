@@ -6,6 +6,7 @@ interface AppState {
   // 当前店家
   currentStore: Store | null
   setCurrentStore: (store: Store | null) => void
+  updateStore: (store: Store) => void
   
   // 客服名称
   serviceStaffName: string
@@ -21,6 +22,9 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       currentStore: null,
       setCurrentStore: (store) => set({ currentStore: store }),
+      updateStore: (store) => set((state) => ({
+        currentStore: state.currentStore?.id === store.id ? store : state.currentStore
+      })),
       
       serviceStaffName: '客服',
       setServiceStaffName: (name) => set({ serviceStaffName: name }),

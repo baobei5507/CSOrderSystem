@@ -60,7 +60,7 @@ export function OrdersPage() {
   const [calculatedPrice, setCalculatedPrice] = useState(0)
 
   const { currentStore } = useAppStore()
-  const { getOrders, getCustomers, getGirls, getPackages, createOrder, updateOrder } = useApi()
+  const { getOrders, getCustomers, getGirls, getPackages, createOrder, updateOrder, getGirlPackagePrices } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -100,10 +100,17 @@ export function OrdersPage() {
   // 计算最终价格
   useEffect(() => {
     if (selectedGirl && selectedPackage) {
-      // 这里简化计算，实际应该查询 girl_prices 表
-      const basePrice = selectedPackage.basePrice
-      setCalculatedPrice(basePrice)
-      setFormData(prev => ({ ...prev, price: basePrice }))
+      // 查询该妹妹对应套餐的价格
+      getGirlPackagePrices(selectedGirl.id).then(prices => {
+        const girlPrice = prices.find(p => p.packageId === selectedPackage.id)
+        const finalPrice = girlPrice?.price || selectedPackage.basePrice
+        setCalculatedPrice(finalPrice)
+        setFormData(prev => ({ ...prev, price: finalPrice }))
+      }).catch(() => {
+        // 查询失败时使用基础价格
+        setCalculatedPrice(selectedPackage.basePrice)
+        setFormData(prev => ({ ...prev, price: selectedPackage.basePrice }))
+      })
     }
   }, [selectedGirl, selectedPackage])
 
