@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Clock, CheckCircle2, XCircle, Tag as TagIcon } from 'lucide-react'
+import { Search, Plus, Clock, CheckCircle2, XCircle, Tag as TagIcon, UserPlus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,18 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { Order, Customer, Girl, Package, Tag } from '@/types'
+
+// 预设标签颜色
+const TAG_COLORS = [
+  '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
+  '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
+  '#F97316', '#6366F1', '#14B8A6', '#EAB308'
+]
+
+const PLATFORM_OPTIONS = [
+  { value: 'wechat', label: '微信' },
+  { value: 'telegram', label: 'Telegram' },
+]
 
 type OrderStatus = 'pending' | 'completed' | 'cancelled'
 
@@ -63,8 +75,13 @@ export function OrdersPage() {
   const [serviceCommissionPreview, setServiceCommissionPreview] = useState(0)
   const [girlIncomePreview, setGirlIncomePreview] = useState(0)
 
+  // 顾客搜索和创建
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false)
+  const [newCustomerAccounts, setNewCustomerAccounts] = useState<{ platform: string; accountId: string; note?: string }[]>([])
+
   const { currentStore } = useAppStore()
-  const { getOrders, getCustomers, getGirls, getPackages, getTags, createOrder, updateOrder, createTag, updateCustomer, getGirlPackagePrices } = useApi()
+  const { getOrders, getCustomers, getGirls, getPackages, getTags, createOrder, updateOrder, createTag, updateCustomer, getGirlPackagePrices, createCustomer } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -161,6 +178,9 @@ export function OrdersPage() {
     setSelectedCustomer(null)
     setSelectedGirl(null)
     setSelectedPackage(null)
+    setCustomerSearch('')
+    setIsCreatingCustomer(false)
+    setNewCustomerAccounts([])
     setDialogOpen(true)
   }
 
@@ -183,11 +203,30 @@ export function OrdersPage() {
   }
 
   const handleSubmit = async () => {
-    if (!formData.customerId || !formData.girlId || !formData.packageId || !currentStore) return
+    if (!formData.girlId || !formData.packageId || !currentStore) return
 
     try {
+      let finalCustomerId = formData.customerId
+
+      // 如果是创建新顾客
+      if (isCreatingCustomer && customerSearch.trim()) {
+        const newCustomer = await createCustomer({
+          name: customerSearch.trim(),
+          storeId: currentStore.id,
+          accounts: newCustomerAccounts.filter(a => a.accountId.trim()),
+          tagIds: [],
+        })
+        finalCustomerId = newCustomer.id
+      }
+
+      if (!finalCustomerId) {
+        alert('请选择或输入顾客')
+        return
+      }
+
       await createOrder({
         ...formData,
+        customerId: finalCustomerId,
         storeId: currentStore.id,
         price: calculatedPrice,
       })
@@ -504,23 +543,131 @@ export function OrdersPage() {
             <DialogTitle>新建订单</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Customer Selection */}
+            {/* Customer Search & Selection */}
             <div className="grid gap-2">
-              <Label>选择顾客</Label>
-              <Select value={formData.customerId} onValueChange={handleCustomerChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="选择顾客" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>顾客</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-apple-400" />
+                <Input
+                  placeholder="搜索顾客姓名..."
+                  className="pl-9"
+                  value={customerSearch}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setCustomerSearch(value)
+                    // 只有在已有选择顾客时才重置状态
+                    if (formData.customerId) {
+                      setIsCreatingCustomer(false)
+                      setSelectedCustomer(null)
+                      setFormData(prev => ({ ...prev, customerId: '', customerAccountId: '' }))
+                    }
+                  }}
+                />
+              </div>
+
+              {/* 搜索结果 */}
+              {customerSearch && !isCreatingCustomer && (
+                <div className="max-h-40 overflow-y-auto bg-white rounded-xl border border-apple-200 shadow-sm">
+                  {/* 创建新顾客选项 - 始终显示 */}
+                  <div 
+                    className="p-3 text-sm text-apple-600 hover:bg-apple-50 cursor-pointer flex items-center gap-2 border-b border-apple-100"
+                    onClick={() => setIsCreatingCustomer(true)}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    创建新顾客 "{customerSearch}"
+                  </div>
+                  
+                  {/* 现有顾客列表 */}
+                  {customers.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase())).length > 0 && (
+                    <div className="py-1">
+                      <p className="px-3 py-1 text-xs text-apple-400">现有顾客</p>
+                      {customers
+                        .filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()))
+                        .map(c => (
+                          <div
+                            key={c.id}
+                            className="px-3 py-2 text-sm hover:bg-apple-50 cursor-pointer flex items-center justify-between"
+                            onClick={() => {
+                              handleCustomerChange(c.id)
+                              setCustomerSearch(c.name)
+                            }}
+                          >
+                            <span>{c.name}</span>
+                            {c.accounts && c.accounts.length > 0 && (
+                              <span className="text-xs text-apple-400">{c.accounts.length} 个账号</span>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 新顾客创建表单 */}
+              {isCreatingCustomer && (
+                <div className="p-3 bg-apple-50 rounded-xl space-y-3">
+                  <p className="text-sm font-medium text-apple-900">创建新顾客: {customerSearch}</p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-apple-500">账号列表 (可选)</p>
+                    {newCustomerAccounts.map((account, index) => (
+                      <div key={index} className="p-2 bg-white rounded-lg space-y-2">
+                        <div className="flex gap-2">
+                          <Select
+                            value={account.platform}
+                            onValueChange={(value) => {
+                              const updated = [...newCustomerAccounts]
+                              updated[index] = { ...account, platform: value }
+                              setNewCustomerAccounts(updated)
+                            }}
+                          >
+                            <SelectTrigger className="flex-1 h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {PLATFORM_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-400"
+                            onClick={() => setNewCustomerAccounts(prev => prev.filter((_, i) => i !== index))}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <Input
+                          placeholder="账号ID"
+                          className="h-8 text-sm"
+                          value={account.accountId}
+                          onChange={(e) => {
+                            const updated = [...newCustomerAccounts]
+                            updated[index] = { ...account, accountId: e.target.value }
+                            setNewCustomerAccounts(updated)
+                          }}
+                        />
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setNewCustomerAccounts(prev => [...prev, { platform: 'wechat', accountId: '' }])}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      添加账号
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Account Selection */}
-            {selectedCustomer && selectedCustomer.accounts && selectedCustomer.accounts.length > 0 && (
+            {/* Account Selection - 仅现有顾客 */}
+            {!isCreatingCustomer && selectedCustomer && selectedCustomer.accounts && selectedCustomer.accounts.length > 0 && (
               <div className="grid gap-2">
                 <Label>选择账号</Label>
                 <Select value={formData.customerAccountId} onValueChange={(v) => setFormData({ ...formData, customerAccountId: v })}>
@@ -625,7 +772,7 @@ export function OrdersPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!formData.customerId || !formData.girlId || !formData.packageId}
+              disabled={(!formData.customerId && !isCreatingCustomer) || !formData.girlId || !formData.packageId || (isCreatingCustomer && !customerSearch.trim())}
               className="bg-apple-blue text-white hover:bg-apple-blue/90"
             >
               创建订单

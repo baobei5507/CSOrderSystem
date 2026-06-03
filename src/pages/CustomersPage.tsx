@@ -416,20 +416,20 @@ export function CustomersPage() {
                 </div>
               )}
 
-              {/* Tags */}
-              {customer.tagIds && customer.tagIds.length > 0 && (
+              {/* Tags - 只显示颜色 */}
+              {Array.isArray(customer.tagIds) && customer.tagIds.length > 0 && Array.isArray(tags) && (
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {customer.tagIds.map(tagId => {
-                    const tag = tags.find(t => t.id === tagId)
+                  {customer.tagIds.map((tagId, idx) => {
+                    if (!tagId) return null
+                    const tag = tags.find(t => t && t.id === tagId)
                     if (!tag) return null
                     return (
                       <span
                         key={tagId}
-                        className="text-xs px-2 py-0.5 rounded-full text-white"
+                        className="w-3 h-3 rounded-full inline-block"
                         style={{ backgroundColor: tag.color || '#3B82F6' }}
-                      >
-                        {tag.name}
-                      </span>
+                        title={tag.name || ''}
+                      />
                     )
                   })}
                 </div>
