@@ -1,6 +1,7 @@
 name = "cs-order-api"
 main = "src/index.ts"
 compatibility_date = "2024-06-03"
+account_id = "ed15f9571e683538b4f05e88d389c9dc"
 
 # 启用 Observability
 [observability]
