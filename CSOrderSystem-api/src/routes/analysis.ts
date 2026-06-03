@@ -208,7 +208,7 @@ app.get('/customer-preferences', async (c) => {
         totalRevenue: stats.totalRevenue,
         uniqueCustomers: stats.uniqueCustomers.size,
       }))
-      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .sort((a, b) => b.orderCount - a.orderCount)
 
     // 3. 套餐偏好排行
     const packageStats = new Map<string, {

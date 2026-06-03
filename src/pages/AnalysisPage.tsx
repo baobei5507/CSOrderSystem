@@ -598,12 +598,12 @@ export function AnalysisPage() {
             </CardContent>
           </Card>
 
-          {/* 妹妹收入排行 - 全量显示，按收入排序 */}
+          {/* 妹妹单量排行 - 全量显示，按单量排序 */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Crown className="w-4 h-4 text-yellow-500" />
-                妹妹收入排行（按收入）
+                妹妹单量排行（按单量）
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
