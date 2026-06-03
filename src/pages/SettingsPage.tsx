@@ -367,7 +367,7 @@ function CommissionSettings() {
       // 更新本地状态
       updateStore({
         ...currentStore,
-        serviceCommissionType,
+        serviceCommissionType: commissionType,
         serviceCommissionValue: commissionValue === '' ? 0 : parseFloat(commissionValue),
       })
       alert('保存成功')
