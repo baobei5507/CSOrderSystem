@@ -18,7 +18,7 @@ interface DashboardData {
   monthServiceCommission: number
   totalCustomers: number
   newCustomersThisMonth: number
-  girlRanking: { id: string; name: string; orderCount: number; revenue: number; serviceCommission: number }[]
+  girlRanking: { id: string; name: string; orderCount: number; revenue: number; girlIncome: number }[]
   customerRanking: { id: string; name: string; orderCount: number; revenue: number }[]
 }
 
@@ -297,8 +297,8 @@ export function HomePage() {
                     {data.girlRanking.slice(0, 8).map((girl, index) => {
                       const maxValue = chartDimension === 'orders' 
                         ? Math.max(...data.girlRanking.map(g => g.orderCount))
-                        : Math.max(...data.girlRanking.map(g => g.serviceCommission))
-                      const currentValue = chartDimension === 'orders' ? girl.orderCount : girl.serviceCommission
+                        : Math.max(...data.girlRanking.map(g => g.girlIncome))
+                      const currentValue = chartDimension === 'orders' ? girl.orderCount : girl.girlIncome
                       const percentage = maxValue > 0 ? (currentValue / maxValue) * 100 : 0
                       
                       return (

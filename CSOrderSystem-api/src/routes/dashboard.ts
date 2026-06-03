@@ -65,7 +65,7 @@ app.get('/', async (c) => {
         .all()
       
       const revenue = girlOrders.reduce((sum, o) => sum + (o.price || 0), 0)
-      const serviceCommission = girlOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0)
+      const girlIncome = girlOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0)
       
       if (girlOrders.length > 0) {
         girlRanking.push({
@@ -73,7 +73,7 @@ app.get('/', async (c) => {
           name: girl.name,
           orderCount: girlOrders.length,
           revenue,
-          serviceCommission,
+          girlIncome,
         })
       }
     }
