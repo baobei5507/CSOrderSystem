@@ -217,16 +217,29 @@ export function OrdersPage() {
         return
       }
 
-      await createOrder({
-        ...formData,
+      // 构建订单数据，过滤空值
+      const orderData: any = {
         customerId: finalCustomerId,
-        storeId: currentStore.id,
+        girlId: formData.girlId,
+        packageId: formData.packageId,
         price: calculatedPrice,
-      })
+        storeId: currentStore.id,
+      }
+      // 只有选择了账号时才传
+      if (formData.customerAccountId) {
+        orderData.customerAccountId = formData.customerAccountId
+      }
+      // 只有填写了预约时间时才传
+      if (formData.appointmentTime) {
+        orderData.appointmentTime = formData.appointmentTime
+      }
+
+      await createOrder(orderData)
       setDialogOpen(false)
       loadData()
-    } catch (err) {
+    } catch (err: any) {
       console.error('创建订单失败:', err)
+      alert('创建订单失败: ' + (err.message || '未知错误'))
     }
   }
 
