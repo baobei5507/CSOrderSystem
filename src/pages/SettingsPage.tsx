@@ -281,7 +281,7 @@ export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'menu' | 'packages' | 'commission'>('menu')
 
   const menuItems = [
-    { id: 'packages', label: '套餐管理', icon: Package, description: '管理按摩套餐及价格' },
+    { id: 'packages', label: '套餐管理', icon: Package, description: '管理套餐及价格' },
     { id: 'commission', label: '提成设置', icon: Percent, description: '设置客服提成规则' },
   ]
 

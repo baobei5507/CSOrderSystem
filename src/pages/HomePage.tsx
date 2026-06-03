@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User, Tag } from 'lucide-react'
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User, BarChart3 } from 'lucide-react'
 import { StoreSelector } from '@/components/StoreSelector'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn, formatMoney } from '@/lib/utils'
@@ -20,12 +20,12 @@ interface DashboardData {
   newCustomersThisMonth: number
   girlRanking: { id: string; name: string; orderCount: number; revenue: number; serviceCommission: number }[]
   customerRanking: { id: string; name: string; orderCount: number; revenue: number }[]
-  tagStats: { id: string; name: string; color: string | null; count: number }[]
 }
 
 export function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [chartDimension, setChartDimension] = useState<'orders' | 'revenue'>('orders')
   const { currentStore } = useAppStore()
   const { getDashboard } = useApi()
 
@@ -262,25 +262,67 @@ export function HomePage() {
               </div>
             </section>
 
-            {/* Tag Stats */}
-            {data.tagStats && data.tagStats.length > 0 && (
+            {/* Girl Trend Chart */}
+            {data.girlRanking && data.girlRanking.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-apple-900">标签统计</h2>
+                  <h2 className="text-lg font-semibold text-apple-900">妹妹趋势</h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setChartDimension('orders')}
+                      className={cn(
+                        "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                        chartDimension === 'orders' 
+                          ? "bg-apple-blue text-white" 
+                          : "bg-apple-100 text-apple-600"
+                      )}
+                    >
+                      订单量
+                    </button>
+                    <button
+                      onClick={() => setChartDimension('revenue')}
+                      className={cn(
+                        "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                        chartDimension === 'revenue' 
+                          ? "bg-apple-blue text-white" 
+                          : "bg-apple-100 text-apple-600"
+                      )}
+                    >
+                      收入
+                    </button>
+                  </div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="flex flex-wrap gap-2">
-                    {data.tagStats.map((tag) => (
-                      <div
-                        key={tag.id}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm text-white"
-                        style={{ backgroundColor: tag.color || '#3B82F6' }}
-                      >
-                        <Tag className="w-3 h-3" />
-                        <span>{tag.name}</span>
-                        <span className="opacity-80">({tag.count})</span>
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    {data.girlRanking.slice(0, 8).map((girl, index) => {
+                      const maxValue = chartDimension === 'orders' 
+                        ? Math.max(...data.girlRanking.map(g => g.orderCount))
+                        : Math.max(...data.girlRanking.map(g => g.revenue))
+                      const currentValue = chartDimension === 'orders' ? girl.orderCount : girl.revenue
+                      const percentage = maxValue > 0 ? (currentValue / maxValue) * 100 : 0
+                      
+                      return (
+                        <div key={girl.id} className="flex items-center gap-3">
+                          <span className="w-5 text-xs text-apple-400 text-right">{index + 1}</span>
+                          <span className="w-12 text-sm font-medium text-apple-900 truncate">{girl.name}</span>
+                          <div className="flex-1 h-6 bg-apple-50 rounded-full overflow-hidden relative">
+                            <div 
+                              className={cn(
+                                "h-full rounded-full transition-all duration-500",
+                                index === 0 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
+                                index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400" :
+                                index === 2 ? "bg-gradient-to-r from-orange-300 to-orange-400" :
+                                "bg-gradient-to-r from-apple-blue to-apple-purple"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs font-medium text-apple-700">
+                              {chartDimension === 'orders' ? `${currentValue}单` : formatMoney(currentValue)}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               </section>
