@@ -130,17 +130,43 @@ app.put('/', async (c) => {
     .set({ nickname: body.name, updatedAt: now })
     .where(eq(customers.id, id))
 
-  // 删除旧账号，插入新账号
-  await db.delete(customerAccounts).where(eq(customerAccounts.customerId, id))
-  if (body.accounts && body.accounts.length > 0) {
+  // 获取现有账号，避免删除被订单引用的账号
+  const existingAccounts = await db.select().from(customerAccounts)
+    .where(eq(customerAccounts.customerId, id))
+    .all()
+
+  // 智能同步账号：更新现有、添加新、删除未被引用的
+  if (body.accounts) {
+    const newAccountIds = new Set<string>()
+    
     for (const acc of body.accounts) {
-      await db.insert(customerAccounts).values({
-        id: crypto.randomUUID(),
-        customerId: id,
-        platform: acc.platform as 'wechat' | 'telegram',
-        account: acc.accountId,
-        createdAt: now,
-      })
+      if (acc.id) {
+        // 更新现有账号
+        await db.update(customerAccounts)
+          .set({
+            platform: acc.platform as 'wechat' | 'telegram',
+            account: acc.accountId,
+          })
+          .where(eq(customerAccounts.id, acc.id))
+        newAccountIds.add(acc.id)
+      } else {
+        // 创建新账号
+        const result = await db.insert(customerAccounts).values({
+          id: crypto.randomUUID(),
+          customerId: id,
+          platform: acc.platform as 'wechat' | 'telegram',
+          account: acc.accountId,
+          createdAt: now,
+        }).returning({ id: customerAccounts.id })
+        if (result[0]) newAccountIds.add(result[0].id)
+      }
+    }
+
+    // 只删除那些不在新列表中的旧账号
+    for (const oldAcc of existingAccounts) {
+      if (!newAccountIds.has(oldAcc.id)) {
+        await db.delete(customerAccounts).where(eq(customerAccounts.id, oldAcc.id))
+      }
     }
   }
 
