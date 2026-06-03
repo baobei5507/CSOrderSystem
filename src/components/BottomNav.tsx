@@ -1,10 +1,11 @@
-import { Home, Users, ClipboardList, UserCircle, Settings, Tags } from 'lucide-react'
+import { Home, Users, ClipboardList, UserCircle, Settings, Tags, BarChart3 } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import { cn } from '@/lib/utils'
 
 const tabs = [
   { id: 'home', label: '首页', icon: Home },
   { id: 'customers', label: '顾客', icon: Users },
+  { id: 'analysis', label: '分析', icon: BarChart3 },
   { id: 'orders', label: '订单', icon: ClipboardList },
   { id: 'girls', label: '妹妹', icon: UserCircle },
   { id: 'tags', label: '标签', icon: Tags },

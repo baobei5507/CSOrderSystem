@@ -13,8 +13,8 @@ interface AppState {
   setServiceStaffName: (name: string) => void
   
   // 底部导航当前页
-  activeTab: 'home' | 'customers' | 'orders' | 'girls' | 'tags' | 'settings'
-  setActiveTab: (tab: 'home' | 'customers' | 'orders' | 'girls' | 'tags' | 'settings') => void
+  activeTab: 'home' | 'customers' | 'analysis' | 'orders' | 'girls' | 'tags' | 'settings'
+  setActiveTab: (tab: 'home' | 'customers' | 'analysis' | 'orders' | 'girls' | 'tags' | 'settings') => void
 }
 
 export const useAppStore = create<AppState>()(

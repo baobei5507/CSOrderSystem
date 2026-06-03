@@ -9,6 +9,7 @@ import customersRoute from './routes/customers'
 import tagsRoute from './routes/tags'
 import ordersRoute from './routes/orders'
 import dashboardRoute from './routes/dashboard'
+import analysisRoute from './routes/analysis'
 
 // 环境变量类型
 export interface Env {
@@ -42,6 +43,7 @@ app.route('/api/customers', customersRoute)
 app.route('/api/tags', tagsRoute)
 app.route('/api/orders', ordersRoute)
 app.route('/api/dashboard', dashboardRoute)
+app.route('/api/analysis', analysisRoute)
 
 // 错误处理
 app.onError((err, c) => {
