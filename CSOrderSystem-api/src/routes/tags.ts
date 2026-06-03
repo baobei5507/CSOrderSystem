@@ -6,17 +6,7 @@ import type { Env } from '../index'
 
 const app = new Hono<{ Bindings: Env }>()
 
-// GET /api/tags?storeId=xxx
-app.get('/', async (c) => {
-  const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
-  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
-
-  const allTags = await db.select().from(tags).where(eq(tags.storeId, storeId)).all()
-  return c.json({ success: true, data: allTags })
-})
-
-// GET /api/tags/stats?storeId=xxx - 标签统计列表
+// GET /api/tags/stats?storeId=xxx - 标签统计列表（必须在 / 之前）
 app.get('/stats', async (c) => {
   const db = drizzle(c.env.DB)
   const storeId = c.req.query('storeId')
@@ -51,6 +41,16 @@ app.get('/stats', async (c) => {
     console.error('Tag stats error:', err)
     return c.json({ success: false, error: err.message }, 500)
   }
+})
+
+// GET /api/tags?storeId=xxx - 获取所有标签
+app.get('/', async (c) => {
+  const db = drizzle(c.env.DB)
+  const storeId = c.req.query('storeId')
+  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
+
+  const allTags = await db.select().from(tags).where(eq(tags.storeId, storeId)).all()
+  return c.json({ success: true, data: allTags })
 })
 
 // GET /api/tags/detail?id=xxx - 单个标签详情（包含关联顾客）
