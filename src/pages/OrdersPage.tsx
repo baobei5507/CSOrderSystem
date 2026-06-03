@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Clock, CheckCircle2, XCircle, Tag as TagIcon, UserPlus, Trash2 } from 'lucide-react'
+import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,13 +21,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { Order, Customer, Girl, Package, Tag } from '@/types'
-
-// 预设标签颜色
-const TAG_COLORS = [
-  '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
-  '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
-  '#F97316', '#6366F1', '#14B8A6', '#EAB308'
-]
 
 const PLATFORM_OPTIONS = [
   { value: 'wechat', label: '微信' },

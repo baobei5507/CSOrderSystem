@@ -3,7 +3,7 @@ import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3 } from 'lucide-reac
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn, formatMoney } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import {
@@ -419,7 +419,7 @@ export function CustomersPage() {
               {/* Tags - 只显示颜色 */}
               {Array.isArray(customer.tagIds) && customer.tagIds.length > 0 && Array.isArray(tags) && (
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {customer.tagIds.map((tagId, idx) => {
+                  {customer.tagIds.map((tagId) => {
                     if (!tagId) return null
                     const tag = tags.find(t => t && t.id === tagId)
                     if (!tag) return null
