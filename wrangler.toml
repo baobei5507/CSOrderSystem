@@ -1,0 +1,14 @@
+name = "cs-order-system"
+compatibility_date = "2024-06-03"
+pages_build_output_dir = "dist"
+
+# D1数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "cs-order-db"
+database_id = "e03be497-4138-4135-aca3-bd4367ba092e"
+migrations_dir = "db/migrations"
+
+# 环境变量
+[vars]
+DEFAULT_SERVICE_STAFF = "客服"
