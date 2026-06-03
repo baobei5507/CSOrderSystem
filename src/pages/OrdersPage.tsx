@@ -200,6 +200,7 @@ export function OrdersPage() {
 
     try {
       let finalCustomerId = formData.customerId
+      let newCustomerAccountId: string | undefined
 
       // 如果是创建新顾客
       if (isCreatingCustomer && customerSearch.trim()) {
@@ -212,7 +213,7 @@ export function OrdersPage() {
         finalCustomerId = newCustomer.id
         // 如果有创建账号，使用第一个账号ID
         if (newCustomer.accounts && newCustomer.accounts.length > 0) {
-          orderData.customerAccountId = newCustomer.accounts[0].id
+          newCustomerAccountId = newCustomer.accounts[0].id
         }
       }
 
@@ -229,8 +230,10 @@ export function OrdersPage() {
         price: calculatedPrice,
         storeId: currentStore.id,
       }
-      // 只有选择了账号时才传
-      if (formData.customerAccountId) {
+      // 使用新建顾客的账号ID或已选择的账号ID
+      if (newCustomerAccountId) {
+        orderData.customerAccountId = newCustomerAccountId
+      } else if (formData.customerAccountId) {
         orderData.customerAccountId = formData.customerAccountId
       }
       // 只有填写了预约时间时才传
