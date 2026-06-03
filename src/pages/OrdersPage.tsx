@@ -177,6 +177,7 @@ export function OrdersPage() {
       girlId: '',
       packageId: '',
       price: 0,
+      discount: 0,
       appointmentTime: '',
     })
     setSelectedCustomer(null)
@@ -461,11 +462,11 @@ export function OrdersPage() {
                     </span>
                   </div>
                   <div className="text-right">
-                    {order.discount > 0 ? (
+                    {(order.discount || 0) > 0 ? (
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-apple-400 line-through">¥{order.price}</span>
                         <span className="text-lg font-bold text-orange-600">
-                          ¥{order.finalPrice || Math.max(0, order.price - order.discount)}
+                          ¥{order.finalPrice || Math.max(0, order.price - (order.discount || 0))}
                         </span>
                         <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
                           优惠¥{order.discount}
