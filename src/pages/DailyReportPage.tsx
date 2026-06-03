@@ -134,7 +134,7 @@ export function DailyReportPage() {
             >
               <ChevronLeft className="w-5 h-5 text-apple-600" />
             </button>
-            <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-apple-50 px-3 py-1.5 rounded-lg transition-colors">
               <Calendar className="w-4 h-4 text-apple-400" />
               <span className="font-medium text-apple-900">
                 {getDateString(selectedDate)}
@@ -142,7 +142,18 @@ export function DailyReportPage() {
               <span className="text-sm text-apple-400">
                 {selectedDate.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
               </span>
-            </div>
+              <input
+                type="date"
+                value={formatDate(selectedDate)}
+                max={formatDate(new Date())}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setSelectedDate(new Date(e.target.value))
+                  }
+                }}
+                className="sr-only"
+              />
+            </label>
             <button 
               onClick={goToNextDay}
               className="p-2 rounded-full hover:bg-apple-100 transition-colors"
