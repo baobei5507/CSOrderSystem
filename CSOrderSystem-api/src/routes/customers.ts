@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
-import { eq, and, like, or } from 'drizzle-orm'
-import { customers, customerAccounts, customerTags, tags } from '../db/schema'
+import { eq, and, like, or, sql } from 'drizzle-orm'
+import { customers, customerAccounts, customerTags, tags, orders } from '../db/schema'
 import type { Env } from '../index'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -190,6 +190,19 @@ app.delete('/', async (c) => {
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
+  // 检查是否有历史订单，如果有则不允许删除
+  const orderCount = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(orders)
+    .where(eq(orders.customerId, id))
+    .get()
+
+  if (orderCount && orderCount.count > 0) {
+    return c.json({ success: false, error: '该顾客有历史订单，无法删除' }, 400)
+  }
+
+  // 先删除关联数据
+  await db.delete(customerAccounts).where(eq(customerAccounts.customerId, id))
+  await db.delete(customerTags).where(eq(customerTags.customerId, id))
   await db.delete(customers).where(eq(customers.id, id))
   return c.json({ success: true })
 })

@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
 import { eq } from 'drizzle-orm'
-import { tags } from '../db/schema'
+import { tags, customerTags } from '../db/schema'
 import type { Env } from '../index'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -31,7 +31,7 @@ app.post('/', async (c) => {
     createdAt: now,
   })
 
-  return c.json({ success: true, data: { id } }, 201)
+  return c.json({ success: true, data: { id, name: body.name, color: body.color, storeId: body.storeId, createdAt: now } }, 201)
 })
 
 // PUT /api/tags?id=xxx
@@ -54,6 +54,8 @@ app.delete('/', async (c) => {
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
+  // 先删除顾客标签关联
+  await db.delete(customerTags).where(eq(customerTags.tagId, id))
   await db.delete(tags).where(eq(tags.id, id))
   return c.json({ success: true })
 })

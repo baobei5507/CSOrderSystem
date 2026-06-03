@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
-import { eq, and } from 'drizzle-orm'
-import { girls } from '../db/schema'
+import { eq, and, sql } from 'drizzle-orm'
+import { girls, orders } from '../db/schema'
 import type { Env } from '../index'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -66,6 +66,20 @@ app.delete('/', async (c) => {
   const db = drizzle(c.env.DB)
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
+
+  // 检查是否有历史订单，如果有则不允许删除（改为离职状态）
+  const orderCount = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(orders)
+    .where(eq(orders.girlId, id))
+    .get()
+
+  if (orderCount && orderCount.count > 0) {
+    // 有历史订单，改为离职状态而不是删除
+    await db.update(girls)
+      .set({ status: 'left', updatedAt: new Date() })
+      .where(eq(girls.id, id))
+    return c.json({ success: true, message: '该妹妹有历史订单，已标记为离职状态' })
+  }
 
   await db.delete(girls).where(eq(girls.id, id))
   return c.json({ success: true })
