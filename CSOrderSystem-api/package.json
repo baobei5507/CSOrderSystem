@@ -7,10 +7,11 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "hono": "^4.4.0"
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.23"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240603.0",
-    "wrangler": "^3.60.0"
+    "wrangler": "^4.97.0"
   }
 }
