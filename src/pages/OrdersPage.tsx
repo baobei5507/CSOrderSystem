@@ -209,7 +209,7 @@ export function OrdersPage() {
           accounts: newCustomerAccounts.filter(a => a.accountId.trim()),
           tagIds: [],
         })
-        finalCustomerId = result.data?.id || result.id
+        finalCustomerId = result.data.id
       }
 
       if (!finalCustomerId) {
