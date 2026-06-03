@@ -4,10 +4,9 @@ import { useAppStore } from '@/stores/appStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ScrollArea } from '@/components/ui/scrollArea'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tag, Users, TrendingUp, Clock, Palette, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Tag as TagType } from '@/types'
 
 interface TagStat {
   id: string
