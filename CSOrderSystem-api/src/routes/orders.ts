@@ -78,7 +78,7 @@ app.post('/', async (c) => {
     customerAccountId: body.customerAccountId || '',
     girlId: body.girlId,
     packageId: body.packageId,
-    appointmentTime: body.appointmentTime && body.appointmentTime.trim() !== '' ? new Date(body.appointmentTime).getTime() : null,
+    appointmentTime: body.appointmentTime && body.appointmentTime.trim() !== '' ? new Date(body.appointmentTime) : null,
     price: body.price,
     status: 'pending',
     serviceStaffName: c.env.DEFAULT_SERVICE_STAFF,
