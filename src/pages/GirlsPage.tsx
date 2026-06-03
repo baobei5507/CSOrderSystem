@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, ChevronRight, Edit2, Trash2 } from 'lucide-react'
+import { Search, Plus, ChevronRight, Edit2, Trash2, DollarSign } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Girl } from '@/types'
+import type { Girl, Package } from '@/types'
+
+interface GirlPackagePrice {
+  packageId: string
+  packageName: string
+  packageCode: string
+  price: number
+}
 
 type GirlStatus = 'active' | 'rest' | 'left'
 type CommissionType = 'percent' | 'fixed'
@@ -34,9 +41,13 @@ const statusMap: Record<GirlStatus, { label: string; color: string; bgColor: str
 export function GirlsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [girls, setGirls] = useState<Girl[]>([])
+  const [packages, setPackages] = useState<Package[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false)
   const [editingGirl, setEditingGirl] = useState<Girl | null>(null)
+  const [selectedGirl, setSelectedGirl] = useState<Girl | null>(null)
+  const [girlPrices, setGirlPrices] = useState<GirlPackagePrice[]>([])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -46,11 +57,12 @@ export function GirlsPage() {
   })
 
   const { currentStore } = useAppStore()
-  const { getGirls, createGirl, updateGirl, deleteGirl } = useApi()
+  const { getGirls, createGirl, updateGirl, deleteGirl, getPackages } = useApi()
 
   useEffect(() => {
     if (currentStore) {
       loadGirls()
+      loadPackages()
     }
   }, [currentStore])
 
@@ -63,6 +75,60 @@ export function GirlsPage() {
       console.error('加载妹妹列表失败:', err)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadPackages = async () => {
+    try {
+      const data = await getPackages(currentStore!.id)
+      setPackages(data)
+    } catch (err) {
+      console.error('加载套餐列表失败:', err)
+    }
+  }
+
+  const handleOpenPriceDialog = async (girl: Girl) => {
+    setSelectedGirl(girl)
+    setPriceDialogOpen(true)
+    // 加载该妹妹的套餐价格
+    try {
+      const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
+      const response = await fetch(`${API_BASE}/girl-package-prices?girlId=${girl.id}`)
+      const result = await response.json()
+      if (result.success) {
+        setGirlPrices(result.data)
+      }
+    } catch (err) {
+      console.error('加载套餐价格失败:', err)
+      setGirlPrices([])
+    }
+  }
+
+  const handleSaveGirlPrice = async (packageId: string, price: string) => {
+    if (!selectedGirl || !currentStore) return
+    try {
+      const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
+      const response = await fetch(`${API_BASE}/girl-package-prices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          girlId: selectedGirl.id,
+          packageId,
+          price: price === '' ? 0 : parseFloat(price),
+          storeId: currentStore.id,
+        }),
+      })
+      const result = await response.json()
+      if (result.success) {
+        // 刷新价格列表
+        const pricesResponse = await fetch(`${API_BASE}/girl-package-prices?girlId=${selectedGirl.id}`)
+        const pricesResult = await pricesResponse.json()
+        if (pricesResult.success) {
+          setGirlPrices(pricesResult.data)
+        }
+      }
+    } catch (err) {
+      console.error('保存套餐价格失败:', err)
     }
   }
 
@@ -216,6 +282,15 @@ export function GirlsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="h-8 w-8 p-0 text-apple-400 hover:text-apple-green"
+                    onClick={() => handleOpenPriceDialog(girl)}
+                    title="设置套餐价格"
+                  >
+                    <DollarSign className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-8 w-8 p-0 text-apple-400 hover:text-apple-blue"
                     onClick={() => handleOpenDialog(girl)}
                   >
@@ -306,6 +381,50 @@ export function GirlsPage() {
               className="bg-apple-blue text-white hover:bg-apple-blue/90"
             >
               {editingGirl ? '保存' : '创建'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 套餐价格设置对话框 */}
+      <Dialog open={priceDialogOpen} onOpenChange={setPriceDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedGirl?.name} - 套餐价格设置</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {packages.length === 0 ? (
+              <div className="text-center text-apple-400 py-4">暂无套餐，请先创建套餐</div>
+            ) : (
+              packages.map((pkg) => {
+                const girlPrice = girlPrices.find(p => p.packageId === pkg.id)
+                const currentPrice = girlPrice?.price?.toString() || ''
+                return (
+                  <div key={pkg.id} className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
+                    <div className="flex-1">
+                      <div className="font-medium text-apple-900">{pkg.name}</div>
+                      <div className="text-xs text-apple-400">基础价: ¥{pkg.basePrice}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm whitespace-nowrap">定价:</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        placeholder={pkg.basePrice.toString()}
+                        className="w-24 h-9"
+                        defaultValue={currentPrice}
+                        onBlur={(e) => handleSaveGirlPrice(pkg.id, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setPriceDialogOpen(false)} variant="outline">
+              关闭
             </Button>
           </div>
         </DialogContent>
