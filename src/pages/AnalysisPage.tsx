@@ -94,7 +94,7 @@ export function AnalysisPage() {
     queryKey: ['customerAnalysis', currentStore?.id, timeRange],
     queryFn: async (): Promise<AnalysisData> => {
       if (!currentStore?.id) return { customerRankings: [], girlPreferences: [], packagePreferences: [], tagAnalysis: [], inactiveCustomers: [] }
-      const res = await fetch(`/api/analysis/customer-preferences?storeId=${currentStore.id}&range=${timeRange}`)
+      const res = await fetch(`https://cs-order-api.550759734-d15.workers.dev/api/analysis/customer-preferences?storeId=${currentStore.id}&range=${timeRange}`)
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
       return json.data
