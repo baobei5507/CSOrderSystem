@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, UserPlus, X } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { cn, formatMoney } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import {
@@ -20,7 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Customer, Tag } from '@/types'
+import type { Customer, Tag, Order, Girl } from '@/types'
+
+interface GirlStat {
+  girlId: string
+  girlName: string
+  orderCount: number
+  totalAmount: number
+  completedCount: number
+  cancelledCount: number
+}
 
 // 预设标签颜色
 const TAG_COLORS = [
@@ -118,8 +127,15 @@ export function CustomersPage() {
   const [selectedColor, setSelectedColor] = useState(TAG_COLORS[0])
   const [isAddingTag, setIsAddingTag] = useState(false)
 
+  // 妹妹统计弹窗状态
+  const [statsDialogOpen, setStatsDialogOpen] = useState(false)
+  const [selectedCustomerForStats, setSelectedCustomerForStats] = useState<Customer | null>(null)
+  const [girlStats, setGirlStats] = useState<GirlStat[]>([])
+  const [statsSortBy, setStatsSortBy] = useState<'orders' | 'amount'>('orders')
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
+
   const { currentStore } = useAppStore()
-  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer, createTag } = useApi()
+  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer, createTag, getOrders, getGirls } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -199,6 +215,61 @@ export function CustomersPage() {
     } catch (err) {
       console.error('删除失败:', err)
     }
+  }
+
+  // 加载顾客妹妹统计数据
+  const loadGirlStats = async (customer: Customer) => {
+    setIsLoadingStats(true)
+    setSelectedCustomerForStats(customer)
+    try {
+      const [ordersData, girlsData] = await Promise.all([
+        getOrders(currentStore!.id),
+        getGirls(currentStore!.id),
+      ])
+
+      // 统计该顾客预约各个妹妹的数据
+      const customerOrders = ordersData.filter((o: Order) => o.customerId === customer.id)
+      
+      const statsMap = new Map<string, GirlStat>()
+      
+      customerOrders.forEach((order: Order) => {
+        const girl = girlsData.find((g: Girl) => g.id === order.girlId)
+        if (!girl) return
+
+        const existing = statsMap.get(order.girlId)
+        if (existing) {
+          existing.orderCount++
+          existing.totalAmount += order.price || 0
+          if (order.status === 'completed') existing.completedCount++
+          if (order.status === 'cancelled') existing.cancelledCount++
+        } else {
+          statsMap.set(order.girlId, {
+            girlId: order.girlId,
+            girlName: girl.name,
+            orderCount: 1,
+            totalAmount: order.price || 0,
+            completedCount: order.status === 'completed' ? 1 : 0,
+            cancelledCount: order.status === 'cancelled' ? 1 : 0,
+          })
+        }
+      })
+
+      setGirlStats(Array.from(statsMap.values()))
+      setStatsDialogOpen(true)
+    } catch (err) {
+      console.error('加载统计数据失败:', err)
+    } finally {
+      setIsLoadingStats(false)
+    }
+  }
+
+  // 获取排序后的统计数据
+  const getSortedStats = () => {
+    const stats = [...girlStats]
+    if (statsSortBy === 'orders') {
+      return stats.sort((a, b) => b.orderCount - a.orderCount)
+    }
+    return stats.sort((a, b) => b.totalAmount - a.totalAmount)
   }
 
   const toggleTag = (tagId: string) => {
@@ -305,6 +376,15 @@ export function CustomersPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-apple-400 hover:text-purple-500"
+                    onClick={() => loadGirlStats(customer)}
+                    title="查看预约统计"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -470,6 +550,118 @@ export function CustomersPage() {
               {editingCustomer ? '保存' : '创建'}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 妹妹统计弹窗 */}
+      <Dialog open={statsDialogOpen} onOpenChange={setStatsDialogOpen}>
+        <DialogContent className="sm:max-w-[450px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>顾客偏好分析</DialogTitle>
+          </DialogHeader>
+          
+          {selectedCustomerForStats && (
+            <div className="py-4 space-y-4">
+              {/* 顾客信息 */}
+              <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-apple-blue to-apple-indigo flex items-center justify-center text-white font-bold">
+                  {selectedCustomerForStats.name[0]}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-apple-900">{selectedCustomerForStats.name}</h3>
+                  <p className="text-sm text-apple-400">
+                    共预约 {girlStats.reduce((sum, g) => sum + g.orderCount, 0)} 次
+                  </p>
+                </div>
+              </div>
+
+              {/* 排序切换 */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStatsSortBy('orders')}
+                  className={cn(
+                    "flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all",
+                    statsSortBy === 'orders'
+                      ? "bg-apple-blue text-white"
+                      : "bg-apple-100 text-apple-600"
+                  )}
+                >
+                  按次数排序
+                </button>
+                <button
+                  onClick={() => setStatsSortBy('amount')}
+                  className={cn(
+                    "flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all",
+                    statsSortBy === 'amount'
+                      ? "bg-apple-blue text-white"
+                      : "bg-apple-100 text-apple-600"
+                  )}
+                >
+                  按金额排序
+                </button>
+              </div>
+
+              {/* 统计列表 */}
+              {isLoadingStats ? (
+                <div className="text-center py-8 text-apple-400">加载中...</div>
+              ) : girlStats.length === 0 ? (
+                <div className="text-center py-8 text-apple-400">暂无预约记录</div>
+              ) : (
+                <div className="space-y-3">
+                  {getSortedStats().map((stat, index) => (
+                    <div key={stat.girlId} className="p-3 bg-apple-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          "w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center",
+                          index === 0 ? "bg-yellow-100 text-yellow-700" :
+                          index === 1 ? "bg-gray-200 text-gray-700" :
+                          index === 2 ? "bg-orange-100 text-orange-700" :
+                          "bg-apple-100 text-apple-600"
+                        )}>
+                          {index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <p className="font-medium text-apple-900">{stat.girlName}</p>
+                          <div className="flex gap-2 text-xs">
+                            <span className="text-green-600">完成 {stat.completedCount} 次</span>
+                            {stat.cancelledCount > 0 && (
+                              <span className="text-red-500">取消 {stat.cancelledCount} 次</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-apple-900">
+                            {statsSortBy === 'orders' ? `${stat.orderCount}次` : `¥${stat.totalAmount}`}
+                          </p>
+                          <p className="text-xs text-apple-400">
+                            {statsSortBy === 'orders' ? `¥${stat.totalAmount}` : `${stat.orderCount}次`}
+                          </p>
+                        </div>
+                      </div>
+                      {/* 进度条 */}
+                      <div className="mt-2 h-1.5 bg-apple-200 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            index === 0 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
+                            index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400" :
+                            index === 2 ? "bg-gradient-to-r from-orange-300 to-orange-400" :
+                            "bg-gradient-to-r from-apple-blue to-apple-purple"
+                          )}
+                          style={{
+                            width: `${statsSortBy === 'orders'
+                              ? (stat.orderCount / (getSortedStats()[0]?.orderCount || 1)) * 100
+                              : (stat.totalAmount / (getSortedStats()[0]?.totalAmount || 1)) * 100
+                            }%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Clock, CheckCircle2, XCircle } from 'lucide-react'
+import { Search, Plus, Clock, CheckCircle2, XCircle, Tag as TagIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Order, Customer, Girl, Package } from '@/types'
+import type { Order, Customer, Girl, Package, Tag } from '@/types'
 
 type OrderStatus = 'pending' | 'completed' | 'cancelled'
 
@@ -64,7 +64,7 @@ export function OrdersPage() {
   const [girlIncomePreview, setGirlIncomePreview] = useState(0)
 
   const { currentStore } = useAppStore()
-  const { getOrders, getCustomers, getGirls, getPackages, createOrder, updateOrder, getGirlPackagePrices } = useApi()
+  const { getOrders, getCustomers, getGirls, getPackages, getTags, createOrder, updateOrder, createTag, updateCustomer, getGirlPackagePrices } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -198,12 +198,86 @@ export function OrdersPage() {
     }
   }
 
+  // 取消订单相关状态
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancellingOrder, setCancellingOrder] = useState<OrderWithDetails | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const [addAsTag, setAddAsTag] = useState(false)
+  const [cancelTags, setCancelTags] = useState<Tag[]>([])
+
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    if (newStatus === 'cancelled') {
+      // 显示取消原因弹窗
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        setCancellingOrder(order)
+        setCancelReason('')
+        setAddAsTag(false)
+        // 加载已有标签
+        const tagsData = await getTags(currentStore!.id)
+        setCancelTags(tagsData)
+        setCancelDialogOpen(true)
+      }
+    } else {
+      try {
+        await updateOrder(orderId, { status: newStatus })
+        loadData()
+      } catch (err) {
+        console.error('更新状态失败:', err)
+      }
+    }
+  }
+
+  // 确认取消订单
+  const handleConfirmCancel = async () => {
+    if (!cancellingOrder || !currentStore) return
+
     try {
-      await updateOrder(orderId, { status: newStatus })
+      // 1. 更新订单状态，添加备注
+      await updateOrder(cancellingOrder.id, {
+        status: 'cancelled',
+        remark: cancelReason || undefined,
+      })
+
+      // 2. 如果选择作为标签，给顾客添加标签
+      if (addAsTag && cancelReason.trim()) {
+        // 先创建标签（如果不存在）
+        const existingTag = cancelTags.find(t => t.name === cancelReason.trim())
+        let tagId: string
+
+        if (existingTag) {
+          tagId = existingTag.id
+        } else {
+          // 创建新标签，使用红色表示取消相关
+          const newTag = await createTag({
+            storeId: currentStore.id,
+            name: cancelReason.trim(),
+            color: '#EF4444', // 红色
+          })
+          tagId = newTag.id
+        }
+
+        // 获取顾客当前标签
+        const customerData = await getCustomers(currentStore.id)
+        const customer = customerData.find(c => c.id === cancellingOrder.customerId)
+        if (customer) {
+          const currentTagIds = customer.tagIds || []
+          // 避免重复添加
+          if (!currentTagIds.includes(tagId)) {
+            await updateCustomer(customer.id, {
+              tagIds: [...currentTagIds, tagId],
+            })
+          }
+        }
+      }
+
+      setCancelDialogOpen(false)
+      setCancellingOrder(null)
+      setCancelReason('')
+      setAddAsTag(false)
       loadData()
     } catch (err) {
-      console.error('更新状态失败:', err)
+      console.error('取消订单失败:', err)
     }
   }
 
@@ -354,6 +428,74 @@ export function OrdersPage() {
           })
         )}
       </div>
+
+      {/* Cancel Order Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>取消订单</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {cancellingOrder && (
+              <div className="p-3 bg-apple-50 rounded-xl text-sm">
+                <p className="text-apple-600">
+                  订单: <span className="font-medium text-apple-900">{cancellingOrder.orderNo}</span>
+                </p>
+                <p className="text-apple-600">
+                  顾客: <span className="font-medium text-apple-900">{cancellingOrder.customerName}</span>
+                </p>
+                <p className="text-apple-600">
+                  妹妹: <span className="font-medium text-apple-900">{cancellingOrder.girlName}</span>
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="cancelReason">取消原因</Label>
+              <Input
+                id="cancelReason"
+                placeholder="请输入取消原因..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl cursor-pointer" onClick={() => setAddAsTag(!addAsTag)}>
+              <div className={cn(
+                "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                addAsTag ? "bg-apple-blue border-apple-blue" : "border-apple-300"
+              )}>
+                {addAsTag && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-apple-900">给顾客添加标签</p>
+                <p className="text-xs text-apple-400">将取消原因作为标签标记给顾客</p>
+              </div>
+            </div>
+
+            {addAsTag && cancelReason.trim() && (
+              <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
+                <span className="text-xs text-apple-500">将创建标签:</span>
+                <span className="text-xs px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#EF4444' }}>
+                  {cancelReason.trim()}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              返回
+            </Button>
+            <Button
+              onClick={handleConfirmCancel}
+              disabled={!cancelReason.trim()}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              确认取消
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Order Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
