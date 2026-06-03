@@ -48,6 +48,8 @@ export function GirlsPage() {
   const [editingGirl, setEditingGirl] = useState<Girl | null>(null)
   const [selectedGirl, setSelectedGirl] = useState<Girl | null>(null)
   const [girlPrices, setGirlPrices] = useState<GirlPackagePrice[]>([])
+  const [priceFormData, setPriceFormData] = useState<Record<string, string>>({})
+  const [isSavingPrices, setIsSavingPrices] = useState(false)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -90,6 +92,7 @@ export function GirlsPage() {
   const handleOpenPriceDialog = async (girl: Girl) => {
     setSelectedGirl(girl)
     setPriceDialogOpen(true)
+    setPriceFormData({})
     // 加载该妹妹的套餐价格
     try {
       const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
@@ -97,6 +100,12 @@ export function GirlsPage() {
       const result = await response.json()
       if (result.success) {
         setGirlPrices(result.data)
+        // 初始化表单数据
+        const initialData: Record<string, string> = {}
+        result.data.forEach((p: GirlPackagePrice) => {
+          initialData[p.packageId] = p.price?.toString() || ''
+        })
+        setPriceFormData(initialData)
       }
     } catch (err) {
       console.error('加载套餐价格失败:', err)
@@ -104,32 +113,41 @@ export function GirlsPage() {
     }
   }
 
-  const handleSaveGirlPrice = async (packageId: string, price: string) => {
+  const handleSaveGirlPrices = async () => {
     if (!selectedGirl || !currentStore) return
+    setIsSavingPrices(true)
     try {
       const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
-      const response = await fetch(`${API_BASE}/girl-package-prices`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          girlId: selectedGirl.id,
-          packageId,
-          price: price === '' ? 0 : parseFloat(price),
-          storeId: currentStore.id,
-        }),
+      // 批量保存所有价格
+      const savePromises = Object.entries(priceFormData).map(([packageId, price]) => {
+        const priceValue = price === '' ? 0 : parseFloat(price)
+        return fetch(`${API_BASE}/girl-package-prices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            girlId: selectedGirl.id,
+            packageId,
+            price: priceValue,
+            storeId: currentStore.id,
+          }),
+        })
       })
-      const result = await response.json()
-      if (result.success) {
-        // 刷新价格列表
-        const pricesResponse = await fetch(`${API_BASE}/girl-package-prices?girlId=${selectedGirl.id}`)
-        const pricesResult = await pricesResponse.json()
-        if (pricesResult.success) {
-          setGirlPrices(pricesResult.data)
-        }
-      }
+      
+      await Promise.all(savePromises)
+      setPriceDialogOpen(false)
     } catch (err) {
       console.error('保存套餐价格失败:', err)
+      alert('保存失败，请重试')
+    } finally {
+      setIsSavingPrices(false)
     }
+  }
+
+  const handlePriceChange = (packageId: string, value: string) => {
+    setPriceFormData(prev => ({
+      ...prev,
+      [packageId]: value
+    }))
   }
 
   const handleOpenDialog = (girl?: Girl) => {
@@ -396,35 +414,42 @@ export function GirlsPage() {
             {packages.length === 0 ? (
               <div className="text-center text-apple-400 py-4">暂无套餐，请先创建套餐</div>
             ) : (
-              packages.map((pkg) => {
-                const girlPrice = girlPrices.find(p => p.packageId === pkg.id)
-                const currentPrice = girlPrice?.price?.toString() || ''
-                return (
-                  <div key={pkg.id} className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
-                    <div className="flex-1">
-                      <div className="font-medium text-apple-900">{pkg.name}</div>
-                      <div className="text-xs text-apple-400">基础价: ¥{pkg.basePrice}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm whitespace-nowrap">定价:</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        placeholder={pkg.basePrice.toString()}
-                        className="w-24 h-9"
-                        defaultValue={currentPrice}
-                        onBlur={(e) => handleSaveGirlPrice(pkg.id, e.target.value)}
-                      />
-                    </div>
+              packages.map((pkg) => (
+                <div key={pkg.id} className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
+                  <div className="flex-1">
+                    <div className="font-medium text-apple-900">{pkg.name}</div>
+                    <div className="text-xs text-apple-400">基础价: ¥{pkg.basePrice}</div>
                   </div>
-                )
-              })
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm whitespace-nowrap">定价:</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder={pkg.basePrice.toString()}
+                      className="w-24 h-9"
+                      value={priceFormData[pkg.id] || ''}
+                      onChange={(e) => handlePriceChange(pkg.id, e.target.value)}
+                    />
+                  </div>
+                </div>
+              ))
             )}
           </div>
-          <div className="flex justify-end">
-            <Button onClick={() => setPriceDialogOpen(false)} variant="outline">
-              关闭
+          <div className="flex justify-end gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setPriceDialogOpen(false)}
+              disabled={isSavingPrices}
+            >
+              取消
+            </Button>
+            <Button 
+              onClick={handleSaveGirlPrices}
+              disabled={isSavingPrices || packages.length === 0}
+              className="bg-apple-blue text-white hover:bg-apple-blue/90"
+            >
+              {isSavingPrices ? '保存中...' : '保存'}
             </Button>
           </div>
         </DialogContent>
