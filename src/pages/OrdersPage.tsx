@@ -210,6 +210,10 @@ export function OrdersPage() {
           tagIds: [],
         })
         finalCustomerId = newCustomer.id
+        // 如果有创建账号，使用第一个账号ID
+        if (newCustomer.accounts && newCustomer.accounts.length > 0) {
+          orderData.customerAccountId = newCustomer.accounts[0].id
+        }
       }
 
       if (!finalCustomerId) {

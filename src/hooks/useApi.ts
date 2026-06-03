@@ -133,7 +133,7 @@ export function useApi() {
     name: string
     accounts?: { platform: string; accountId: string; note?: string }[]
     tagIds?: string[]
-  }): Promise<{ id: string }> => {
+  }): Promise<{ id: string; accounts?: { id: string; platform: string; account: string }[] }> => {
     return fetchApi('/customers', {
       method: 'POST',
       body: JSON.stringify(data),

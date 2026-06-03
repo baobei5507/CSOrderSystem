@@ -113,7 +113,17 @@ app.post('/', async (c) => {
     }
   }
 
-  return c.json({ success: true, data: { id } }, 201)
+  // 获取创建的账号
+  const accountList = await db.select().from(customerAccounts)
+    .where(eq(customerAccounts.customerId, id))
+    .all()
+
+  const accounts = accountList.map(acc => ({
+    ...acc,
+    accountId: acc.account,
+  }))
+
+  return c.json({ success: true, data: { id, accounts } }, 201)
 })
 
 // PUT /api/customers?id=xxx
