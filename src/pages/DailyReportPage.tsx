@@ -134,8 +134,8 @@ export function DailyReportPage() {
             >
               <ChevronLeft className="w-5 h-5 text-apple-600" />
             </button>
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-apple-50 px-3 py-1.5 rounded-lg transition-colors">
-              <Calendar className="w-4 h-4 text-apple-400" />
+            <div className="relative flex items-center gap-2 cursor-pointer hover:bg-apple-50 px-3 py-1.5 rounded-lg transition-colors group">
+              <Calendar className="w-4 h-4 text-apple-400 group-hover:text-apple-600" />
               <span className="font-medium text-apple-900">
                 {getDateString(selectedDate)}
               </span>
@@ -151,9 +151,9 @@ export function DailyReportPage() {
                     setSelectedDate(new Date(e.target.value))
                   }
                 }}
-                className="sr-only"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-            </label>
+            </div>
             <button 
               onClick={goToNextDay}
               className="p-2 rounded-full hover:bg-apple-100 transition-colors"
