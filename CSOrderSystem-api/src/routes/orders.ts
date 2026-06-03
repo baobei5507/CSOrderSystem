@@ -50,7 +50,6 @@ app.get('/', async (c) => {
 app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
-  const timestamp = new Date()
 
   // 获取关联数据
   const customer = await db.select().from(customers).where(eq(customers.id, body.customerId)).get()
@@ -69,6 +68,17 @@ app.post('/', async (c) => {
   const orderId = crypto.randomUUID()
   const orderNo = generateOrderNo()
 
+  // 处理预约时间 - 转换为 Unix 时间戳数字
+  let appointmentTimeValue = null
+  if (body.appointmentTime && body.appointmentTime.trim() !== '') {
+    const date = new Date(body.appointmentTime)
+    if (!isNaN(date.getTime())) {
+      appointmentTimeValue = date.getTime()
+    }
+  }
+
+  const now = new Date()
+
   // 创建订单
   await db.insert(orders).values({
     id: orderId,
@@ -78,15 +88,15 @@ app.post('/', async (c) => {
     customerAccountId: body.customerAccountId || '',
     girlId: body.girlId,
     packageId: body.packageId,
-    appointmentTime: body.appointmentTime && body.appointmentTime.trim() !== '' ? new Date(body.appointmentTime) : null,
+    appointmentTime: appointmentTimeValue,
     price: body.price,
     status: 'pending',
     serviceStaffName: c.env.DEFAULT_SERVICE_STAFF,
     girlIncome,
     serviceCommission,
     remark: null,
-    createdAt: timestamp,
-    updatedAt: timestamp,
+    createdAt: now.getTime(),
+    updatedAt: now.getTime(),
   })
 
   // 创建订单快照
