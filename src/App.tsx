@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAppStore } from './stores/appStore'
 import { BottomNav } from './components/BottomNav'
 import { HomePage } from './pages/HomePage'
+import { DailyReportPage } from './pages/DailyReportPage'
 import { CustomersPage } from './pages/CustomersPage'
 import { AnalysisPage } from './pages/AnalysisPage'
 import { OrdersPage } from './pages/OrdersPage'
@@ -25,6 +26,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-apple-50">
         {activeTab === 'home' && <HomePage />}
+        {activeTab === 'daily' && <DailyReportPage />}
         {activeTab === 'customers' && <CustomersPage />}
         {activeTab === 'analysis' && <AnalysisPage />}
         {activeTab === 'orders' && <OrdersPage />}
