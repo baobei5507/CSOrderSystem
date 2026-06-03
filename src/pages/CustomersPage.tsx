@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, UserPlus } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, UserPlus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { Customer, Tag } from '@/types'
+
+// 预设标签颜色
+const TAG_COLORS = [
+  '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
+  '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
+  '#F97316', '#6366F1', '#14B8A6', '#EAB308'
+]
 
 const PLATFORM_OPTIONS = [
   { value: 'wechat', label: '微信' },
@@ -106,8 +113,13 @@ export function CustomersPage() {
     selectedTags: [] as string[],
   })
 
+  // 自定义标签输入
+  const [newTagName, setNewTagName] = useState('')
+  const [selectedColor, setSelectedColor] = useState(TAG_COLORS[0])
+  const [isAddingTag, setIsAddingTag] = useState(false)
+
   const { currentStore } = useAppStore()
-  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer } = useApi()
+  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer, createTag } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -147,6 +159,9 @@ export function CustomersPage() {
         selectedTags: [],
       })
     }
+    // 重置自定义标签输入
+    setNewTagName('')
+    setSelectedColor(TAG_COLORS[0])
     setDialogOpen(true)
   }
 
@@ -193,6 +208,34 @@ export function CustomersPage() {
         ? prev.selectedTags.filter(id => id !== tagId)
         : [...prev.selectedTags, tagId]
     }))
+  }
+
+  // 添加自定义标签
+  const handleAddCustomTag = async () => {
+    if (!newTagName.trim() || !currentStore) return
+
+    setIsAddingTag(true)
+    try {
+      const newTag = await createTag({
+        storeId: currentStore.id,
+        name: newTagName.trim(),
+        color: selectedColor,
+      })
+      // 添加到标签列表
+      setTags(prev => [...prev, newTag])
+      // 自动选中该标签
+      setFormData(prev => ({
+        ...prev,
+        selectedTags: [...prev.selectedTags, newTag.id]
+      }))
+      // 清空输入
+      setNewTagName('')
+    } catch (err) {
+      console.error('创建标签失败:', err)
+      alert('创建标签失败')
+    } finally {
+      setIsAddingTag(false)
+    }
   }
 
   const filteredCustomers = customers.filter(c =>
@@ -343,26 +386,76 @@ export function CustomersPage() {
 
             <div className="grid gap-2">
               <Label>标签</Label>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    onClick={() => toggleTag(tag.id)}
-                    className={cn(
-                      "px-3 py-1 rounded-full text-sm transition-all",
-                      formData.selectedTags.includes(tag.id)
-                        ? "ring-2 ring-offset-1"
-                        : "opacity-60"
-                    )}
-                    style={{
-                      backgroundColor: tag.color || '#3B82F6',
-                      color: 'white',
+
+              {/* 自定义标签输入 */}
+              <div className="p-3 bg-apple-50 rounded-xl space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="输入新标签名称"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAddCustomTag()
+                      }
                     }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddCustomTag}
+                    disabled={!newTagName.trim() || isAddingTag}
+                    size="sm"
+                    className="bg-apple-blue text-white"
                   >
-                    {tag.name}
-                  </button>
-                ))}
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* 颜色选择 */}
+                <div className="flex flex-wrap gap-1.5">
+                  {TAG_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setSelectedColor(color)}
+                      className={cn(
+                        "w-6 h-6 rounded-full transition-all",
+                        selectedColor === color && "ring-2 ring-offset-1 ring-apple-blue scale-110"
+                      )}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
               </div>
+
+              {/* 已有标签列表 */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => toggleTag(tag.id)}
+                      className={cn(
+                        "px-3 py-1 rounded-full text-sm transition-all flex items-center gap-1",
+                        formData.selectedTags.includes(tag.id)
+                          ? "ring-2 ring-offset-1"
+                          : "opacity-60"
+                      )}
+                      style={{
+                        backgroundColor: tag.color || '#3B82F6',
+                        color: 'white',
+                      }}
+                    >
+                      {tag.name}
+                      {formData.selectedTags.includes(tag.id) && (
+                        <X className="w-3 h-3" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-3">

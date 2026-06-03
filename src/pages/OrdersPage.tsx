@@ -59,6 +59,10 @@ export function OrdersPage() {
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [calculatedPrice, setCalculatedPrice] = useState(0)
 
+  // 提成预览
+  const [serviceCommissionPreview, setServiceCommissionPreview] = useState(0)
+  const [girlIncomePreview, setGirlIncomePreview] = useState(0)
+
   const { currentStore } = useAppStore()
   const { getOrders, getCustomers, getGirls, getPackages, createOrder, updateOrder, getGirlPackagePrices } = useApi()
 
@@ -97,7 +101,7 @@ export function OrdersPage() {
     }
   }
 
-  // 计算最终价格
+  // 计算最终价格和提成
   useEffect(() => {
     if (selectedGirl && selectedPackage) {
       // 查询该妹妹对应套餐的价格
@@ -106,13 +110,44 @@ export function OrdersPage() {
         const finalPrice = girlPrice?.price || selectedPackage.basePrice
         setCalculatedPrice(finalPrice)
         setFormData(prev => ({ ...prev, price: finalPrice }))
+
+        // 计算提成预览
+        calculateCommissions(finalPrice)
       }).catch(() => {
         // 查询失败时使用基础价格
         setCalculatedPrice(selectedPackage.basePrice)
         setFormData(prev => ({ ...prev, price: selectedPackage.basePrice }))
+        calculateCommissions(selectedPackage.basePrice)
       })
     }
   }, [selectedGirl, selectedPackage])
+
+  // 计算提成预览
+  const calculateCommissions = (price: number) => {
+    if (!currentStore || !selectedGirl) {
+      setServiceCommissionPreview(0)
+      setGirlIncomePreview(0)
+      return
+    }
+
+    // 客服提成计算
+    let serviceCommission = 0
+    if (currentStore.serviceCommissionType === 'percent') {
+      serviceCommission = price * (currentStore.serviceCommissionValue / 100)
+    } else {
+      serviceCommission = currentStore.serviceCommissionValue
+    }
+    setServiceCommissionPreview(Math.round(serviceCommission * 100) / 100)
+
+    // 妹妹提成计算
+    let girlIncome = 0
+    if (selectedGirl.commissionType === 'percent') {
+      girlIncome = price * (selectedGirl.commissionValue / 100)
+    } else {
+      girlIncome = selectedGirl.commissionValue
+    }
+    setGirlIncomePreview(Math.round(girlIncome * 100) / 100)
+  }
 
   const handleOpenDialog = () => {
     setFormData({
@@ -393,13 +428,42 @@ export function OrdersPage() {
               </Select>
             </div>
 
-            {/* Price Display */}
+            {/* Price & Commission Preview */}
             {calculatedPrice > 0 && (
-              <div className="p-3 bg-apple-50 rounded-xl">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-apple-600">最终价格</span>
+              <div className="p-4 bg-apple-50 rounded-xl space-y-3">
+                <div className="flex justify-between items-center border-b border-apple-100 pb-2">
+                  <span className="text-sm text-apple-600">订单金额</span>
                   <span className="text-xl font-bold text-apple-blue">¥{calculatedPrice}</span>
                 </div>
+
+                {/* 客服提成预览 */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-apple-500">客服提成</span>
+                    <span className="text-xs text-apple-400">
+                      ({currentStore?.serviceCommissionType === 'percent'
+                        ? `${currentStore?.serviceCommissionValue}%`
+                        : `固定¥${currentStore?.serviceCommissionValue}`
+                      })
+                    </span>
+                  </div>
+                  <span className="text-lg font-semibold text-green-600">¥{serviceCommissionPreview.toFixed(2)}</span>
+                </div>
+
+                {/* 妹妹提成预览 */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-apple-500">{selectedGirl?.name}提成</span>
+                    <span className="text-xs text-apple-400">
+                      ({selectedGirl?.commissionType === 'percent'
+                        ? `${selectedGirl?.commissionValue}%`
+                        : `固定¥${selectedGirl?.commissionValue}`
+                      })
+                    </span>
+                  </div>
+                  <span className="text-lg font-semibold text-purple-600">¥{girlIncomePreview.toFixed(2)}</span>
+                </div>
+
               </div>
             )}
 

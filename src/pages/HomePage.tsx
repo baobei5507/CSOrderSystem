@@ -122,14 +122,20 @@ export function HomePage() {
                 <StatCard
                   title="今日收入"
                   value={formatMoney(data.todayRevenue)}
-                  subtitle={`${data.todayOrders} 笔订单`}
+                  subtitle={`${data.todayCompleted} 笔完成订单`}
                   icon={DollarSign}
                 />
                 <StatCard
-                  title="今日订单"
-                  value={data.todayOrders}
-                  subtitle={`${data.todayCompleted}完成 · ${data.todayCancelled}取消`}
+                  title="完成订单"
+                  value={data.todayCompleted}
+                  subtitle="今日已完成"
                   icon={Calendar}
+                />
+                <StatCard
+                  title="取消订单"
+                  value={data.todayCancelled}
+                  subtitle="今日已取消"
+                  icon={Users}
                 />
               </div>
             </section>
@@ -141,17 +147,21 @@ export function HomePage() {
                 <StatCard
                   title="本月收入"
                   value={formatMoney(data.monthRevenue)}
-                  subtitle={`${data.monthOrders} 笔订单`}
+                  subtitle={`${data.monthCompleted} 笔完成订单`}
                   icon={TrendingUp}
                 />
                 <StatCard
-                  title="本月订单"
-                  value={data.monthOrders}
-                  subtitle={`${data.monthCompleted}完成 · ${data.monthCancelled}取消`}
+                  title="完成订单"
+                  value={data.monthCompleted}
+                  subtitle="本月已完成"
+                  icon={Calendar}
+                />
+                <StatCard
+                  title="取消订单"
+                  value={data.monthCancelled}
+                  subtitle="本月已取消"
                   icon={Users}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-3 mt-3">
                 <StatCard
                   title="客服提成"
                   value={formatMoney(data.monthServiceCommission)}

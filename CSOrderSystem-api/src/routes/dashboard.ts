@@ -23,8 +23,9 @@ app.get('/', async (c) => {
       .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, new Date(todayStart))))
       .all()
 
-    const todayRevenue = todayOrdersList.reduce((sum, o) => sum + (o.price || 0), 0)
-    const todayCompleted = todayOrdersList.filter(o => o.status === 'completed').length
+    const todayCompletedList = todayOrdersList.filter(o => o.status === 'completed')
+    const todayRevenue = todayCompletedList.reduce((sum, o) => sum + (o.price || 0), 0)
+    const todayCompleted = todayCompletedList.length
     const todayCancelled = todayOrdersList.filter(o => o.status === 'cancelled').length
 
     // 本月统计
@@ -32,10 +33,11 @@ app.get('/', async (c) => {
       .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, new Date(monthStart))))
       .all()
 
-    const monthRevenue = monthOrdersList.reduce((sum, o) => sum + (o.price || 0), 0)
-    const monthCompleted = monthOrdersList.filter(o => o.status === 'completed').length
+    const monthCompletedList = monthOrdersList.filter(o => o.status === 'completed')
+    const monthRevenue = monthCompletedList.reduce((sum, o) => sum + (o.price || 0), 0)
+    const monthCompleted = monthCompletedList.length
     const monthCancelled = monthOrdersList.filter(o => o.status === 'cancelled').length
-    const monthServiceCommission = monthOrdersList.reduce((sum, o) => sum + (o.serviceCommission || 0), 0)
+    const monthServiceCommission = monthCompletedList.reduce((sum, o) => sum + (o.serviceCommission || 0), 0)
 
     // 本月新增顾客数
     const newCustomersResult = await db.select({ count: sql<number>`COUNT(*)` })
