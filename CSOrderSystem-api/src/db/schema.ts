@@ -88,7 +88,7 @@ export const orders = sqliteTable('orders', {
   orderNo: text('order_no').notNull().unique(),
   storeId: text('store_id').notNull().references(() => stores.id),
   customerId: text('customer_id').notNull().references(() => customers.id),
-  customerAccountId: text('customer_account_id').notNull().references(() => customerAccounts.id),
+  customerAccountId: text('customer_account_id').references(() => customerAccounts.id),
   girlId: text('girl_id').notNull().references(() => girls.id),
   packageId: text('package_id').notNull().references(() => packages.id),
   appointmentTime: integer('appointment_time'),

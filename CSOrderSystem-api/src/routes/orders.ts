@@ -85,7 +85,7 @@ app.post('/', async (c) => {
     orderNo,
     storeId: body.storeId,
     customerId: body.customerId,
-    customerAccountId: body.customerAccountId || '',
+    customerAccountId: body.customerAccountId || null,
     girlId: body.girlId,
     packageId: body.packageId,
     appointmentTime: appointmentTimeValue,
