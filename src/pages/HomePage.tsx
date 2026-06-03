@@ -25,7 +25,7 @@ interface DashboardData {
 export function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [chartDimension, setChartDimension] = useState<'orders' | 'revenue'>('orders')
+  const [chartDimension, setChartDimension] = useState<'orders' | 'commission'>('orders')
   const { currentStore } = useAppStore()
   const { getDashboard } = useApi()
 
@@ -280,15 +280,15 @@ export function HomePage() {
                       订单量
                     </button>
                     <button
-                      onClick={() => setChartDimension('revenue')}
+                      onClick={() => setChartDimension('commission')}
                       className={cn(
                         "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                        chartDimension === 'revenue' 
+                        chartDimension === 'commission' 
                           ? "bg-apple-blue text-white" 
                           : "bg-apple-100 text-apple-600"
                       )}
                     >
-                      收入
+                      妹妹提成
                     </button>
                   </div>
                 </div>
@@ -297,8 +297,8 @@ export function HomePage() {
                     {data.girlRanking.slice(0, 8).map((girl, index) => {
                       const maxValue = chartDimension === 'orders' 
                         ? Math.max(...data.girlRanking.map(g => g.orderCount))
-                        : Math.max(...data.girlRanking.map(g => g.revenue))
-                      const currentValue = chartDimension === 'orders' ? girl.orderCount : girl.revenue
+                        : Math.max(...data.girlRanking.map(g => g.serviceCommission))
+                      const currentValue = chartDimension === 'orders' ? girl.orderCount : girl.serviceCommission
                       const percentage = maxValue > 0 ? (currentValue / maxValue) * 100 : 0
                       
                       return (

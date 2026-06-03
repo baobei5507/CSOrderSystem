@@ -63,8 +63,10 @@ export function TagsPage() {
   const unusedTags = totalTags - usedTags
   const totalCustomersTagged = tagStats?.reduce((sum, t) => sum + t.customerCount, 0) || 0
 
-  // 按使用频率排序
-  const sortedByUsage = [...(tagStats || [])].sort((a, b) => b.customerCount - a.customerCount)
+  // 按使用频率排序（只显示有顾客使用的标签）
+  const sortedByUsage = [...(tagStats || [])]
+    .filter(t => t.customerCount > 0)
+    .sort((a, b) => b.customerCount - a.customerCount)
   const topTags = sortedByUsage.slice(0, 5)
 
   // 最近新增的标签
