@@ -47,7 +47,6 @@ export function GirlsPage() {
   const [priceDialogOpen, setPriceDialogOpen] = useState(false)
   const [editingGirl, setEditingGirl] = useState<Girl | null>(null)
   const [selectedGirl, setSelectedGirl] = useState<Girl | null>(null)
-  const [girlPrices, setGirlPrices] = useState<GirlPackagePrice[]>([])
   const [priceFormData, setPriceFormData] = useState<Record<string, string>>({})
   const [isSavingPrices, setIsSavingPrices] = useState(false)
   
@@ -99,7 +98,6 @@ export function GirlsPage() {
       const response = await fetch(`${API_BASE}/girl-package-prices?girlId=${girl.id}`)
       const result = await response.json()
       if (result.success) {
-        setGirlPrices(result.data)
         // 初始化表单数据
         const initialData: Record<string, string> = {}
         result.data.forEach((p: GirlPackagePrice) => {
@@ -109,7 +107,6 @@ export function GirlsPage() {
       }
     } catch (err) {
       console.error('加载套餐价格失败:', err)
-      setGirlPrices([])
     }
   }
 
