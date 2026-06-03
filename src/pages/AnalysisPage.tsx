@@ -88,7 +88,6 @@ const timeRangeOptions: { value: TimeRange; label: string }[] = [
 export function AnalysisPage() {
   const { currentStore } = useAppStore()
   const [timeRange, setTimeRange] = useState<TimeRange>('month')
-  const [selectedSection, setSelectedSection] = useState<string | null>(null)
 
   // 获取分析数据
   const { data: analysisData, isLoading } = useQuery({
