@@ -13,7 +13,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Customer, Tag } from '@/types'
+
+const PLATFORM_OPTIONS = [
+  { value: 'wechat', label: '微信' },
+  { value: 'telegram', label: 'Telegram' },
+]
 
 interface AccountFormProps {
   accounts: { platform: string; accountId: string; note?: string }[]
@@ -23,7 +35,7 @@ interface AccountFormProps {
 // 账号编辑组件
 function AccountForm({ accounts, onChange }: AccountFormProps) {
   const addAccount = () => {
-    onChange([...accounts, { platform: '', accountId: '', note: '' }])
+    onChange([...accounts, { platform: 'wechat', accountId: '', note: '' }])
   }
 
   const updateAccount = (index: number, field: string, value: string) => {
@@ -41,12 +53,21 @@ function AccountForm({ accounts, onChange }: AccountFormProps) {
       {accounts.map((account, index) => (
         <div key={index} className="p-3 bg-apple-50 rounded-xl space-y-2">
           <div className="flex gap-2">
-            <Input
-              placeholder="平台 (如: QQ)"
+            <Select
               value={account.platform}
-              onChange={(e) => updateAccount(index, 'platform', e.target.value)}
-              className="flex-1"
-            />
+              onValueChange={(value) => updateAccount(index, 'platform', value)}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="选择平台" />
+              </SelectTrigger>
+              <SelectContent>
+                {PLATFORM_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button variant="ghost" size="sm" className="h-10 w-10 p-0 text-red-400" onClick={() => removeAccount(index)}>
               <Trash2 className="w-4 h-4" />
             </Button>
