@@ -209,7 +209,7 @@ export function DailyReportPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Crown className="w-4 h-4 text-yellow-500" />
-                妹妹当日收入排行
+                妹妹当日单量排行
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
@@ -236,10 +236,10 @@ export function DailyReportPage() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-apple-900">{girl.girlName}</span>
-                            <span className="text-sm font-semibold text-apple-900">¥{girl.income.toLocaleString()}</span>
+                            <span className="text-sm font-semibold text-apple-900">{girl.orderCount}单</span>
                           </div>
                           <div className="flex items-center justify-between text-xs text-apple-500">
-                            <span>{girl.orderCount}单</span>
+                            <span>收入 ¥{girl.income.toLocaleString()}</span>
                             <span>占比 {girl.percentage}%</span>
                           </div>
                         </div>

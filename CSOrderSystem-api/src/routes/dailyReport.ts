@@ -70,14 +70,14 @@ app.get('/', async (c) => {
       girlStatsMap.set(order.girlId, stats)
     }
 
-    // 计算占比并排序
-    const totalGirlIncome = summary.totalGirlIncome || 1 // 避免除以0
+    // 计算占比并排序（按单量排序）
+    const totalOrders = summary.totalOrders || 1 // 避免除以0
     const girlStats = Array.from(girlStatsMap.values())
       .map(stats => ({
         ...stats,
-        percentage: Math.round((stats.income / totalGirlIncome) * 100),
+        percentage: Math.round((stats.orderCount / totalOrders) * 100),
       }))
-      .sort((a, b) => b.income - a.income)
+      .sort((a, b) => b.orderCount - a.orderCount)
 
     // 构建订单明细
     const ordersDetail = dayOrders.map(order => {
