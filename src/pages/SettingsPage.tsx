@@ -26,7 +26,7 @@ function PackagesSettings() {
   const [formData, setFormData] = useState({
     name: '',
     code: '',
-    basePrice: 0,
+    basePrice: '',
   })
 
   useEffect(() => {
@@ -51,11 +51,11 @@ function PackagesSettings() {
       setFormData({
         name: pkg.name,
         code: pkg.code,
-        basePrice: pkg.basePrice,
+        basePrice: pkg.basePrice?.toString() || '',
       })
     } else {
       setEditingPkg(null)
-      setFormData({ name: '', code: '', basePrice: 0 })
+      setFormData({ name: '', code: '', basePrice: '' })
     }
     setDialogOpen(true)
   }
@@ -64,10 +64,16 @@ function PackagesSettings() {
     if (!formData.name.trim() || !currentStore) return
 
     try {
+      const data = {
+        name: formData.name,
+        code: formData.code,
+        basePrice: formData.basePrice === '' ? 0 : parseFloat(formData.basePrice),
+        storeId: currentStore.id,
+      }
       if (editingPkg) {
-        await updatePackage(editingPkg.id, { ...formData, storeId: currentStore.id })
+        await updatePackage(editingPkg.id, data)
       } else {
-        await createPackage({ ...formData, storeId: currentStore.id })
+        await createPackage(data)
       }
       setDialogOpen(false)
       loadPackages()
@@ -156,10 +162,10 @@ function PackagesSettings() {
                 type="number"
                 min={0}
                 step={0.01}
+                placeholder="0.00"
                 value={formData.basePrice}
                 onChange={(e) => {
-                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                  setFormData({ ...formData, basePrice: value })
+                  setFormData({ ...formData, basePrice: e.target.value })
                 }}
               />
             </div>
