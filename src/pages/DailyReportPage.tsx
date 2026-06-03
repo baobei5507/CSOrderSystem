@@ -161,8 +161,7 @@ export function DailyReportPage() {
                   setSelectedDate(new Date(e.target.value))
                 }
               }}
-              className="absolute opacity-0 w-0 h-0"
-              style={{ zIndex: -1 }}
+              className="sr-only"
             />
             <button 
               onClick={goToNextDay}

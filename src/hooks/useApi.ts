@@ -163,6 +163,7 @@ export function useApi() {
     girlId: string
     packageId: string
     price: number
+    discount?: number
     appointmentTime?: string
   }): Promise<Order> => {
     return fetchApi('/orders', {
