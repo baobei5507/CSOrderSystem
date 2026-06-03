@@ -453,6 +453,16 @@ export function OrdersPage() {
                   </span>
                 </div>
 
+                {/* Commission Info */}
+                <div className="flex items-center justify-between mt-2 text-xs">
+                  <span className="text-purple-600">
+                    妹妹收入: ¥{order.girlIncome || 0}
+                  </span>
+                  <span className="text-green-600">
+                    客服提成: ¥{order.serviceCommission || 0}
+                  </span>
+                </div>
+
                 {/* Actions */}
                 {order.status === 'pending' && (
                   <div className="flex gap-2 mt-3">
