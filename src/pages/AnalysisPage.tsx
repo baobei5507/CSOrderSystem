@@ -542,11 +542,12 @@ export function AnalysisPage() {
                         tickFormatter={(value) => trendDimension === 'income' ? `¥${value}` : value}
                       />
                       <Tooltip 
-                        formatter={(value: number, name: string) => {
-                          const girlName = name.replace(`_${trendDimension}`, '')
-                          return [trendDimension === 'income' ? `¥${value}` : value, girlName]
+                        formatter={(value, name) => {
+                          const girlName = String(name).replace(`_${trendDimension}`, '')
+                          const displayValue = trendDimension === 'income' ? `¥${value}` : value
+                          return [displayValue, girlName]
                         }}
-                        labelFormatter={(label) => label}
+                        labelFormatter={(label) => String(label)}
                         contentStyle={{ 
                           borderRadius: 8, 
                           border: 'none', 
