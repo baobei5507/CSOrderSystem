@@ -472,12 +472,12 @@ export function AnalysisPage() {
             </div>
           ) : null}
 
-          {/* 妹妹人气排行 - 全量显示，按单量排序 */}
+          {/* 妹妹收入排行 - 全量显示，按收入排序 */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Crown className="w-4 h-4 text-yellow-500" />
-                妹妹人气排行（按单量）
+                妹妹收入排行（按收入）
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">

@@ -195,7 +195,7 @@ app.get('/customer-preferences', async (c) => {
       }
 
       stats.orderCount += 1
-      stats.totalRevenue += order.price || 0
+      stats.totalRevenue += order.girlIncome || 0
       stats.uniqueCustomers.add(order.customerId)
       girlStats.set(order.girlId, stats)
     }
@@ -208,7 +208,7 @@ app.get('/customer-preferences', async (c) => {
         totalRevenue: stats.totalRevenue,
         uniqueCustomers: stats.uniqueCustomers.size,
       }))
-      .sort((a, b) => b.orderCount - a.orderCount)
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
 
     // 3. 套餐偏好排行
     const packageStats = new Map<string, {
