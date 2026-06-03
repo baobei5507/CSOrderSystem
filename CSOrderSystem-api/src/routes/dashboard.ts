@@ -20,7 +20,7 @@ app.get('/', async (c) => {
   try {
     // 今日统计
     const todayOrdersList = await db.select().from(orders)
-      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, new Date(todayStart))))
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, todayStart)))
       .all()
 
     const todayCompletedList = todayOrdersList.filter(o => o.status === 'completed')
@@ -30,7 +30,7 @@ app.get('/', async (c) => {
 
     // 本月统计
     const monthOrdersList = await db.select().from(orders)
-      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, new Date(monthStart))))
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, monthStart)))
       .all()
 
     const monthCompletedList = monthOrdersList.filter(o => o.status === 'completed')
@@ -42,7 +42,7 @@ app.get('/', async (c) => {
     // 本月新增顾客数
     const newCustomersResult = await db.select({ count: sql<number>`COUNT(*)` })
       .from(customers)
-      .where(and(eq(customers.storeId, storeId), gte(customers.createdAt, new Date(monthStart))))
+      .where(and(eq(customers.storeId, storeId), gte(customers.createdAt, monthStart)))
       .get()
 
     // 总顾客数
@@ -60,7 +60,7 @@ app.get('/', async (c) => {
         .where(and(
           eq(orders.girlId, girl.id),
           eq(orders.status, 'completed'),
-          gte(orders.createdAt, new Date(monthStart))
+          gte(orders.createdAt, monthStart)
         ))
         .all()
       
@@ -88,7 +88,7 @@ app.get('/', async (c) => {
         .where(and(
           eq(orders.customerId, customer.id),
           eq(orders.status, 'completed'),
-          gte(orders.createdAt, new Date(monthStart))
+          gte(orders.createdAt, monthStart)
         ))
         .all()
       

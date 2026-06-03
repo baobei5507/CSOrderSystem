@@ -45,10 +45,11 @@ app.post('/', async (c) => {
     ))
     .get()
 
+  const now = Date.now()
   if (existing) {
     // 更新价格
     await db.update(girlPackagePrices)
-      .set({ price, updatedAt: new Date() })
+      .set({ price, updatedAt: now })
       .where(and(
         eq(girlPackagePrices.girlId, girlId),
         eq(girlPackagePrices.packageId, packageId)
@@ -61,8 +62,8 @@ app.post('/', async (c) => {
       girlId,
       packageId,
       price,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     })
   }
 

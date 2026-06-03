@@ -7,8 +7,8 @@ export const stores = sqliteTable('stores', {
   name: text('name').notNull(),
   serviceCommissionType: text('service_commission_type', { enum: ['percent', 'fixed'] }).notNull(),
   serviceCommissionValue: real('service_commission_value').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 })
 
 // 妹妹
@@ -19,8 +19,8 @@ export const girls = sqliteTable('girls', {
   status: text('status', { enum: ['active', 'rest', 'left'] }).notNull(),
   commissionType: text('commission_type', { enum: ['percent', 'fixed'] }).notNull(),
   commissionValue: real('commission_value').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 })
 
 // 套餐
@@ -31,8 +31,8 @@ export const packages = sqliteTable('packages', {
   name: text('name').notNull(),
   basePrice: real('base_price').notNull().default(0),
   status: text('status', { enum: ['active', 'inactive'] }).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 })
 
 // 妹妹套餐价格
@@ -42,8 +42,8 @@ export const girlPackagePrices = sqliteTable('girl_package_prices', {
   girlId: text('girl_id').notNull().references(() => girls.id),
   packageId: text('package_id').notNull().references(() => packages.id),
   price: real('price').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 })
 
 // 顾客
@@ -52,8 +52,8 @@ export const customers = sqliteTable('customers', {
   storeId: text('store_id').notNull().references(() => stores.id),
   nickname: text('nickname'),
   remark: text('remark'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 })
 
 // 顾客账号
@@ -62,7 +62,7 @@ export const customerAccounts = sqliteTable('customer_accounts', {
   customerId: text('customer_id').notNull().references(() => customers.id),
   platform: text('platform', { enum: ['wechat', 'telegram'] }).notNull(),
   account: text('account').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
 })
 
 // 标签
@@ -71,7 +71,7 @@ export const tags = sqliteTable('tags', {
   storeId: text('store_id').notNull().references(() => stores.id),
   name: text('name').notNull(),
   color: text('color'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
 })
 
 // 顾客标签关联
@@ -91,15 +91,15 @@ export const orders = sqliteTable('orders', {
   customerAccountId: text('customer_account_id').notNull().references(() => customerAccounts.id),
   girlId: text('girl_id').notNull().references(() => girls.id),
   packageId: text('package_id').notNull().references(() => packages.id),
-  appointmentTime: integer('appointment_time', { mode: 'timestamp' }),
+  appointmentTime: integer('appointment_time'),
   price: real('price').notNull(),
   status: text('status', { enum: ['pending', 'completed', 'cancelled'] }).notNull(),
   serviceStaffName: text('service_staff_name').notNull(),
   girlIncome: real('girl_income').notNull(),
   serviceCommission: real('service_commission').notNull(),
   remark: text('remark'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
 })
 
 // 订单快照
@@ -115,5 +115,5 @@ export const orderSnapshots = sqliteTable('order_snapshots', {
   girlCommissionValueSnapshot: real('girl_commission_value_snapshot').notNull(),
   serviceCommissionTypeSnapshot: text('service_commission_type_snapshot', { enum: ['percent', 'fixed'] }).notNull(),
   serviceCommissionValueSnapshot: real('service_commission_value_snapshot').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: integer('created_at').notNull(),
 })

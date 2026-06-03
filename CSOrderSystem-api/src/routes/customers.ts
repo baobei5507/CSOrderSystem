@@ -79,7 +79,7 @@ app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
   const id = crypto.randomUUID()
-  const now = new Date()
+  const now = Date.now()
 
   await db.insert(customers).values({
     id,
@@ -123,7 +123,7 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
-  const now = new Date()
+  const now = Date.now()
 
   // 更新顾客基本信息
   await db.update(customers)

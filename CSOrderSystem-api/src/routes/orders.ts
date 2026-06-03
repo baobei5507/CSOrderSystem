@@ -112,7 +112,7 @@ app.post('/', async (c) => {
     girlCommissionValueSnapshot: girl.commissionValue,
     serviceCommissionTypeSnapshot: store.serviceCommissionType,
     serviceCommissionValueSnapshot: store.serviceCommissionValue,
-    createdAt: timestamp,
+    createdAt: now.getTime(),
   })
 
   return c.json({ success: true, data: { id: orderId, orderNo } }, 201)
@@ -125,8 +125,17 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
+  const updateData = { ...body }
+  
+  // 移除可能传入的 Date 对象，改用时间戳
+  if (body.updatedAt) delete updateData.updatedAt
+  if (body.createdAt) delete updateData.createdAt
+  if (body.appointmentTime && typeof body.appointmentTime === 'object') {
+    updateData.appointmentTime = new Date(body.appointmentTime).getTime()
+  }
+  
   await db.update(orders)
-    .set({ ...body, updatedAt: new Date() })
+    .set({ ...updateData, updatedAt: Date.now() })
     .where(eq(orders.id, id))
 
   return c.json({ success: true })

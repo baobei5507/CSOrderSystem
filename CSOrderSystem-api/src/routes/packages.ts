@@ -31,7 +31,7 @@ app.post('/', async (c) => {
   }
 
   const id = crypto.randomUUID()
-  const now = new Date()
+  const now = Date.now()
 
   await db.insert(packages).values({
     id,
@@ -55,8 +55,11 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
+  const updateData = { ...body }
+  if (body.createdAt) delete updateData.createdAt
+  if (body.updatedAt) delete updateData.updatedAt
   await db.update(packages)
-    .set({ ...body, updatedAt: new Date() })
+    .set({ ...updateData, updatedAt: Date.now() })
     .where(eq(packages.id, id))
 
   return c.json({ success: true })
@@ -77,7 +80,7 @@ app.delete('/', async (c) => {
   if (orderCount && orderCount.count > 0) {
     // 有历史订单，改为停用状态而不是删除
     await db.update(packages)
-      .set({ status: 'inactive', updatedAt: new Date() })
+      .set({ status: 'inactive', updatedAt: Date.now() })
       .where(eq(packages.id, id))
     return c.json({ success: true, message: '该套餐有历史订单，已标记为停用状态' })
   }

@@ -21,7 +21,7 @@ app.post('/', async (c) => {
   console.log('[API] Parsed body:', body)
   
   const id = crypto.randomUUID()
-  const now = new Date()
+  const now = Date.now()
   console.log('[API] Inserting store with id:', id, 'name:', body.name)
 
   try {
@@ -51,8 +51,11 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
+  const updateData = { ...body }
+  if (body.createdAt) delete updateData.createdAt
+  if (body.updatedAt) delete updateData.updatedAt
   await db.update(stores)
-    .set({ ...body, updatedAt: new Date() })
+    .set({ ...updateData, updatedAt: Date.now() })
     .where(eq(stores.id, id))
 
   return c.json({ success: true })
