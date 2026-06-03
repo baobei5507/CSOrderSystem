@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
-import { ChevronRight, Percent, Package, Tag, Edit2, Trash2, Plus } from 'lucide-react'
+import { ChevronRight, Percent, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -20,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Package as PackageType, Tag as TagType } from '@/types'
+import type { Package as PackageType } from '@/types'
 
 // 套餐设置页面
 function PackagesSettings() {
@@ -189,158 +188,6 @@ function PackagesSettings() {
   )
 }
 
-// 标签设置页面
-function TagsSettings() {
-  const { currentStore } = useAppStore()
-  const { getTags, createTag, updateTag, deleteTag } = useApi()
-  const [tags, setTags] = useState<TagType[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingTag, setEditingTag] = useState<TagType | null>(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    color: '#3B82F6',
-  })
-
-  const colors = [
-    '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'
-  ]
-
-  useEffect(() => {
-    if (currentStore) loadTags()
-  }, [currentStore])
-
-  const loadTags = async () => {
-    setIsLoading(true)
-    try {
-      const data = await getTags(currentStore!.id)
-      setTags(data)
-    } catch (err) {
-      console.error('加载标签失败:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleOpenDialog = (tag?: TagType) => {
-    if (tag) {
-      setEditingTag(tag)
-      setFormData({ name: tag.name, color: tag.color || '#3B82F6' })
-    } else {
-      setEditingTag(null)
-      setFormData({ name: '', color: '#3B82F6' })
-    }
-    setDialogOpen(true)
-  }
-
-  const handleSubmit = async () => {
-    if (!formData.name.trim() || !currentStore) return
-
-    try {
-      if (editingTag) {
-        await updateTag(editingTag.id, { ...formData, storeId: currentStore.id })
-      } else {
-        await createTag({ ...formData, storeId: currentStore.id })
-      }
-      setDialogOpen(false)
-      loadTags()
-    } catch (err) {
-      console.error('保存失败:', err)
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除此标签吗？')) return
-    try {
-      await deleteTag(id)
-      loadTags()
-    } catch (err) {
-      console.error('删除失败:', err)
-    }
-  }
-
-  if (!currentStore) {
-    return <div className="text-center py-12 text-apple-400">请先选择店家</div>
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">标签管理</h2>
-        <Button onClick={() => handleOpenDialog()} size="sm" className="bg-apple-blue text-white rounded-full">
-          <Plus className="w-4 h-4 mr-1" />
-          新增
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <div className="text-center py-8 text-apple-400">加载中...</div>
-      ) : tags.length === 0 ? (
-        <div className="text-center py-8 text-apple-400">暂无标签</div>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <div
-              key={tag.id}
-              className="flex items-center gap-2 px-3 py-2 rounded-full text-white text-sm"
-              style={{ backgroundColor: tag.color || '#3B82F6' }}
-            >
-              <span>{tag.name}</span>
-              <button onClick={() => handleOpenDialog(tag)} className="hover:opacity-80">
-                <Edit2 className="w-3 h-3" />
-              </button>
-              <button onClick={() => handleDelete(tag.id)} className="hover:opacity-80">
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{editingTag ? '编辑标签' : '新增标签'}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>标签名称</Label>
-              <Input
-                placeholder="如：VIP"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>标签颜色</Label>
-              <div className="flex flex-wrap gap-2">
-                {colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setFormData({ ...formData, color })}
-                    className={cn(
-                      "w-8 h-8 rounded-full transition-transform",
-                      formData.color === color && "ring-2 ring-offset-2 ring-apple-blue scale-110"
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
-            <Button onClick={handleSubmit} disabled={!formData.name.trim()} className="bg-apple-blue text-white">
-              {editingTag ? '保存' : '创建'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
-}
-
 // 提成设置页面
 function CommissionSettings() {
   const { currentStore, updateStore } = useAppStore()
@@ -431,11 +278,10 @@ function CommissionSettings() {
 }
 
 export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'menu' | 'packages' | 'tags' | 'commission'>('menu')
+  const [activeTab, setActiveTab] = useState<'menu' | 'packages' | 'commission'>('menu')
 
   const menuItems = [
     { id: 'packages', label: '套餐管理', icon: Package, description: '管理按摩套餐及价格' },
-    { id: 'tags', label: '标签管理', icon: Tag, description: '管理顾客标签' },
     { id: 'commission', label: '提成设置', icon: Percent, description: '设置客服提成规则' },
   ]
 
@@ -452,24 +298,6 @@ export function SettingsPage() {
         </div>
         <div className="px-4">
           <PackagesSettings />
-        </div>
-      </div>
-    )
-  }
-
-  if (activeTab === 'tags') {
-    return (
-      <div className="pb-24">
-        <div className="sticky top-0 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-apple-400">
-              <ChevronRight className="w-5 h-5 rotate-180" />
-            </Button>
-            <h1 className="text-xl font-semibold">标签管理</h1>
-          </div>
-        </div>
-        <div className="px-4">
-          <TagsSettings />
         </div>
       </div>
     )

@@ -57,7 +57,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           id: customer.id,
           nickname: customer.nickname,
           phone: customer.phone,
-          orderCount: customerOrders.length,
+          orderCount: completedOrders.length,
           totalSpent,
         })
       }
