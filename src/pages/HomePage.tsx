@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User, BarChart3 } from 'lucide-react'
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User } from 'lucide-react'
 import { StoreSelector } from '@/components/StoreSelector'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn, formatMoney } from '@/lib/utils'
