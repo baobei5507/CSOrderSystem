@@ -210,13 +210,13 @@ export function OrdersPage() {
 
       // 如果是创建新顾客
       if (isCreatingCustomer && customerSearch.trim()) {
-        const newCustomer = await createCustomer({
+        const result = await createCustomer({
           name: customerSearch.trim(),
           storeId: currentStore.id,
           accounts: newCustomerAccounts.filter(a => a.accountId.trim()),
           tagIds: [],
         })
-        finalCustomerId = newCustomer.id
+        finalCustomerId = result.data?.id || result.id
       }
 
       if (!finalCustomerId) {
