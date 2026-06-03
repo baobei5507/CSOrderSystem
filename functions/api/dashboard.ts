@@ -54,16 +54,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       girlIncome: monthOrders.reduce((sum, o) => sum + o.girlIncome, 0),
     }
 
-    // 妹妹排行（基于订单快照）
+    // 妹妹排行（基于订单快照）- 只统计已完成订单
     const girlRankings = await db.all(sql`
       SELECT 
         os.girl_name_snapshot as name,
         COUNT(*) as orderCount,
-        SUM(o.girl_income) as income
+        SUM(o.price) as revenue,
+        SUM(o.girl_income) as serviceCommission
       FROM order_snapshots os
       JOIN orders o ON os.order_id = o.id
       WHERE o.store_id = ${storeId}
       AND o.created_at >= ${monthStart}
+      AND o.status = 'completed'
       GROUP BY os.girl_name_snapshot
       ORDER BY orderCount DESC
       LIMIT 10
@@ -89,18 +91,41 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .where(eq(customers.storeId, storeId))
       .get()
 
+    // 本月新增顾客数
+    const newCustomers = await db.select({ count: sql`COUNT(*)` }).from(customers)
+      .where(and(eq(customers.storeId, storeId), gte(customers.createdAt, monthStart)))
+      .get()
+
     // 在职妹妹数
     const activeGirls = await db.select({ count: sql`COUNT(*)` }).from(girls)
       .where(and(eq(girls.storeId, storeId), eq(girls.status, 'active')))
       .get()
 
     return successResponse({
-      today: todayStats,
-      month: monthStats,
-      girlRankings: girlRankings || [],
-      customerRankings: customerRankings || [],
+      todayRevenue: todayStats.amount,
+      todayOrders: todayStats.orders,
+      todayCompleted: todayOrders.filter(o => o.status === 'completed').length,
+      todayCancelled: todayOrders.filter(o => o.status === 'cancelled').length,
+      monthRevenue: monthStats.amount,
+      monthOrders: monthStats.orders,
+      monthCompleted: monthOrders.filter(o => o.status === 'completed').length,
+      monthCancelled: monthOrders.filter(o => o.status === 'cancelled').length,
+      monthServiceCommission: monthStats.serviceCommission,
       totalCustomers: totalCustomers?.count || 0,
-      activeGirls: activeGirls?.count || 0,
+      newCustomersThisMonth: newCustomers?.count || 0,
+      girlRanking: (girlRankings || []).map((g: any) => ({
+        id: g.name, // 用 name 作为 id
+        name: g.name,
+        orderCount: g.orderCount,
+        revenue: g.revenue,
+        serviceCommission: g.serviceCommission,
+      })),
+      customerRanking: (customerRankings || []).map((c: any) => ({
+        id: c.nickname,
+        name: c.nickname,
+        orderCount: c.orderCount,
+        revenue: c.totalAmount,
+      })),
     })
   } catch (error: any) {
     console.error('Dashboard API Error:', error)
