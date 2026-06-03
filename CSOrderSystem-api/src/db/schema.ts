@@ -93,6 +93,8 @@ export const orders = sqliteTable('orders', {
   packageId: text('package_id').notNull().references(() => packages.id),
   appointmentTime: integer('appointment_time'),
   price: real('price').notNull(),
+  discount: real('discount').default(0),
+  finalPrice: real('final_price').notNull(),
   status: text('status', { enum: ['pending', 'completed', 'cancelled'] }).notNull(),
   serviceStaffName: text('service_staff_name').notNull(),
   girlIncome: real('girl_income').notNull(),

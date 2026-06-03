@@ -56,6 +56,7 @@ export function OrdersPage() {
     girlId: '',
     packageId: '',
     price: 0,
+    discount: 0,
     appointmentTime: '',
   })
 
@@ -67,6 +68,7 @@ export function OrdersPage() {
   // 提成预览
   const [serviceCommissionPreview, setServiceCommissionPreview] = useState(0)
   const [girlIncomePreview, setGirlIncomePreview] = useState(0)
+  const [finalPricePreview, setFinalPricePreview] = useState(0)
 
   // 顾客搜索和创建
   const [customerSearch, setCustomerSearch] = useState('')
@@ -117,20 +119,29 @@ export function OrdersPage() {
       // 查询该妹妹对应套餐的价格
       getGirlPackagePrices(selectedGirl.id).then(prices => {
         const girlPrice = prices.find(p => p.packageId === selectedPackage.id)
-        const finalPrice = girlPrice?.price || selectedPackage.basePrice
-        setCalculatedPrice(finalPrice)
-        setFormData(prev => ({ ...prev, price: finalPrice }))
+        const basePrice = girlPrice?.price || selectedPackage.basePrice
+        setCalculatedPrice(basePrice)
+        setFormData(prev => ({ ...prev, price: basePrice }))
 
-        // 计算提成预览
-        calculateCommissions(finalPrice)
+        // 计算提成预览（基于原价）
+        calculateCommissions(basePrice)
+        // 计算优惠后价格
+        updateFinalPrice(basePrice, formData.discount)
       }).catch(() => {
         // 查询失败时使用基础价格
         setCalculatedPrice(selectedPackage.basePrice)
         setFormData(prev => ({ ...prev, price: selectedPackage.basePrice }))
         calculateCommissions(selectedPackage.basePrice)
+        updateFinalPrice(selectedPackage.basePrice, formData.discount)
       })
     }
   }, [selectedGirl, selectedPackage])
+
+  // 优惠后价格计算
+  const updateFinalPrice = (price: number, discount: number) => {
+    const finalPrice = Math.max(0, price - discount)
+    setFinalPricePreview(finalPrice)
+  }
 
   // 计算提成预览
   const calculateCommissions = (price: number) => {
@@ -228,6 +239,7 @@ export function OrdersPage() {
         girlId: formData.girlId,
         packageId: formData.packageId,
         price: calculatedPrice,
+        discount: formData.discount || 0,
         storeId: currentStore.id,
       }
       // 使用新建顾客的账号ID或已选择的账号ID
@@ -448,9 +460,23 @@ export function OrdersPage() {
                       {order.appointmentTime ? formatDateTime(order.appointmentTime) : '立即'}
                     </span>
                   </div>
-                  <span className="text-lg font-bold text-apple-blue">
-                    ¥{order.price}
-                  </span>
+                  <div className="text-right">
+                    {order.discount > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-apple-400 line-through">¥{order.price}</span>
+                        <span className="text-lg font-bold text-orange-600">
+                          ¥{order.finalPrice || Math.max(0, order.price - order.discount)}
+                        </span>
+                        <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
+                          优惠¥{order.discount}
+                        </Badge>
+                      </div>
+                    ) : (
+                      <span className="text-lg font-bold text-apple-blue">
+                        ¥{order.price}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Commission Info */}
@@ -747,6 +773,35 @@ export function OrdersPage() {
                   <span className="text-sm text-apple-600">订单金额</span>
                   <span className="text-xl font-bold text-apple-blue">¥{calculatedPrice}</span>
                 </div>
+
+                {/* 优惠券 */}
+                <div className="grid gap-2">
+                  <Label className="text-sm text-apple-500">优惠券抵扣</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-apple-400">-¥</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={calculatedPrice}
+                      placeholder="0"
+                      className="h-8 text-sm"
+                      value={formData.discount || ''}
+                      onChange={(e) => {
+                        const discount = parseFloat(e.target.value) || 0
+                        setFormData(prev => ({ ...prev, discount }))
+                        updateFinalPrice(calculatedPrice, discount)
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 优惠后金额 */}
+                {formData.discount > 0 && (
+                  <div className="flex justify-between items-center pt-2 border-t border-apple-100">
+                    <span className="text-sm text-apple-600">优惠后金额</span>
+                    <span className="text-lg font-bold text-orange-600">¥{finalPricePreview}</span>
+                  </div>
+                )}
 
                 {/* 客服提成预览 */}
                 <div className="flex justify-between items-center">

@@ -61,7 +61,11 @@ app.post('/', async (c) => {
     return c.json({ success: false, error: '关联数据不存在' }, 400)
   }
 
-  // 自动计算
+  // 处理优惠券折扣
+  const discount = body.discount || 0
+  const finalPrice = Math.max(0, body.price - discount)
+
+  // 自动计算提成（基于原价，不受优惠券影响）
   const girlIncome = calculateCommission(body.price, girl.commissionType, girl.commissionValue)
   const serviceCommission = calculateCommission(body.price, store.serviceCommissionType, store.serviceCommissionValue)
 
@@ -90,6 +94,8 @@ app.post('/', async (c) => {
     packageId: body.packageId,
     appointmentTime: appointmentTimeValue,
     price: body.price,
+    discount: discount,
+    finalPrice: finalPrice,
     status: 'pending',
     serviceStaffName: c.env.DEFAULT_SERVICE_STAFF,
     girlIncome,

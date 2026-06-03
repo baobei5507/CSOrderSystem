@@ -99,6 +99,8 @@ export interface Order {
   packageId: string
   appointmentTime: number | null
   price: number
+  discount?: number
+  finalPrice?: number
   status: 'pending' | 'completed' | 'cancelled'
   serviceStaffName: string
   girlIncome: number
