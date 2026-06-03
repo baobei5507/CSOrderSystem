@@ -195,7 +195,7 @@ export function useApi() {
     monthServiceCommission: number
     totalCustomers: number
     newCustomersThisMonth: number
-    girlRanking: { id: string; name: string; orderCount: number; revenue: number; serviceCommission: number }[]
+    girlRanking: { id: string; name: string; orderCount: number; revenue: number; girlIncome: number }[]
     customerRanking: { id: string; name: string; orderCount: number; revenue: number }[]
     tagStats: { id: string; name: string; color: string | null; count: number }[]
   }> => {
