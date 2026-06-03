@@ -26,27 +26,32 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     
     if (!storeId) return errorResponse('Missing storeId')
 
-    const tagStats = await db.select({
-      id: tags.id,
-      name: tags.name,
-      color: tags.color,
-      createdAt: tags.createdAt,
-      customerCount: sql<number>`COUNT(${customerTags.customerId})`,
-    })
-      .from(tags)
-      .leftJoin(customerTags, eq(tags.id, customerTags.tagId))
-      .where(eq(tags.storeId, storeId))
-      .groupBy(tags.id)
-      .orderBy(sql`COUNT(${customerTags.customerId}) DESC`)
-      .all()
+    // 获取所有标签
+    const allTags = await db.select().from(tags).where(eq(tags.storeId, storeId)).all()
+    
+    // 统计每个标签的顾客数
+    const tagStats = []
+    for (const tag of allTags) {
+      const countResult = await db.select({
+        count: sql<number>`COUNT(*)`,
+      })
+        .from(customerTags)
+        .where(eq(customerTags.tagId, tag.id))
+        .get()
+      
+      tagStats.push({
+        id: tag.id,
+        name: tag.name,
+        color: tag.color,
+        createdAt: tag.createdAt,
+        customerCount: countResult?.count || 0,
+      })
+    }
+    
+    // 按顾客数排序
+    tagStats.sort((a, b) => b.customerCount - a.customerCount)
 
-    return successResponse(tagStats.map(t => ({
-      id: t.id,
-      name: t.name,
-      color: t.color,
-      createdAt: t.createdAt,
-      customerCount: t.customerCount || 0,
-    })))
+    return successResponse(tagStats)
   } catch (error: any) {
     console.error('Tag stats error:', error)
     return errorResponse(error.message || 'Internal server error', 500)
