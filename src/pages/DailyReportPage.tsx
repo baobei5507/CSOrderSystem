@@ -17,6 +17,7 @@ import {
   Crown
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CuteCard, CharacterAvatar } from '@/components/ChiikawaTheme'
 
 interface DailySummary {
   totalRevenue: number
@@ -105,24 +106,30 @@ export function DailyReportPage() {
 
   if (!currentStore) {
     return (
-      <div className="flex items-center justify-center min-h-screen pb-20">
-        <p className="text-apple-400">请先选择店铺</p>
+      <div className="flex items-center justify-center min-h-screen pb-20 bg-chiikawa-cream">
+        <div className="text-center">
+          <CharacterAvatar character="kuri" size="lg" className="mx-auto mb-4" />
+          <p className="text-chiikawa-brown/60">请先选择店铺</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pb-24 bg-apple-50">
+    <div className="min-h-screen pb-24 bg-chiikawa-cream">
       {/* 头部 */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-apple-200/50">
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-chiikawa-peach/30">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-semibold text-apple-900">当日业绩</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold text-chiikawa-brown">当日业绩</h1>
+              <CharacterAvatar character="usagi" size="sm" />
+            </div>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={goToToday}
-              className="text-xs"
+              className="text-xs rounded-xl border-chiikawa-peach/30 text-chiikawa-brown hover:bg-chiikawa-cream"
             >
               今天
             </Button>
@@ -131,22 +138,22 @@ export function DailyReportPage() {
           <div className="flex items-center justify-center gap-4">
             <button 
               onClick={goToPrevDay}
-              className="p-2 rounded-full hover:bg-apple-100 transition-colors"
+              className="p-2 rounded-full hover:bg-chiikawa-pink/20 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5 text-apple-600" />
+              <ChevronLeft className="w-5 h-5 text-chiikawa-brown" />
             </button>
             <button
               onClick={() => {
                 console.log('Date button clicked, ref:', dateInputRef.current)
                 dateInputRef.current?.click()
               }}
-              className="flex items-center gap-2 hover:bg-apple-50 px-3 py-1.5 rounded-lg transition-colors"
+              className="flex items-center gap-2 hover:bg-chiikawa-cream px-3 py-1.5 rounded-xl transition-colors"
             >
-              <Calendar className="w-4 h-4 text-apple-400" />
-              <span className="font-medium text-apple-900">
+              <Calendar className="w-4 h-4 text-chiikawa-brown/50" />
+              <span className="font-medium text-chiikawa-brown">
                 {getDateString(selectedDate)}
               </span>
-              <span className="text-sm text-apple-400">
+              <span className="text-sm text-chiikawa-brown/50">
                 {selectedDate.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
               </span>
             </button>
@@ -165,9 +172,9 @@ export function DailyReportPage() {
             />
             <button 
               onClick={goToNextDay}
-              className="p-2 rounded-full hover:bg-apple-100 transition-colors"
+              className="p-2 rounded-full hover:bg-chiikawa-pink/20 transition-colors"
             >
-              <ChevronRight className="w-5 h-5 text-apple-600" />
+              <ChevronRight className="w-5 h-5 text-chiikawa-brown" />
             </button>
           </div>
         </div>
@@ -185,54 +192,64 @@ export function DailyReportPage() {
             </div>
           ) : reportData?.summary ? (
             <div className="grid grid-cols-2 gap-3">
-              <Card className="bg-gradient-to-br from-apple-blue/10 to-apple-blue/5 border-apple-blue/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <DollarSign className="w-4 h-4 text-apple-blue" />
-                    <span className="text-xs text-apple-500">今日收入</span>
+              <CuteCard variant="blue" className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-chiikawa-blue" />
+                      <span className="text-xs text-chiikawa-brown/70">今日收入</span>
+                    </div>
+                    <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalRevenue.toLocaleString()}</p>
                   </div>
-                  <p className="text-2xl font-bold text-apple-900">¥{reportData.summary.totalRevenue.toLocaleString()}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-purple-600" />
-                    <span className="text-xs text-apple-500">订单数</span>
+                  <CharacterAvatar character="chiikawa" size="sm" />
+                </div>
+              </CuteCard>
+              <CuteCard variant="pink" className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-chiikawa-pink" />
+                      <span className="text-xs text-chiikawa-brown/70">订单数</span>
+                    </div>
+                    <p className="text-2xl font-bold text-chiikawa-brown">{reportData.summary.totalOrders}</p>
                   </div>
-                  <p className="text-2xl font-bold text-apple-900">{reportData.summary.totalOrders}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 border-pink-500/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Users className="w-4 h-4 text-pink-600" />
-                    <span className="text-xs text-apple-500">妹妹总收入</span>
+                  <CharacterAvatar character="hachiware" size="sm" />
+                </div>
+              </CuteCard>
+              <CuteCard variant="yellow" className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="w-4 h-4 text-chiikawa-yellow" />
+                      <span className="text-xs text-chiikawa-brown/70">妹妹总收入</span>
+                    </div>
+                    <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalGirlIncome.toLocaleString()}</p>
                   </div>
-                  <p className="text-2xl font-bold text-apple-900">¥{reportData.summary.totalGirlIncome.toLocaleString()}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                    <span className="text-xs text-apple-500">客服总提成</span>
+                  <CharacterAvatar character="usagi" size="sm" />
+                </div>
+              </CuteCard>
+              <CuteCard variant="mint" className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-chiikawa-brown/70">客服总提成</span>
+                    </div>
+                    <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalServiceCommission.toLocaleString()}</p>
                   </div>
-                  <p className="text-2xl font-bold text-apple-900">¥{reportData.summary.totalServiceCommission.toLocaleString()}</p>
-                </CardContent>
-              </Card>
+                  <CharacterAvatar character="kuri" size="sm" />
+                </div>
+              </CuteCard>
             </div>
           ) : null}
 
           {/* 妹妹当日排行 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CuteCard variant="pink">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-3">
                 <Crown className="w-4 h-4 text-yellow-500" />
-                妹妹当日单量排行
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
+                <span className="text-sm font-medium text-chiikawa-brown">妹妹当日单量排行</span>
+              </div>
               {isLoading ? (
                 <div className="space-y-2">
                   {[...Array(5)].map((_, i) => (
@@ -249,30 +266,30 @@ export function DailyReportPage() {
                           index === 0 && "bg-yellow-100 text-yellow-700",
                           index === 1 && "bg-gray-200 text-gray-700",
                           index === 2 && "bg-orange-100 text-orange-700",
-                          index > 2 && "bg-apple-100 text-apple-600"
+                          index > 2 && "bg-chiikawa-cream text-chiikawa-brown"
                         )}>
                           {index + 1}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-apple-900">{girl.girlName}</span>
-                            <span className="text-sm font-semibold text-apple-900">{girl.orderCount}单</span>
+                            <span className="font-medium text-chiikawa-brown">{girl.girlName}</span>
+                            <span className="text-sm font-semibold text-chiikawa-brown">{girl.orderCount}单</span>
                           </div>
-                          <div className="flex items-center justify-between text-xs text-apple-500">
+                          <div className="flex items-center justify-between text-xs text-chiikawa-brown/60">
                             <span>收入 ¥{girl.income.toLocaleString()}</span>
                             <span>占比 {girl.percentage}%</span>
                           </div>
                         </div>
                       </div>
                       {/* 进度条 */}
-                      <div className="h-2 bg-apple-100 rounded-full overflow-hidden">
+                      <div className="h-2 bg-white/50 rounded-full overflow-hidden">
                         <div 
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
                             index === 0 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
                             index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400" :
                             index === 2 ? "bg-gradient-to-r from-orange-300 to-orange-400" :
-                            "bg-gradient-to-r from-apple-blue to-apple-purple"
+                            "bg-gradient-to-r from-chiikawa-pink to-chiikawa-blue"
                           )}
                           style={{ width: `${girl.percentage}%` }}
                         />
@@ -281,20 +298,21 @@ export function DailyReportPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-apple-400 py-8">当日暂无数据</p>
+                <div className="text-center py-8">
+                  <CharacterAvatar character="rakko" size="md" className="mx-auto mb-3" />
+                  <p className="text-chiikawa-brown/60">当日暂无数据</p>
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </CuteCard>
 
           {/* 当日订单明细 */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Clock className="w-4 h-4 text-apple-blue" />
-                当日订单明细 ({reportData?.orders.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
+          <CuteCard variant="yellow">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="w-4 h-4 text-chiikawa-yellow" />
+                <span className="text-sm font-medium text-chiikawa-brown">当日订单明细 ({reportData?.orders.length || 0})</span>
+              </div>
               {isLoading ? (
                 <div className="space-y-2">
                   {[...Array(3)].map((_, i) => (
@@ -306,36 +324,44 @@ export function DailyReportPage() {
                   {reportData.orders.map((order) => (
                     <div 
                       key={order.id} 
-                      className="p-3 bg-apple-50 rounded-lg space-y-2"
+                      className="p-3 bg-white/50 rounded-xl space-y-2"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-apple-400">{order.orderNo}</span>
+                          <span className="text-xs font-mono text-chiikawa-brown/50">{order.orderNo}</span>
                           <Badge 
                             variant={order.status === 'completed' ? 'default' : order.status === 'cancelled' ? 'secondary' : 'outline'}
-                            className="text-xs"
+                            className={cn(
+                              "text-xs",
+                              order.status === 'completed' ? "bg-green-100 text-green-700 hover:bg-green-100" :
+                              order.status === 'cancelled' ? "bg-gray-100 text-gray-700 hover:bg-gray-100" :
+                              "bg-chiikawa-cream text-chiikawa-brown"
+                            )}
                           >
                             {order.status === 'completed' ? '已完成' : order.status === 'cancelled' ? '已取消' : '待完成'}
                           </Badge>
                         </div>
-                        <span className="font-semibold text-apple-900">¥{order.price}</span>
+                        <span className="font-semibold text-chiikawa-brown">¥{order.price}</span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-apple-500">
+                      <div className="flex items-center gap-4 text-xs text-chiikawa-brown/60">
                         <span>顾客: {order.customerName}</span>
                         <span>妹妹: {order.girlName}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-pink-600">妹妹收入: ¥{order.girlIncome}</span>
+                        <span className="text-chiikawa-pink">妹妹收入: ¥{order.girlIncome}</span>
                         <span className="text-green-600">客服提成: ¥{order.serviceCommission}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-apple-400 py-8">当日暂无订单</p>
+                <div className="text-center py-8">
+                  <CharacterAvatar character="hachiware" size="md" className="mx-auto mb-3" />
+                  <p className="text-chiikawa-brown/60">当日暂无订单</p>
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </CuteCard>
         </div>
       </ScrollArea>
     </div>
