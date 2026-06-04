@@ -546,12 +546,16 @@ export function OrdersPage() {
                 {/* Order Details */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <CharacterAvatar character="kuri" size="xs" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chiikawa-blue to-chiikawa-blue-light flex items-center justify-center text-white font-bold text-xs">
+                      {order.customerName?.[0] || '?'}
+                    </div>
                     <span className="text-sm text-chiikawa-brown/50 w-10">顾客</span>
                     <span className="font-medium text-chiikawa-brown">{order.customerName}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CharacterAvatar character="rakko" size="xs" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold text-xs">
+                      {order.girlName?.[0] || '?'}
+                    </div>
                     <span className="text-sm text-chiikawa-brown/50 w-10">妹妹</span>
                     <span className="font-medium text-chiikawa-brown">{order.girlName}</span>
                   </div>

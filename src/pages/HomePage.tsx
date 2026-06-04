@@ -199,10 +199,9 @@ export function HomePage() {
                     )}>
                       {index + 1}
                     </div>
-                    <CharacterAvatar 
-                      character={index === 0 ? 'chiikawa' : index === 1 ? 'hachiware' : 'usagi'} 
-                      size="sm" 
-                    />
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold text-sm">
+                      {girl.name[0]}
+                    </div>
                     <div className="flex-1">
                       <p className="font-medium text-chiikawa-brown">{girl.name}</p>
                       <p className="text-sm text-chiikawa-brown/50">{girl.orderCount} 单</p>
@@ -246,10 +245,9 @@ export function HomePage() {
                     )}>
                       {index + 1}
                     </div>
-                    <CharacterAvatar 
-                      character={index === 0 ? 'kuri' : index === 1 ? 'rakko' : 'chiikawa'} 
-                      size="sm" 
-                    />
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-chiikawa-blue to-chiikawa-blue-light flex items-center justify-center text-white font-bold text-sm">
+                      {customer.name[0]}
+                    </div>
                     <div className="flex-1">
                       <p className="font-medium text-chiikawa-brown">{customer.name}</p>
                       <p className="text-sm text-chiikawa-brown/50">{customer.orderCount} 单</p>
