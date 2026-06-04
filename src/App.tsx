@@ -24,7 +24,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-apple-50">
+      <div className="min-h-screen bg-chiikawa-cream">
         {activeTab === 'home' && <HomePage />}
         {activeTab === 'daily' && <DailyReportPage />}
         {activeTab === 'customers' && <CustomersPage />}
