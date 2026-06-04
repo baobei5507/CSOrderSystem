@@ -996,28 +996,40 @@ export function CustomersPage() {
           
           {historyCustomer && (
             <div className="py-4 space-y-4">
-              {/* 顾客信息 */}
-              <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
-                  {historyCustomer.name[0]}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-apple-900">{historyCustomer.name}</h3>
-                  <div className="flex items-center gap-2 text-sm">
-                    {(historyCustomer.memberLevel || 0) > 0 ? (
-                      <Badge className="bg-amber-100 text-amber-700 text-xs">
-                        <Crown className="w-3 h-3 mr-0.5" />
-                        {MEMBER_LEVEL_NAMES[historyCustomer.memberLevel || 0]}
-                      </Badge>
-                    ) : (
-                      <span className="text-apple-400">普通用户</span>
-                    )}
-                    <span className="text-green-600">
-                      当前余额: ¥{((historyCustomer.balance || 0) / 100).toFixed(2)}
-                    </span>
+              {/* 顾客信息 - 从最新历史记录中获取实际余额 */}
+              {(() => {
+                // 从历史记录计算最新余额（如果有记录）
+                const latestBalance = balanceHistory.length > 0 
+                  ? balanceHistory[0].balanceAfter 
+                  : historyCustomer.balance
+                // 从历史记录计算最新会员等级（如果有充值记录）
+                const latestRechargeRecord = balanceHistory.find(r => r.type === 'recharge')
+                const latestLevel = latestRechargeRecord?.afterLevel ?? historyCustomer.memberLevel
+                
+                return (
+                  <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
+                      {historyCustomer.name[0]}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-apple-900">{historyCustomer.name}</h3>
+                      <div className="flex items-center gap-2 text-sm">
+                        {(latestLevel || 0) > 0 ? (
+                          <Badge className="bg-amber-100 text-amber-700 text-xs">
+                            <Crown className="w-3 h-3 mr-0.5" />
+                            {MEMBER_LEVEL_NAMES[latestLevel || 0]}
+                          </Badge>
+                        ) : (
+                          <span className="text-apple-400">普通用户</span>
+                        )}
+                        <span className="text-green-600">
+                          当前余额: ¥{((latestBalance || 0) / 100).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                )
+              })()}
 
               {/* 历史记录列表 */}
               {isLoadingHistory ? (
@@ -1026,7 +1038,7 @@ export function CustomersPage() {
                 <div className="text-center py-8 text-apple-400">暂无余额变动记录</div>
               ) : (
                 <div className="space-y-2">
-                  {balanceHistory.map((record) => (
+                  {[...balanceHistory].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((record) => (
                     <div key={record.id} className="p-3 bg-apple-50 rounded-xl">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
