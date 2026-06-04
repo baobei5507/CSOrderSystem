@@ -286,6 +286,7 @@ app.post('/', async (c) => {
     girlIncome,
     serviceCommission,
     storeProfit,
+    couponSource: body.couponSource || null,
     status: 'pending',
     serviceStaffName: c.env.DEFAULT_SERVICE_STAFF,
     remark: body.remark || null,

@@ -75,6 +75,7 @@ export function OrdersPage() {
     discount: 0,
     appointmentTime: '',
     hours: 1,
+    couponSource: '',
   })
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
@@ -253,6 +254,7 @@ export function OrdersPage() {
       discount: 0,
       appointmentTime: '',
       hours: 1,
+      couponSource: '',
     })
     setSelectedCustomer(null)
     setSelectedGirl(null)
@@ -340,6 +342,10 @@ export function OrdersPage() {
       // 只有填写了预约时间时才传
       if (formData.appointmentTime) {
         orderData.appointmentTime = formData.appointmentTime
+      }
+      // 优惠券来源
+      if (formData.couponSource) {
+        orderData.couponSource = formData.couponSource
       }
 
       await createOrder(orderData)
@@ -576,6 +582,11 @@ export function OrdersPage() {
                         {(order.discount || 0) > 0 && (
                           <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
                             优惠¥{order.discount}
+                          </Badge>
+                        )}
+                        {order.couponSource && (
+                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                            来源:{order.couponSource}
                           </Badge>
                         )}
                       </div>
@@ -1020,6 +1031,20 @@ export function OrdersPage() {
                     />
                   </div>
                 </div>
+
+                {/* 优惠券来源 */}
+                {formData.discount > 0 && (
+                  <div className="grid gap-2">
+                    <Label className="text-sm text-apple-500">优惠券来源</Label>
+                    <Input
+                      placeholder="如：Telegram群组名称"
+                      className="h-8 text-sm"
+                      value={formData.couponSource}
+                      onChange={(e) => setFormData(prev => ({ ...prev, couponSource: e.target.value }))}
+                    />
+                    <p className="text-xs text-apple-400">记录是哪个群组/渠道发放的优惠券</p>
+                  </div>
+                )}
 
                 {/* 优惠后金额 */}
                 <div className="flex justify-between items-center pt-2 border-t border-apple-100">

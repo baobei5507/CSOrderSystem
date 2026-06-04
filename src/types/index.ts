@@ -115,6 +115,7 @@ export interface Order {
   girlIncome: number
   serviceCommission: number
   storeProfit?: number // 店家利润
+  couponSource?: string | null // 优惠券来源（如TG群组）
   status: 'pending' | 'completed' | 'cancelled'
   remark: string | null
   createdAt: number
