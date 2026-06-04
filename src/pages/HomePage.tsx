@@ -306,10 +306,9 @@ export function HomePage() {
                       return (
                         <div key={girl.id} className="flex items-center gap-3">
                           <span className="w-5 text-xs text-chiikawa-brown/50 text-right">{index + 1}</span>
-                          <CharacterAvatar 
-                            character={index % 3 === 0 ? 'chiikawa' : index % 3 === 1 ? 'hachiware' : 'usagi'} 
-                            size="xs" 
-                          />
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold text-xs">
+                            {girl.name[0]}
+                          </div>
                           <span className="w-10 text-sm font-medium text-chiikawa-brown truncate">{girl.name}</span>
                           <div className="flex-1 h-6 bg-white/50 rounded-full overflow-hidden relative">
                             <div 
