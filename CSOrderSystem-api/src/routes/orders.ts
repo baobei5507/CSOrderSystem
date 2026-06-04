@@ -15,12 +15,13 @@ import {
 } from '../db/schema'
 import type { Env } from '../index'
 
-// 计算提成（基于原价）
-function calculateCommission(price: number, type: 'percent' | 'fixed', value: number): number {
+// 计算提成（基于原价和小时数）
+function calculateCommission(price: number, type: 'percent' | 'fixed', value: number, hours: number = 1): number {
   if (type === 'percent') {
     return Math.round(price * value / 100)
   }
-  return value
+  // 固定提成：每小时固定金额 × 小时数
+  return value * hours
 }
 
 // 生成订单号
@@ -99,8 +100,8 @@ app.post('/calculate', async (c) => {
         finalPrice: originalPricePerHour,
         type: 'none' as const,
       })),
-      girlIncome: calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue),
-      serviceCommission: calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue),
+      girlIncome: calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue, hours),
+      serviceCommission: calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue, hours),
       usedMemberDayBenefit: false,
       reason: '非会员或无余额',
     }
@@ -187,9 +188,9 @@ app.post('/calculate', async (c) => {
     const discountAmount = totalOriginalAmount - totalFinalPrice
     const avgDiscountPercent = Math.round((totalFinalPrice / totalOriginalAmount) * 100)
 
-    // 提成计算（基于原价！）
-    const girlIncome = calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue)
-    const serviceCommission = calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue)
+    // 提成计算（基于原价和小时数！）
+    const girlIncome = calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue, hours)
+    const serviceCommission = calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue, hours)
 
     result = {
       originalPricePerHour,
@@ -256,9 +257,9 @@ app.post('/', async (c) => {
   const discountAmount = body.discountAmount || (totalOriginalAmount - finalPrice)
   const discountPercent = body.discountPercent || Math.round((finalPrice / totalOriginalAmount) * 100)
 
-  // 提成计算（基于原价！）
-  const girlIncome = calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue)
-  const serviceCommission = calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue)
+  // 提成计算（基于原价和小时数！）
+  const girlIncome = calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue, hours)
+  const serviceCommission = calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue, hours)
   const storeProfit = finalPrice - girlIncome - serviceCommission
 
   // 创建订单

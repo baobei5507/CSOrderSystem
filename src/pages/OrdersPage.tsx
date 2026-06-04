@@ -220,12 +220,15 @@ export function OrdersPage() {
       return
     }
 
+    const hours = formData.hours || 1
+
     // 客服提成计算
     let serviceCommission = 0
     if (currentStore.serviceCommissionType === 'percent') {
       serviceCommission = price * (currentStore.serviceCommissionValue / 100)
     } else {
-      serviceCommission = currentStore.serviceCommissionValue
+      // 固定提成：每小时固定金额 × 小时数
+      serviceCommission = currentStore.serviceCommissionValue * hours
     }
     setServiceCommissionPreview(Math.round(serviceCommission * 100) / 100)
 
@@ -234,7 +237,8 @@ export function OrdersPage() {
     if (selectedGirl.commissionType === 'percent') {
       girlIncome = price * (selectedGirl.commissionValue / 100)
     } else {
-      girlIncome = selectedGirl.commissionValue
+      // 固定提成：每小时固定金额 × 小时数
+      girlIncome = selectedGirl.commissionValue * hours
     }
     setGirlIncomePreview(Math.round(girlIncome * 100) / 100)
   }
