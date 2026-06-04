@@ -7,11 +7,11 @@ const app = new Hono<{ Bindings: { DB: D1Database } }>()
 
 // 计算会员等级
 function calculateMemberLevel(totalRecharge: number): number {
-  if (totalRecharge >= 200000) return 5 // 2w
-  if (totalRecharge >= 100000) return 4 // 1w
-  if (totalRecharge >= 70000) return 3  // 7k
-  if (totalRecharge >= 50000) return 2  // 5k
-  if (totalRecharge >= 30000) return 1  // 3k
+  if (totalRecharge >= 2000000) return 5 // 2w = ¥20000
+  if (totalRecharge >= 1000000) return 4 // 1w = ¥10000
+  if (totalRecharge >= 700000) return 3  // 7k = ¥7000
+  if (totalRecharge >= 500000) return 2  // 5k = ¥5000
+  if (totalRecharge >= 300000) return 1  // 3k = ¥3000
   return 0
 }
 
