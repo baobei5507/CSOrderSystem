@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User, Sparkles } from 'lucide-react'
+import { ChevronRight, Crown, Sparkles } from 'lucide-react'
 import { StoreSelector } from '@/components/StoreSelector'
 import { cn, formatMoney } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
@@ -53,24 +53,6 @@ export function HomePage() {
     day: 'numeric',
     weekday: 'short'
   })
-
-  // 根据标题选择对应角色
-  const getCharacterByTitle = (title: string) => {
-    if (title.includes('收入')) return 'chiikawa'
-    if (title.includes('订单')) return 'hachiware'
-    if (title.includes('提成')) return 'usagi'
-    if (title.includes('顾客')) return 'kuri'
-    return 'chiikawa'
-  }
-
-  // 根据标题选择配色
-  const getVariantByTitle = (title: string) => {
-    if (title.includes('收入')) return 'pink'
-    if (title.includes('订单')) return 'blue'
-    if (title.includes('提成')) return 'yellow'
-    if (title.includes('顾客')) return 'mint'
-    return 'cream'
-  }
 
   if (!currentStore) {
     return (

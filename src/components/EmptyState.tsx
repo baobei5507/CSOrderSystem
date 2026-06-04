@@ -98,33 +98,6 @@ function getFallbackSvg(character: string): string {
   return svgs[character] || svgs.hachiware
 }
 
-// 备用SVG - 简单的小八轮廓
-const HACHIWARE_SVG = `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- 背景圆 -->
-  <circle cx="50" cy="50" r="45" fill="#DBEAFE"/>
-  <!-- 身体 -->
-  <ellipse cx="50" cy="60" rx="30" ry="28" fill="white" stroke="#60A5FA" stroke-width="2"/>
-  <!-- 头顶蓝色 -->
-  <path d="M20 35 Q50 20 80 35 Q80 25 70 20 Q60 25 50 25 Q40 25 30 20 Q20 25 20 35" fill="#60A5FA" stroke="#3B82F6" stroke-width="2"/>
-  <!-- 左耳 -->
-  <path d="M25 32 L20 15 Q23 10 30 15 L35 30" fill="#60A5FA" stroke="#3B82F6" stroke-width="2"/>
-  <!-- 右耳 -->
-  <path d="M75 32 L80 15 Q77 10 70 15 L65 30" fill="#60A5FA" stroke="#3B82F6" stroke-width="2"/>
-  <!-- 左眼 -->
-  <circle cx="38" cy="50" r="5" fill="#1F2937"/>
-  <circle cx="40" cy="48" r="2" fill="white"/>
-  <!-- 右眼 -->
-  <circle cx="62" cy="50" r="5" fill="#1F2937"/>
-  <circle cx="64" cy="48" r="2" fill="white"/>
-  <!-- 粉色腮红 -->
-  <ellipse cx="28" cy="58" rx="6" ry="4" fill="#FBCFE8"/>
-  <ellipse cx="72" cy="58" rx="6" ry="4" fill="#FBCFE8"/>
-  <!-- 鼻子 -->
-  <ellipse cx="50" cy="56" rx="3" ry="2" fill="#1F2937"/>
-  <!-- 嘴巴 -->
-  <path d="M45 62 Q50 66 55 62" stroke="#1F2937" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-</svg>`
-
 /**
  * 订单空状态 - 小八 + 订单相关文案
  */
