@@ -294,10 +294,11 @@ app.post('/', async (c) => {
     updatedAt: nowTime,
   })
 
-  // 扣除余额
+  // 扣除余额（deductedBalance是元单位，转为分）
   if (body.deductedBalance && body.deductedBalance > 0) {
+    const deductedBalanceFen = Math.round(body.deductedBalance * 100) // 元转分
     const beforeBalance = customer.balance || 0
-    const afterBalance = beforeBalance - body.deductedBalance
+    const afterBalance = beforeBalance - deductedBalanceFen
 
     await db.update(customers)
       .set({ balance: afterBalance, updatedAt: nowTime })
@@ -309,7 +310,7 @@ app.post('/', async (c) => {
       customerId: body.customerId,
       orderId,
       type: 'consume',
-      amount: -body.deductedBalance,
+      amount: -deductedBalanceFen,
       balanceBefore: beforeBalance,
       balanceAfter: afterBalance,
       remark: `订单消费 ${orderNo}`,
