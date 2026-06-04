@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2, Crown, Wallet } from 'lucide-react'
+import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2, Crown, Wallet, Sparkles } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,6 +7,7 @@ import { cn, formatDateTime } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import { EmptyOrdersState } from '@/components/EmptyState'
+import { CuteCard, CharacterAvatar, ChiikawaLoading } from '@/components/ChiikawaTheme'
 import {
   Dialog,
   DialogContent,
@@ -468,12 +469,15 @@ export function OrdersPage() {
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
+      <div className="sticky top-0 z-10 bg-gradient-to-b from-chiikawa-cream to-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-apple-900">订单管理</h1>
+          <div className="flex items-center gap-2">
+            <CharacterAvatar character="hachiware" size="sm" />
+            <h1 className="text-2xl font-bold text-chiikawa-brown">订单管理</h1>
+          </div>
           <Button
             onClick={handleOpenDialog}
-            className="bg-apple-blue text-white rounded-full px-4 h-10 hover:bg-apple-blue/90"
+            className="bg-chiikawa-pink text-white rounded-full px-4 h-10 hover:bg-chiikawa-pink/90 shadow-md"
           >
             <Plus className="w-4 h-4 mr-1" />
             新建订单
@@ -482,26 +486,26 @@ export function OrdersPage() {
 
         {/* Stats */}
         <div className="flex gap-3 mb-4">
-          <div className="flex-1 bg-white rounded-2xl p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold text-apple-orange">{pendingCount}</p>
-            <p className="text-xs text-apple-400">待完成</p>
-          </div>
-          <div className="flex-1 bg-white rounded-2xl p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold text-apple-green">{todayCompleted}</p>
-            <p className="text-xs text-apple-400">今日完成</p>
-          </div>
-          <div className="flex-1 bg-white rounded-2xl p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold text-apple-600">{orders.length}</p>
-            <p className="text-xs text-apple-400">总订单</p>
-          </div>
+          <CuteCard variant="yellow" className="flex-1 p-3 text-center">
+            <p className="text-2xl font-bold text-chiikawa-brown">{pendingCount}</p>
+            <p className="text-xs text-chiikawa-brown/60">待完成</p>
+          </CuteCard>
+          <CuteCard variant="blue" className="flex-1 p-3 text-center">
+            <p className="text-2xl font-bold text-chiikawa-brown">{todayCompleted}</p>
+            <p className="text-xs text-chiikawa-brown/60">今日完成</p>
+          </CuteCard>
+          <CuteCard variant="pink" className="flex-1 p-3 text-center">
+            <p className="text-2xl font-bold text-chiikawa-brown">{orders.length}</p>
+            <p className="text-xs text-chiikawa-brown/60">总订单</p>
+          </CuteCard>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-chiikawa-brown/40" />
           <Input
             placeholder="搜索订单号、顾客或妹妹..."
-            className="pl-10 h-12 bg-white border-0 rounded-2xl shadow-sm"
+            className="pl-10 h-12 bg-white border-2 border-chiikawa-peach/30 rounded-2xl shadow-sm focus:border-chiikawa-pink"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -511,10 +515,13 @@ export function OrdersPage() {
       {/* Orders List */}
       <div className="px-4 space-y-3">
         {isLoading ? (
-          <div className="text-center py-12 text-apple-400">加载中...</div>
+          <ChiikawaLoading />
         ) : filteredOrders.length === 0 ? (
           searchQuery ? (
-            <div className="text-center py-12 text-apple-400">未找到匹配的结果</div>
+            <div className="text-center py-12 text-chiikawa-brown/60">
+              <CharacterAvatar character="chiikawa" size="lg" className="mx-auto mb-4 opacity-50" />
+              未找到匹配的结果
+            </div>
           ) : (
             <EmptyOrdersState />
           )
@@ -522,13 +529,14 @@ export function OrdersPage() {
           filteredOrders.map((order) => {
             const status = statusMap[order.status as OrderStatus]
             return (
-              <div
+              <CuteCard
                 key={order.id}
-                className="bg-white rounded-2xl p-4 shadow-sm"
+                variant="cream"
+                className="p-4"
               >
                 {/* Order Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-mono text-apple-400">{order.orderNo}</span>
+                  <span className="text-sm font-mono text-chiikawa-brown/40">{order.orderNo}</span>
                   <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
                     {status.label}
                   </Badge>
@@ -537,27 +545,29 @@ export function OrdersPage() {
                 {/* Order Details */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-apple-400 w-12">顾客</span>
-                    <span className="font-medium text-apple-900">{order.customerName}</span>
+                    <CharacterAvatar character="kuri" size="xs" />
+                    <span className="text-sm text-chiikawa-brown/50 w-10">顾客</span>
+                    <span className="font-medium text-chiikawa-brown">{order.customerName}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-apple-400 w-12">妹妹</span>
-                    <span className="font-medium text-apple-900">{order.girlName}</span>
+                    <CharacterAvatar character="rakko" size="xs" />
+                    <span className="text-sm text-chiikawa-brown/50 w-10">妹妹</span>
+                    <span className="font-medium text-chiikawa-brown">{order.girlName}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-apple-400 w-12">套餐</span>
-                    <span className="font-medium text-apple-900">
+                    <span className="text-sm text-chiikawa-brown/50 w-12 pl-1">套餐</span>
+                    <span className="font-medium text-chiikawa-brown">
                       {order.packageName}
                       {order.hours && order.hours > 1 && (
-                        <span className="text-sm text-apple-400 ml-1">({order.hours}小时)</span>
+                        <span className="text-sm text-chiikawa-brown/40 ml-1">({order.hours}小时)</span>
                       )}
                     </span>
                   </div>
                 </div>
 
                 {/* Price & Time */}
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-apple-100">
-                  <div className="flex items-center gap-1 text-apple-400">
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-chiikawa-peach/20">
+                  <div className="flex items-center gap-1 text-chiikawa-brown/50">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">
                       {order.appointmentTime ? formatDateTime(order.appointmentTime) : '立即'}
@@ -566,35 +576,35 @@ export function OrdersPage() {
                   <div className="text-right">
                     {(order.discount || 0) > 0 || order.discountAmount ? (
                       <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <span className="text-sm text-apple-400 line-through">
+                        <span className="text-sm text-chiikawa-brown/40 line-through">
                           ¥{order.totalOriginalAmount || order.price}
                         </span>
-                        <span className="text-lg font-bold text-orange-600">
+                        <span className="text-lg font-bold text-chiikawa-pink">
                           ¥{order.finalPrice || Math.max(0, (order.totalOriginalAmount || order.price) - (order.discount || 0) - (order.discountAmount || 0))}
                         </span>
                         {order.discountType && order.discountType !== 'none' && (
                           <Badge variant="secondary" className={cn(
                             "text-xs",
                             order.discountType === 'memberDay' 
-                              ? "bg-pink-100 text-pink-700" 
-                              : "bg-blue-100 text-blue-700"
+                              ? "bg-chiikawa-pink-light text-chiikawa-pink" 
+                              : "bg-chiikawa-blue-light text-chiikawa-blue"
                           )}>
                             {order.discountType === 'memberDay' ? '会员日' : '会员'}{order.discountPercent}折
                           </Badge>
                         )}
                         {(order.discount || 0) > 0 && (
-                          <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
+                          <Badge variant="secondary" className="text-xs bg-chiikawa-yellow-light text-yellow-600">
                             优惠¥{order.discount}
                           </Badge>
                         )}
                         {order.couponSource && (
-                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                          <Badge variant="secondary" className="text-xs bg-chiikawa-lavender text-purple-600">
                             来源:{order.couponSource}
                           </Badge>
                         )}
                       </div>
                     ) : (
-                      <span className="text-lg font-bold text-apple-blue">
+                      <span className="text-lg font-bold text-chiikawa-pink">
                         ¥{order.price}
                       </span>
                     )}
@@ -603,10 +613,10 @@ export function OrdersPage() {
 
                 {/* Commission Info */}
                 <div className="flex items-center justify-between mt-2 text-xs">
-                  <span className="text-purple-600">
+                  <span className="text-purple-500">
                     妹妹收入: ¥{order.girlIncome || 0}
                   </span>
-                  <span className="text-green-600">
+                  <span className="text-green-500">
                     客服提成: ¥{order.serviceCommission || 0}
                   </span>
                 </div>
@@ -616,7 +626,7 @@ export function OrdersPage() {
                   <div className="flex gap-2 mt-3">
                     <Button
                       size="sm"
-                      className="flex-1 bg-green-500 text-white hover:bg-green-600"
+                      className="flex-1 bg-green-400 text-white hover:bg-green-500 rounded-xl"
                       onClick={() => handleStatusChange(order.id, 'completed')}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-1" />
@@ -625,7 +635,7 @@ export function OrdersPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 rounded-xl border-chiikawa-peach/50 text-chiikawa-brown"
                       onClick={() => handleStatusChange(order.id, 'cancelled')}
                     >
                       <XCircle className="w-4 h-4 mr-1" />
@@ -633,8 +643,8 @@ export function OrdersPage() {
                     </Button>
                   </div>
                 )}
-              </div>
-            )
+              </CuteCard>
+            )}
           })
         )}
       </div>
