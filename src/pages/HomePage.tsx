@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { cn, formatMoney } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
+import { EmptyDataState } from '@/components/EmptyState'
 
 interface DashboardData {
   todayRevenue: number
@@ -329,7 +330,7 @@ export function HomePage() {
             )}
           </>
         ) : (
-          <div className="text-center py-12 text-apple-400">暂无数据</div>
+          <EmptyDataState />
         )}
       </div>
     </div>

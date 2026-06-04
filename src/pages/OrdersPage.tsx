@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
+import { EmptyOrdersState } from '@/components/EmptyState'
 import {
   Dialog,
   DialogContent,
@@ -512,9 +513,11 @@ export function OrdersPage() {
         {isLoading ? (
           <div className="text-center py-12 text-apple-400">加载中...</div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-12 text-apple-400">
-            {searchQuery ? '未找到匹配的结果' : '暂无订单，点击右上角创建'}
-          </div>
+          searchQuery ? (
+            <div className="text-center py-12 text-apple-400">未找到匹配的结果</div>
+          ) : (
+            <EmptyOrdersState />
+          )
         ) : (
           filteredOrders.map((order) => {
             const status = statusMap[order.status as OrderStatus]

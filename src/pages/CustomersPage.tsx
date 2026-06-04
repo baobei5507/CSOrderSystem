@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
+import { EmptyCustomersState } from '@/components/EmptyState'
 import {
   Dialog,
   DialogContent,
@@ -482,9 +483,11 @@ export function CustomersPage() {
         {isLoading ? (
           <div className="text-center py-12 text-apple-400">加载中...</div>
         ) : filteredCustomers.length === 0 ? (
-          <div className="text-center py-12 text-apple-400">
-            {searchQuery ? '未找到匹配的结果' : '暂无顾客，点击右上角添加'}
-          </div>
+          searchQuery ? (
+            <div className="text-center py-12 text-apple-400">未找到匹配的结果</div>
+          ) : (
+            <EmptyCustomersState />
+          )
         ) : (
           filteredCustomers.map((customer) => (
             <div

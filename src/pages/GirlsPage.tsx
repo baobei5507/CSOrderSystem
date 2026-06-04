@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
+import { EmptyGirlsState } from '@/components/EmptyState'
 import {
   Dialog,
   DialogContent,
@@ -263,9 +264,11 @@ export function GirlsPage() {
         {isLoading ? (
           <div className="text-center py-12 text-apple-400">加载中...</div>
         ) : filteredGirls.length === 0 ? (
-          <div className="text-center py-12 text-apple-400">
-            {searchQuery ? '未找到匹配的结果' : '暂无妹妹，点击右上角添加'}
-          </div>
+          searchQuery ? (
+            <div className="text-center py-12 text-apple-400">未找到匹配的结果</div>
+          ) : (
+            <EmptyGirlsState />
+          )
         ) : (
           filteredGirls.map((girl) => {
             const status = statusMap[girl.status as GirlStatus]
