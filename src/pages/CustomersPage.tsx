@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3 } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3, Wallet, Crown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,16 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { Customer, Tag, Order, Girl } from '@/types'
+
+// 会员等级名称映射
+const MEMBER_LEVEL_NAMES: Record<number, string> = {
+  0: '普通用户',
+  1: '3K会员',
+  2: '5K会员',
+  3: '7K会员',
+  4: '1w会员',
+  5: '2w会员',
+}
 
 interface GirlStat {
   girlId: string
@@ -134,8 +144,16 @@ export function CustomersPage() {
   const [statsSortBy, setStatsSortBy] = useState<'orders' | 'amount'>('orders')
   const [isLoadingStats, setIsLoadingStats] = useState(false)
 
+  // 充值弹窗状态
+  const [rechargeDialogOpen, setRechargeDialogOpen] = useState(false)
+  const [rechargingCustomer, setRechargingCustomer] = useState<Customer | null>(null)
+  const [rechargeAmount, setRechargeAmount] = useState('')
+  const [giftAmount, setGiftAmount] = useState('')
+  const [rechargeRemark, setRechargeRemark] = useState('')
+  const [isRecharging, setIsRecharging] = useState(false)
+
   const { currentStore } = useAppStore()
-  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer, createTag, getOrders, getGirls } = useApi()
+  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer, createTag, getOrders, getGirls, recharge, getMemberConfig } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -214,6 +232,66 @@ export function CustomersPage() {
       loadData()
     } catch (err) {
       console.error('删除失败:', err)
+    }
+  }
+
+  // 打开充值弹窗
+  const handleOpenRecharge = (customer: Customer) => {
+    setRechargingCustomer(customer)
+    setRechargeAmount('')
+    setGiftAmount('')
+    setRechargeRemark('')
+    setRechargeDialogOpen(true)
+  }
+
+  // 处理充值
+  const handleRecharge = async () => {
+    if (!rechargingCustomer || !currentStore) return
+    
+    const amount = parseFloat(rechargeAmount)
+    if (!amount || amount <= 0) {
+      alert('请输入有效的充值金额')
+      return
+    }
+
+    setIsRecharging(true)
+    try {
+      const result = await recharge({
+        customerId: rechargingCustomer.id,
+        storeId: currentStore.id,
+        amount: Math.round(amount * 100), // 转换为分
+        giftAmount: giftAmount ? Math.round(parseFloat(giftAmount) * 100) : 0,
+        remark: rechargeRemark || undefined,
+      })
+
+      // 显示充值结果
+      const beforeLevelName = MEMBER_LEVEL_NAMES[result.beforeLevel] || '普通用户'
+      const afterLevelName = MEMBER_LEVEL_NAMES[result.afterLevel] || '普通用户'
+      
+      let message = `充值成功！\n\n`
+      message += `充值金额: ¥${amount.toFixed(2)}\n`
+      if (result.addedAmount > amount * 100) {
+        message += `赠送金额: ¥${((result.addedAmount - amount * 100) / 100).toFixed(2)}\n`
+      }
+      message += `当前余额: ¥${(result.afterBalance / 100).toFixed(2)}\n`
+      
+      if (result.afterLevel > result.beforeLevel) {
+        message += `\n🎉 会员升级: ${beforeLevelName} → ${afterLevelName}`
+      }
+
+      alert(message)
+      
+      setRechargeDialogOpen(false)
+      setRechargingCustomer(null)
+      setRechargeAmount('')
+      setGiftAmount('')
+      setRechargeRemark('')
+      loadData() // 刷新顾客列表
+    } catch (err: any) {
+      console.error('充值失败:', err)
+      alert('充值失败: ' + (err.message || '未知错误'))
+    } finally {
+      setIsRecharging(false)
     }
   }
 
@@ -369,13 +447,38 @@ export function CustomersPage() {
                     {customer.name[0]}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-apple-900">{customer.name}</h3>
-                    <p className="text-sm text-apple-400">
-                      {customer.accounts?.length || 0} 个账号
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-apple-900">{customer.name}</h3>
+                      {/* 会员等级徽章 */}
+                      {(customer.memberLevel || 0) > 0 && (
+                        <Badge className="bg-amber-100 text-amber-700 text-xs">
+                          <Crown className="w-3 h-3 mr-0.5" />
+                          {MEMBER_LEVEL_NAMES[customer.memberLevel || 0]}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-apple-400">
+                      <span>{customer.accounts?.length || 0} 个账号</span>
+                      {(customer.balance || 0) > 0 && (
+                        <span className="text-green-600 flex items-center gap-1">
+                          <Wallet className="w-3 h-3" />
+                          ¥{((customer.balance || 0) / 100).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {/* 充值按钮 */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-apple-400 hover:text-green-500"
+                    onClick={() => handleOpenRecharge(customer)}
+                    title="充值"
+                  >
+                    <Wallet className="w-4 h-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -662,6 +765,104 @@ export function CustomersPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 充值弹窗 */}
+      <Dialog open={rechargeDialogOpen} onOpenChange={setRechargeDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>会员充值</DialogTitle>
+          </DialogHeader>
+          
+          {rechargingCustomer && (
+            <div className="py-4 space-y-4">
+              {/* 顾客信息 */}
+              <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold">
+                  {rechargingCustomer.name[0]}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-apple-900">{rechargingCustomer.name}</h3>
+                  <div className="flex items-center gap-2 text-sm">
+                    {(rechargingCustomer.memberLevel || 0) > 0 ? (
+                      <Badge className="bg-amber-100 text-amber-700 text-xs">
+                        <Crown className="w-3 h-3 mr-0.5" />
+                        {MEMBER_LEVEL_NAMES[rechargingCustomer.memberLevel || 0]}
+                      </Badge>
+                    ) : (
+                      <span className="text-apple-400">普通用户</span>
+                    )}
+                    <span className="text-green-600">
+                      余额: ¥{((rechargingCustomer.balance || 0) / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 充值金额 */}
+              <div className="grid gap-2">
+                <Label htmlFor="rechargeAmount">充值金额 (元)</Label>
+                <Input
+                  id="rechargeAmount"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  placeholder="输入充值金额"
+                  value={rechargeAmount}
+                  onChange={(e) => setRechargeAmount(e.target.value)}
+                />
+              </div>
+
+              {/* 赠送金额 */}
+              <div className="grid gap-2">
+                <Label htmlFor="giftAmount">赠送金额 (元，可选)</Label>
+                <Input
+                  id="giftAmount"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  placeholder="输入赠送金额"
+                  value={giftAmount}
+                  onChange={(e) => setGiftAmount(e.target.value)}
+                />
+              </div>
+
+              {/* 备注 */}
+              <div className="grid gap-2">
+                <Label htmlFor="rechargeRemark">备注 (可选)</Label>
+                <Input
+                  id="rechargeRemark"
+                  placeholder="输入备注信息"
+                  value={rechargeRemark}
+                  onChange={(e) => setRechargeRemark(e.target.value)}
+                />
+              </div>
+
+              {/* 充值后预估 */}
+              {rechargeAmount && parseFloat(rechargeAmount) > 0 && (
+                <div className="p-3 bg-green-50 rounded-xl text-sm">
+                  <p className="text-green-800 font-medium mb-1">充值预览</p>
+                  <p className="text-green-600">
+                    充值后余额: ¥{(((rechargingCustomer.balance || 0) / 100) + parseFloat(rechargeAmount) + (giftAmount ? parseFloat(giftAmount) : 0)).toFixed(2)}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setRechargeDialogOpen(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleRecharge}
+              disabled={!rechargeAmount || parseFloat(rechargeAmount) <= 0 || isRecharging}
+              className="bg-green-500 text-white hover:bg-green-600"
+            >
+              {isRecharging ? '充值中...' : '确认充值'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
