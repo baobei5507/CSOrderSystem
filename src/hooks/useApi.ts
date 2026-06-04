@@ -165,6 +165,14 @@ export function useApi() {
     price: number
     discount?: number
     appointmentTime?: string
+    hours?: number
+    originalPrice?: number
+    totalOriginalAmount?: number
+    discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'none'
+    discountPercent?: number
+    discountAmount?: number
+    deductedBalance?: number
+    usedMemberDayBenefit?: number
   }): Promise<Order> => {
     return fetchApi('/orders', {
       method: 'POST',

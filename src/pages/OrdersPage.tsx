@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2 } from 'lucide-react'
+import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2, Crown, Wallet } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,22 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { Order, Customer, Girl, Package, Tag } from '@/types'
+
+// 会员等级配置类型
+interface MemberLevel {
+  level: number
+  name: string
+  minRecharge: number
+  regularDiscount: number
+  memberDayDiscount: number
+}
+
+interface MemberConfig {
+  enabled: boolean
+  levels: MemberLevel[]
+  memberDays: number[]
+  minBalancePercent: number
+}
 
 const PLATFORM_OPTIONS = [
   { value: 'wechat', label: '微信' },
@@ -58,6 +74,7 @@ export function OrdersPage() {
     price: 0,
     discount: 0,
     appointmentTime: '',
+    hours: 1,
   })
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
@@ -65,7 +82,25 @@ export function OrdersPage() {
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [calculatedPrice, setCalculatedPrice] = useState(0)
 
-  // 提成预览
+  // 会员系统相关
+  const [memberConfig, setMemberConfig] = useState<MemberConfig | null>(null)
+  const [priceCalculation, setPriceCalculation] = useState<{
+    originalPricePerHour: number
+    hours: number
+    totalOriginalAmount: number
+    discountType: 'memberDay' | 'memberRegular' | 'none'
+    discountPercent: number
+    discountAmount: number
+    finalPrice: number
+    deductedBalance: number
+    breakdown: { hour: number; originalPrice: number; discountPercent: number; finalPrice: number; type: string }[]
+    girlIncome: number
+    serviceCommission: number
+    usedMemberDayBenefit: boolean
+    reason: string
+  } | null>(null)
+
+  // 提成预览（基于原价）
   const [serviceCommissionPreview, setServiceCommissionPreview] = useState(0)
   const [girlIncomePreview, setGirlIncomePreview] = useState(0)
   const [finalPricePreview, setFinalPricePreview] = useState(0)
@@ -76,7 +111,7 @@ export function OrdersPage() {
   const [newCustomerAccounts, setNewCustomerAccounts] = useState<{ platform: string; accountId: string; note?: string }[]>([])
 
   const { currentStore } = useAppStore()
-  const { getOrders, getCustomers, getGirls, getPackages, getTags, createOrder, updateOrder, createTag, updateCustomer, getGirlPackagePrices, createCustomer } = useApi()
+  const { getOrders, getCustomers, getGirls, getPackages, getTags, createOrder, updateOrder, createTag, updateCustomer, getGirlPackagePrices, createCustomer, getMemberConfig, calculateOrderPrice } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -113,29 +148,69 @@ export function OrdersPage() {
     }
   }
 
-  // 计算最终价格和提成
+  // 加载会员配置
   useEffect(() => {
-    if (selectedGirl && selectedPackage) {
-      // 查询该妹妹对应套餐的价格
-      getGirlPackagePrices(selectedGirl.id).then(prices => {
+    if (currentStore) {
+      getMemberConfig(currentStore.id).then(config => {
+        setMemberConfig(config)
+      }).catch(() => {
+        // 会员系统未配置或出错
+        setMemberConfig(null)
+      })
+    }
+  }, [currentStore])
+
+  // 计算订单价格和会员折扣
+  useEffect(() => {
+    const calculatePrice = async () => {
+      if (!selectedGirl || !selectedPackage || !currentStore) {
+        setPriceCalculation(null)
+        return
+      }
+
+      try {
+        // 获取妹妹套餐价格
+        const prices = await getGirlPackagePrices(selectedGirl.id)
         const girlPrice = prices.find(p => p.packageId === selectedPackage.id)
         const basePrice = girlPrice?.price || selectedPackage.basePrice
         setCalculatedPrice(basePrice)
-        setFormData(prev => ({ ...prev, price: basePrice }))
 
-        // 计算提成预览（基于原价）
-        calculateCommissions(basePrice)
-        // 计算优惠后价格
-        updateFinalPrice(basePrice, formData.discount)
-      }).catch(() => {
-        // 查询失败时使用基础价格
-        setCalculatedPrice(selectedPackage.basePrice)
-        setFormData(prev => ({ ...prev, price: selectedPackage.basePrice }))
-        calculateCommissions(selectedPackage.basePrice)
-        updateFinalPrice(selectedPackage.basePrice, formData.discount)
-      })
+        // 如果有顾客且会员系统启用，调用计算接口
+        if (formData.customerId && memberConfig?.enabled) {
+          const result = await calculateOrderPrice({
+            storeId: currentStore.id,
+            customerId: formData.customerId,
+            girlId: formData.girlId,
+            packageId: formData.packageId,
+            hours: formData.hours,
+            date: formData.appointmentTime || new Date().toISOString(),
+          })
+          setPriceCalculation(result)
+          setFinalPricePreview(result.finalPrice)
+          setServiceCommissionPreview(result.serviceCommission)
+          setGirlIncomePreview(result.girlIncome)
+        } else {
+          // 无会员折扣时的计算
+          const totalOriginal = basePrice * formData.hours
+          const finalPrice = Math.max(0, totalOriginal - formData.discount)
+          setFinalPricePreview(finalPrice)
+          calculateCommissions(totalOriginal)
+          setPriceCalculation(null)
+        }
+      } catch (err) {
+        console.error('计算价格失败:', err)
+        // 使用基础价格计算
+        const basePrice = selectedPackage.basePrice
+        setCalculatedPrice(basePrice)
+        const totalOriginal = basePrice * formData.hours
+        const finalPrice = Math.max(0, totalOriginal - formData.discount)
+        setFinalPricePreview(finalPrice)
+        calculateCommissions(totalOriginal)
+      }
     }
-  }, [selectedGirl, selectedPackage])
+
+    calculatePrice()
+  }, [selectedGirl, selectedPackage, formData.customerId, formData.hours, formData.appointmentTime, memberConfig])
 
   // 优惠后价格计算
   const updateFinalPrice = (price: number, discount: number) => {
@@ -179,10 +254,12 @@ export function OrdersPage() {
       price: 0,
       discount: 0,
       appointmentTime: '',
+      hours: 1,
     })
     setSelectedCustomer(null)
     setSelectedGirl(null)
     setSelectedPackage(null)
+    setPriceCalculation(null)
     setCustomerSearch('')
     setIsCreatingCustomer(false)
     setNewCustomerAccounts([])
@@ -242,7 +319,20 @@ export function OrdersPage() {
         price: calculatedPrice,
         discount: formData.discount || 0,
         storeId: currentStore.id,
+        hours: formData.hours,
       }
+      
+      // 添加会员折扣相关信息
+      if (priceCalculation) {
+        orderData.originalPrice = priceCalculation.originalPricePerHour
+        orderData.totalOriginalAmount = priceCalculation.totalOriginalAmount
+        orderData.discountType = priceCalculation.discountType
+        orderData.discountPercent = priceCalculation.discountPercent
+        orderData.discountAmount = priceCalculation.discountAmount
+        orderData.deductedBalance = priceCalculation.deductedBalance
+        orderData.usedMemberDayBenefit = priceCalculation.usedMemberDayBenefit ? 1 : 0
+      }
+      
       // 使用新建顾客的账号ID或已选择的账号ID
       if (newCustomerAccountId) {
         orderData.customerAccountId = newCustomerAccountId
@@ -449,7 +539,12 @@ export function OrdersPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-apple-400 w-12">套餐</span>
-                    <span className="font-medium text-apple-900">{order.packageName}</span>
+                    <span className="font-medium text-apple-900">
+                      {order.packageName}
+                      {order.hours && order.hours > 1 && (
+                        <span className="text-sm text-apple-400 ml-1">({order.hours}小时)</span>
+                      )}
+                    </span>
                   </div>
                 </div>
 
@@ -462,15 +557,29 @@ export function OrdersPage() {
                     </span>
                   </div>
                   <div className="text-right">
-                    {(order.discount || 0) > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-apple-400 line-through">¥{order.price}</span>
-                        <span className="text-lg font-bold text-orange-600">
-                          ¥{order.finalPrice || Math.max(0, order.price - (order.discount || 0))}
+                    {(order.discount || 0) > 0 || order.discountAmount ? (
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <span className="text-sm text-apple-400 line-through">
+                          ¥{order.totalOriginalAmount || order.price}
                         </span>
-                        <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
-                          优惠¥{order.discount}
-                        </Badge>
+                        <span className="text-lg font-bold text-orange-600">
+                          ¥{order.finalPrice || Math.max(0, (order.totalOriginalAmount || order.price) - (order.discount || 0) - (order.discountAmount || 0))}
+                        </span>
+                        {order.discountType && order.discountType !== 'none' && (
+                          <Badge variant="secondary" className={cn(
+                            "text-xs",
+                            order.discountType === 'memberDay' 
+                              ? "bg-pink-100 text-pink-700" 
+                              : "bg-blue-100 text-blue-700"
+                          )}>
+                            {order.discountType === 'memberDay' ? '会员日' : '会员'}{order.discountPercent}折
+                          </Badge>
+                        )}
+                        {(order.discount || 0) > 0 && (
+                          <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
+                            优惠¥{order.discount}
+                          </Badge>
+                        )}
                       </div>
                     ) : (
                       <span className="text-lg font-bold text-apple-blue">
@@ -767,42 +876,160 @@ export function OrdersPage() {
               </Select>
             </div>
 
+            {/* Hours Selection */}
+            {selectedPackage && (
+              <div className="grid gap-2">
+                <Label>预约小时数</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={24}
+                    value={formData.hours}
+                    onChange={(e) => {
+                      const hours = parseInt(e.target.value) || 1
+                      setFormData(prev => ({ ...prev, hours: Math.max(1, Math.min(24, hours)) }))
+                    }}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-apple-400">小时</span>
+                </div>
+              </div>
+            )}
+
+            {/* Member Info Display */}
+            {selectedCustomer && memberConfig?.enabled && (
+              <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-medium text-amber-800">会员信息</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-apple-600">
+                    等级: <span className="font-medium text-amber-700">
+                      {memberConfig.levels.find(l => l.level === selectedCustomer.memberLevel)?.name || '普通用户'}
+                    </span>
+                  </span>
+                  <span className="text-apple-600">
+                    余额: <span className="font-medium text-green-600">¥{((selectedCustomer.balance || 0) / 100).toFixed(2)}</span>
+                  </span>
+                </div>
+                {selectedCustomer.totalRecharge && selectedCustomer.totalRecharge > 0 && (
+                  <div className="text-xs text-apple-400 mt-1">
+                    累计充值: ¥{(selectedCustomer.totalRecharge / 100).toFixed(2)}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Price & Commission Preview */}
             {calculatedPrice > 0 && (
               <div className="p-4 bg-apple-50 rounded-xl space-y-3">
+                {/* 原价总计 */}
                 <div className="flex justify-between items-center border-b border-apple-100 pb-2">
-                  <span className="text-sm text-apple-600">订单金额</span>
-                  <span className="text-xl font-bold text-apple-blue">¥{calculatedPrice}</span>
+                  <span className="text-sm text-apple-600">
+                    订单金额 ({formData.hours}小时 × ¥{calculatedPrice})
+                  </span>
+                  <span className="text-xl font-bold text-apple-blue">
+                    ¥{priceCalculation?.totalOriginalAmount || calculatedPrice * formData.hours}
+                  </span>
                 </div>
+
+                {/* 会员折扣明细 */}
+                {priceCalculation && priceCalculation.discountType !== 'none' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge className={cn(
+                        "text-xs",
+                        priceCalculation.discountType === 'memberDay' 
+                          ? "bg-pink-100 text-pink-700" 
+                          : "bg-blue-100 text-blue-700"
+                      )}>
+                        {priceCalculation.discountType === 'memberDay' ? '会员日特惠' : '会员折扣'}
+                      </Badge>
+                      <span className="text-xs text-apple-400">{priceCalculation.reason}</span>
+                    </div>
+                    
+                    {/* 每小时明细 */}
+                    <div className="space-y-1 text-xs">
+                      {priceCalculation.breakdown.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center py-1 px-2 bg-white rounded">
+                          <span className="text-apple-500">
+                            第{item.hour}小时
+                            {item.type === 'memberDay' && <span className="text-pink-500 ml-1">(会员日)</span>}
+                            {item.type === 'regular' && <span className="text-blue-500 ml-1">(常规)</span>}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-apple-400 line-through">¥{item.originalPrice}</span>
+                            <span className="text-apple-400">{item.discountPercent}折</span>
+                            <span className="font-medium text-apple-700">¥{item.finalPrice}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* 折扣总计 */}
+                    <div className="flex justify-between items-center pt-2 border-t border-apple-100">
+                      <span className="text-sm text-apple-600">会员优惠</span>
+                      <span className="text-sm font-semibold text-orange-600">
+                        -¥{priceCalculation.discountAmount}
+                        <span className="text-xs text-apple-400 ml-1">
+                          ({priceCalculation.discountPercent}折)
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 余额抵扣提示 */}
+                {priceCalculation && priceCalculation.deductedBalance > 0 && (
+                  <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                    <Wallet className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700">
+                      将从余额扣除: ¥{priceCalculation.deductedBalance}
+                    </span>
+                  </div>
+                )}
+
+                {/* 余额不足警告 */}
+                {priceCalculation && selectedCustomer && 
+                 priceCalculation.finalPrice > (selectedCustomer.balance || 0) / 100 && 
+                 priceCalculation.deductedBalance === 0 && (
+                  <div className="p-2 bg-red-50 rounded-lg text-sm text-red-600">
+                    余额不足，还需支付 ¥{priceCalculation.finalPrice - (selectedCustomer.balance || 0) / 100}
+                  </div>
+                )}
 
                 {/* 优惠券 */}
                 <div className="grid gap-2">
-                  <Label className="text-sm text-apple-500">优惠券抵扣</Label>
+                  <Label className="text-sm text-apple-500">额外优惠券抵扣</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-apple-400">-¥</span>
                     <Input
                       type="number"
                       min={0}
-                      max={calculatedPrice}
+                      max={priceCalculation?.finalPrice || calculatedPrice * formData.hours}
                       placeholder="0"
                       className="h-8 text-sm"
                       value={formData.discount || ''}
                       onChange={(e) => {
                         const discount = parseFloat(e.target.value) || 0
                         setFormData(prev => ({ ...prev, discount }))
-                        updateFinalPrice(calculatedPrice, discount)
+                        // 重新计算最终价格
+                        const baseFinal = priceCalculation?.finalPrice || calculatedPrice * formData.hours
+                        setFinalPricePreview(Math.max(0, baseFinal - discount))
                       }}
                     />
                   </div>
                 </div>
 
                 {/* 优惠后金额 */}
-                {formData.discount > 0 && (
-                  <div className="flex justify-between items-center pt-2 border-t border-apple-100">
-                    <span className="text-sm text-apple-600">优惠后金额</span>
-                    <span className="text-lg font-bold text-orange-600">¥{finalPricePreview}</span>
-                  </div>
-                )}
+                <div className="flex justify-between items-center pt-2 border-t border-apple-100">
+                  <span className="text-sm text-apple-600">实付金额</span>
+                  <span className="text-lg font-bold text-orange-600">
+                    ¥{finalPricePreview > 0 ? finalPricePreview : (priceCalculation?.finalPrice || calculatedPrice * formData.hours - formData.discount)}
+                  </span>
+                </div>
 
                 {/* 客服提成预览 */}
                 <div className="flex justify-between items-center">
@@ -815,7 +1042,7 @@ export function OrdersPage() {
                       })
                     </span>
                   </div>
-                  <span className="text-lg font-semibold text-green-600">¥{serviceCommissionPreview.toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-green-600">¥{(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}</span>
                 </div>
 
                 {/* 妹妹提成预览 */}
@@ -829,7 +1056,7 @@ export function OrdersPage() {
                       })
                     </span>
                   </div>
-                  <span className="text-lg font-semibold text-purple-600">¥{girlIncomePreview.toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-purple-600">¥{(priceCalculation?.girlIncome || girlIncomePreview).toFixed(2)}</span>
                 </div>
 
               </div>
