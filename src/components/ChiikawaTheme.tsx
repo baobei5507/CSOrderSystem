@@ -1,11 +1,21 @@
 import { cn } from '@/lib/utils'
 import { ReactNode } from 'react'
 
+// 角色图片映射
+const characterImages: Record<string, string> = {
+  chiikawa: '/images/chiikawa.png',
+  hachiware: '/images/hachiware.png',
+  usagi: '/images/usagi.png',
+  kuri: '/images/kuri.png',
+  rakko: '/images/rakko.png',
+}
+
 // 吉伊卡哇角色头像组件
 interface CharacterAvatarProps {
   character: 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   className?: string
+  useImage?: boolean // 是否使用图片素材（默认 true）
 }
 
 const characterColors: Record<string, string> = {
@@ -27,8 +37,31 @@ const sizeClasses = {
 export function CharacterAvatar({ 
   character, 
   size = 'md', 
-  className 
+  className,
+  useImage = true
 }: CharacterAvatarProps) {
+  // 默认使用图片素材，除非指定不使用
+  if (useImage) {
+    return (
+      <div 
+        className={cn(
+          'rounded-full overflow-hidden flex items-center justify-center',
+          'border-2 border-white shadow-md',
+          characterColors[character],
+          sizeClasses[size],
+          className
+        )}
+      >
+        <img 
+          src={characterImages[character]} 
+          alt={character}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    )
+  }
+  
+  // 不使用图片时使用 SVG
   const svgContent = getFallbackSvg(character)
   
   return (
