@@ -255,7 +255,9 @@ export function CustomersPage() {
 
   // 打开充值弹窗
   const handleOpenRecharge = (customer: Customer) => {
-    setRechargingCustomer(customer)
+    // 从最新的customers数组中获取该顾客的最新数据
+    const latestCustomer = customers.find(c => c.id === customer.id)
+    setRechargingCustomer(latestCustomer || customer)
     setRechargeAmount('')
     setGiftAmount('')
     setRechargeRemark('')
@@ -299,6 +301,16 @@ export function CustomersPage() {
 
       alert(message)
       
+      // 更新当前弹窗中的顾客数据，让余额显示最新值
+      if (rechargingCustomer) {
+        setRechargingCustomer({
+          ...rechargingCustomer,
+          balance: result.afterBalance,
+          memberLevel: result.afterLevel,
+          totalRecharge: (rechargingCustomer.totalRecharge || 0) + Math.round(amount * 100) + (giftAmount ? Math.round(parseFloat(giftAmount) * 100) : 0),
+        })
+      }
+      
       setRechargeDialogOpen(false)
       setRechargingCustomer(null)
       setRechargeAmount('')
@@ -315,7 +327,9 @@ export function CustomersPage() {
 
   // 查看余额历史
   const handleViewHistory = async (customer: Customer) => {
-    setHistoryCustomer(customer)
+    // 从最新的customers数组中获取该顾客的最新数据
+    const latestCustomer = customers.find(c => c.id === customer.id)
+    setHistoryCustomer(latestCustomer || customer)
     setHistoryDialogOpen(true)
     setIsLoadingHistory(true)
     try {
