@@ -115,6 +115,7 @@ export interface Order {
   girlIncome: number
   serviceCommission: number
   storeProfit?: number // 店家利润
+  status: 'pending' | 'completed' | 'cancelled'
   remark: string | null
   createdAt: number
   updatedAt: number

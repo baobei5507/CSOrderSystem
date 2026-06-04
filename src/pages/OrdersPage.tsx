@@ -212,12 +212,6 @@ export function OrdersPage() {
     calculatePrice()
   }, [selectedGirl, selectedPackage, formData.customerId, formData.hours, formData.appointmentTime, memberConfig])
 
-  // 优惠后价格计算
-  const updateFinalPrice = (price: number, discount: number) => {
-    const finalPrice = Math.max(0, price - discount)
-    setFinalPricePreview(finalPrice)
-  }
-
   // 计算提成预览
   const calculateCommissions = (price: number) => {
     if (!currentStore || !selectedGirl) {
