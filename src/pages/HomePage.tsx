@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User } from 'lucide-react'
+import { TrendingUp, Users, DollarSign, Calendar, ChevronRight, Crown, User, Sparkles } from 'lucide-react'
 import { StoreSelector } from '@/components/StoreSelector'
-import { Card, CardContent } from '@/components/ui/card'
 import { cn, formatMoney } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import { EmptyDataState } from '@/components/EmptyState'
+import { WelcomeHeader, CuteStatCard, ChiikawaLoading, CharacterAvatar, CuteCard } from '@/components/ChiikawaTheme'
 
 interface DashboardData {
   todayRevenue: number
@@ -54,34 +54,23 @@ export function HomePage() {
     weekday: 'short'
   })
 
-  const StatCard = ({ title, value, subtitle, icon: Icon, trend }: {
-    title: string
-    value: string | number
-    subtitle?: string
-    icon: React.ElementType
-    trend?: string
-  }) => (
-    <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-md overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-apple-400 font-medium">{title}</p>
-            <p className="text-2xl font-bold text-apple-900 mt-1">{value}</p>
-            {subtitle && <p className="text-xs text-apple-400 mt-1">{subtitle}</p>}
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center">
-            <Icon className="w-5 h-5 text-apple-blue" />
-          </div>
-        </div>
-        {trend && (
-          <div className="flex items-center gap-1 mt-3">
-            <TrendingUp className="w-3 h-3 text-apple-green" />
-            <span className="text-xs text-apple-green font-medium">{trend}</span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
+  // 根据标题选择对应角色
+  const getCharacterByTitle = (title: string) => {
+    if (title.includes('收入')) return 'chiikawa'
+    if (title.includes('订单')) return 'hachiware'
+    if (title.includes('提成')) return 'usagi'
+    if (title.includes('顾客')) return 'kuri'
+    return 'chiikawa'
+  }
+
+  // 根据标题选择配色
+  const getVariantByTitle = (title: string) => {
+    if (title.includes('收入')) return 'pink'
+    if (title.includes('订单')) return 'blue'
+    if (title.includes('提成')) return 'yellow'
+    if (title.includes('顾客')) return 'mint'
+    return 'cream'
+  }
 
   if (!currentStore) {
     return (
@@ -112,67 +101,88 @@ export function HomePage() {
       </div>
 
       <div className="px-4 space-y-6">
+        {/* 可爱欢迎区域 */}
+        <WelcomeHeader 
+          title="今天也要加油哦！"
+          subtitle={`${today} · ${currentStore?.name || '未选择店家'}`}
+          character="chiikawa"
+        />
+
         {isLoading ? (
-          <div className="text-center py-12 text-apple-400">加载中...</div>
+          <ChiikawaLoading />
         ) : data ? (
           <>
             {/* Today's Stats */}
             <section>
-              <h2 className="text-lg font-semibold text-apple-900 mb-3">今日概况</h2>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-chiikawa-pink" />
+                <h2 className="text-lg font-semibold text-chiikawa-brown">今日概况</h2>
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                <StatCard
+                <CuteStatCard
                   title="今日收入"
                   value={formatMoney(data.todayRevenue)}
                   subtitle={`${data.todayCompleted} 笔完成订单`}
-                  icon={DollarSign}
+                  character="chiikawa"
+                  variant="pink"
                 />
-                <StatCard
+                <CuteStatCard
                   title="完成订单"
                   value={data.todayCompleted}
                   subtitle="今日已完成"
-                  icon={Calendar}
+                  character="hachiware"
+                  variant="blue"
                 />
-                <StatCard
+                <CuteStatCard
                   title="取消订单"
                   value={data.todayCancelled}
                   subtitle="今日已取消"
-                  icon={Users}
+                  character="usagi"
+                  variant="yellow"
                 />
               </div>
             </section>
 
             {/* Month Stats */}
             <section>
-              <h2 className="text-lg font-semibold text-apple-900 mb-3">本月累计</h2>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-chiikawa-blue" />
+                <h2 className="text-lg font-semibold text-chiikawa-brown">本月累计</h2>
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                <StatCard
+                <CuteStatCard
                   title="本月收入"
                   value={formatMoney(data.monthRevenue)}
                   subtitle={`${data.monthCompleted} 笔完成订单`}
-                  icon={TrendingUp}
+                  character="chiikawa"
+                  variant="pink"
                 />
-                <StatCard
+                <CuteStatCard
                   title="完成订单"
                   value={data.monthCompleted}
                   subtitle="本月已完成"
-                  icon={Calendar}
+                  character="hachiware"
+                  variant="blue"
                 />
-                <StatCard
+                <CuteStatCard
                   title="取消订单"
                   value={data.monthCancelled}
                   subtitle="本月已取消"
-                  icon={Users}
+                  character="usagi"
+                  variant="yellow"
                 />
-                <StatCard
+                <CuteStatCard
                   title="客服提成"
                   value={formatMoney(data.monthServiceCommission)}
-                  icon={DollarSign}
+                  character="usagi"
+                  variant="yellow"
                 />
-                <StatCard
+                <CuteStatCard
                   title="新增顾客"
                   value={data.newCustomersThisMonth}
                   subtitle={`共${data.totalCustomers}位顾客`}
-                  icon={User}
+                  character="kuri"
+                  variant="cream"
                 />
               </div>
             </section>
@@ -180,102 +190,113 @@ export function HomePage() {
             {/* Girl Ranking */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-apple-900">妹妹排行</h2>
-                <button className="text-sm text-apple-blue flex items-center">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-chiikawa-yellow" />
+                  <h2 className="text-lg font-semibold text-chiikawa-brown">妹妹排行</h2>
+                </div>
+                <button className="text-sm text-chiikawa-brown/70 flex items-center hover:text-chiikawa-brown">
                   查看全部
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <CuteCard variant="cream">
                 {data.girlRanking.slice(0, 5).map((girl, index) => (
                   <div
                     key={girl.id}
                     className={cn(
                       "flex items-center gap-3 p-4",
-                      index !== data.girlRanking.slice(0, 5).length - 1 && "border-b border-apple-100"
+                      index !== data.girlRanking.slice(0, 5).length - 1 && "border-b border-chiikawa-peach/20"
                     )}
                   >
                     <div className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold",
-                      index === 0 ? "bg-yellow-100 text-yellow-600" :
-                      index === 1 ? "bg-gray-100 text-gray-600" :
-                      index === 2 ? "bg-orange-100 text-orange-600" :
-                      "bg-apple-100 text-apple-400"
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm",
+                      index === 0 ? "bg-gradient-to-br from-yellow-300 to-yellow-400 text-white" :
+                      index === 1 ? "bg-gradient-to-br from-gray-300 to-gray-400 text-white" :
+                      index === 2 ? "bg-gradient-to-br from-orange-300 to-orange-400 text-white" :
+                      "bg-chiikawa-cream text-chiikawa-brown"
                     )}>
                       {index + 1}
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-apple-pink to-apple-orange flex items-center justify-center text-white font-bold">
-                      {girl.name[0]}
-                    </div>
+                    <CharacterAvatar 
+                      character={index === 0 ? 'chiikawa' : index === 1 ? 'hachiware' : 'usagi'} 
+                      size="sm" 
+                    />
                     <div className="flex-1">
-                      <p className="font-medium text-apple-900">{girl.name}</p>
-                      <p className="text-sm text-apple-400">{girl.orderCount} 单</p>
+                      <p className="font-medium text-chiikawa-brown">{girl.name}</p>
+                      <p className="text-sm text-chiikawa-brown/50">{girl.orderCount} 单</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-apple-900">{formatMoney(girl.revenue)}</p>
+                      <p className="font-semibold text-chiikawa-brown">{formatMoney(girl.revenue)}</p>
                       {index === 0 && <Crown className="w-4 h-4 text-yellow-500 ml-auto" />}
                     </div>
                   </div>
                 ))}
-              </div>
+              </CuteCard>
             </section>
 
             {/* Customer Ranking */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-apple-900">顾客排行</h2>
-                <button className="text-sm text-apple-blue flex items-center">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-chiikawa-mint" />
+                  <h2 className="text-lg font-semibold text-chiikawa-brown">顾客排行</h2>
+                </div>
+                <button className="text-sm text-chiikawa-brown/70 flex items-center hover:text-chiikawa-brown">
                   查看全部
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <CuteCard variant="mint">
                 {data.customerRanking.slice(0, 5).map((customer, index) => (
                   <div
                     key={customer.id}
                     className={cn(
                       "flex items-center gap-3 p-4",
-                      index !== data.customerRanking.slice(0, 5).length - 1 && "border-b border-apple-100"
+                      index !== data.customerRanking.slice(0, 5).length - 1 && "border-b border-chiikawa-mint/30"
                     )}
                   >
                     <div className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold",
-                      index === 0 ? "bg-yellow-100 text-yellow-600" :
-                      index === 1 ? "bg-gray-100 text-gray-600" :
-                      index === 2 ? "bg-orange-100 text-orange-600" :
-                      "bg-apple-100 text-apple-400"
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm",
+                      index === 0 ? "bg-gradient-to-br from-yellow-300 to-yellow-400 text-white" :
+                      index === 1 ? "bg-gradient-to-br from-gray-300 to-gray-400 text-white" :
+                      index === 2 ? "bg-gradient-to-br from-orange-300 to-orange-400 text-white" :
+                      "bg-chiikawa-cream text-chiikawa-brown"
                     )}>
                       {index + 1}
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-apple-blue to-apple-indigo flex items-center justify-center text-white font-bold">
-                      <User className="w-5 h-5" />
-                    </div>
+                    <CharacterAvatar 
+                      character={index === 0 ? 'kuri' : index === 1 ? 'rakko' : 'chiikawa'} 
+                      size="sm" 
+                    />
                     <div className="flex-1">
-                      <p className="font-medium text-apple-900">{customer.name}</p>
-                      <p className="text-sm text-apple-400">{customer.orderCount} 单</p>
+                      <p className="font-medium text-chiikawa-brown">{customer.name}</p>
+                      <p className="text-sm text-chiikawa-brown/50">{customer.orderCount} 单</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-apple-900">{formatMoney(customer.revenue)}</p>
+                      <p className="font-semibold text-chiikawa-brown">{formatMoney(customer.revenue)}</p>
                       {index === 0 && <Crown className="w-4 h-4 text-yellow-500 ml-auto" />}
                     </div>
                   </div>
                 ))}
-              </div>
+              </CuteCard>
             </section>
 
             {/* Girl Trend Chart */}
             {data.girlRanking && data.girlRanking.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-apple-900">妹妹趋势</h2>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-chiikawa-blue" />
+                    <h2 className="text-lg font-semibold text-chiikawa-brown">妹妹趋势</h2>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setChartDimension('orders')}
                       className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                        "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
                         chartDimension === 'orders' 
-                          ? "bg-apple-blue text-white" 
-                          : "bg-apple-100 text-apple-600"
+                          ? "bg-chiikawa-pink text-white shadow-sm" 
+                          : "bg-chiikawa-cream text-chiikawa-brown"
                       )}
                     >
                       订单量
@@ -283,17 +304,17 @@ export function HomePage() {
                     <button
                       onClick={() => setChartDimension('commission')}
                       className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                        "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
                         chartDimension === 'commission' 
-                          ? "bg-apple-blue text-white" 
-                          : "bg-apple-100 text-apple-600"
+                          ? "bg-chiikawa-blue text-white shadow-sm" 
+                          : "bg-chiikawa-cream text-chiikawa-brown"
                       )}
                     >
                       妹妹提成
                     </button>
                   </div>
                 </div>
-                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                <CuteCard variant="blue" className="p-4">
                   <div className="space-y-3">
                     {data.girlRanking.slice(0, 8).map((girl, index) => {
                       const maxValue = chartDimension === 'orders' 
@@ -304,20 +325,24 @@ export function HomePage() {
                       
                       return (
                         <div key={girl.id} className="flex items-center gap-3">
-                          <span className="w-5 text-xs text-apple-400 text-right">{index + 1}</span>
-                          <span className="w-12 text-sm font-medium text-apple-900 truncate">{girl.name}</span>
-                          <div className="flex-1 h-6 bg-apple-50 rounded-full overflow-hidden relative">
+                          <span className="w-5 text-xs text-chiikawa-brown/50 text-right">{index + 1}</span>
+                          <CharacterAvatar 
+                            character={index % 3 === 0 ? 'chiikawa' : index % 3 === 1 ? 'hachiware' : 'usagi'} 
+                            size="xs" 
+                          />
+                          <span className="w-10 text-sm font-medium text-chiikawa-brown truncate">{girl.name}</span>
+                          <div className="flex-1 h-6 bg-white/50 rounded-full overflow-hidden relative">
                             <div 
                               className={cn(
                                 "h-full rounded-full transition-all duration-500",
-                                index === 0 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
+                                index === 0 ? "bg-gradient-to-r from-yellow-300 to-yellow-400" :
                                 index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400" :
                                 index === 2 ? "bg-gradient-to-r from-orange-300 to-orange-400" :
-                                "bg-gradient-to-r from-apple-blue to-apple-purple"
+                                "bg-gradient-to-r from-chiikawa-pink to-chiikawa-blue"
                               )}
                               style={{ width: `${percentage}%` }}
                             />
-                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs font-medium text-apple-700">
+                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs font-medium text-chiikawa-brown">
                               {chartDimension === 'orders' ? `${currentValue}单` : formatMoney(currentValue)}
                             </span>
                           </div>
@@ -325,7 +350,7 @@ export function HomePage() {
                       )
                     })}
                   </div>
-                </div>
+                </CuteCard>
               </section>
             )}
           </>

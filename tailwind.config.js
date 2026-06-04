@@ -63,6 +63,20 @@ export default {
           green: '#34c759',
           orange: '#ff9500',
           red: '#ff3b30',
+        },
+        // 吉伊卡哇可爱配色
+        chiikawa: {
+          cream: '#FFF9F0',      // 温暖奶油色背景
+          pink: '#FFB6C1',       // 樱花粉
+          'pink-light': '#FFE4E9', // 浅粉
+          blue: '#87CEEB',       // 小八蓝
+          'blue-light': '#E0F4FF', // 浅蓝
+          yellow: '#FFE4A1',     // 乌萨奇黄
+          'yellow-light': '#FFF8E7', // 浅黄
+          mint: '#B8E6D4',       // 薄荷绿
+          lavender: '#E6E6FA',   // 淡紫
+          peach: '#FFDAB9',      // 桃色
+          brown: '#8B7355',      // 柔和棕（文字用）
         }
       },
       borderRadius: {
