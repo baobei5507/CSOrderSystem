@@ -52,6 +52,9 @@ export interface Customer {
   remark?: string | null
   accounts?: Account[]
   tagIds?: string[]
+  balance?: number // 余额（分）
+  totalRecharge?: number // 累计充值（分）
+  memberLevel?: number // 会员等级 0-5
   createdAt: number
   updatedAt: number
 }
@@ -98,13 +101,20 @@ export interface Order {
   girlId: string
   packageId: string
   appointmentTime: number | null
+  hours?: number // 预约小时数
+  originalPrice?: number // 每小时原价
+  totalOriginalAmount?: number // 原价总计
   price: number
   discount?: number
   finalPrice?: number
-  status: 'pending' | 'completed' | 'cancelled'
-  serviceStaffName: string
+  discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'none'
+  discountPercent?: number // 实际折扣率
+  discountAmount?: number // 优惠金额
+  deductedBalance?: number // 实际扣除余额
+  usedMemberDayBenefit?: number // 是否使用了会员日权益
   girlIncome: number
   serviceCommission: number
+  storeProfit?: number // 店家利润
   remark: string | null
   createdAt: number
   updatedAt: number

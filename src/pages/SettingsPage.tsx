@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronRight, Percent, Package, Plus, Edit2, Trash2 } from 'lucide-react'
+import { ChevronRight, Percent, Package, Plus, Edit2, Trash2, Crown, CreditCard } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
@@ -7,6 +7,7 @@ import { useAppStore } from '@/stores/appStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
 import {
   Dialog,
   DialogContent,
@@ -278,11 +279,232 @@ function CommissionSettings() {
   )
 }
 
+// 会员设置页面
+function MemberSettings() {
+  const { currentStore } = useAppStore()
+  const { getMemberConfig, saveMemberConfig } = useApi()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  
+  const [config, setConfig] = useState({
+    enabled: false,
+    levels: [
+      { level: 1, name: '3K会员', minRecharge: 3000, regularDiscount: 95, memberDayDiscount: 85 },
+      { level: 2, name: '5K会员', minRecharge: 5000, regularDiscount: 90, memberDayDiscount: 80 },
+      { level: 3, name: '7K会员', minRecharge: 7000, regularDiscount: 88, memberDayDiscount: 75 },
+      { level: 4, name: '1w会员', minRecharge: 10000, regularDiscount: 85, memberDayDiscount: 70 },
+      { level: 5, name: '2w会员', minRecharge: 20000, regularDiscount: 83, memberDayDiscount: 65 },
+    ],
+    memberDays: [1, 2], // 周一、周二
+    minBalancePercent: 50,
+  })
+
+  useEffect(() => {
+    if (currentStore) loadConfig()
+  }, [currentStore])
+
+  const loadConfig = async () => {
+    setIsLoading(true)
+    try {
+      const data = await getMemberConfig(currentStore!.id)
+      if (data) {
+        setConfig({
+          enabled: data.enabled || false,
+          levels: data.levels || config.levels,
+          memberDays: data.memberDays || [1, 2],
+          minBalancePercent: data.minBalancePercent || 50,
+        })
+      }
+    } catch (err) {
+      console.error('加载会员配置失败:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!currentStore) return
+    setIsSaving(true)
+    try {
+      await saveMemberConfig({
+        storeId: currentStore.id,
+        ...config,
+      })
+      alert('保存成功')
+    } catch (err) {
+      console.error('保存失败:', err)
+      alert('保存失败')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const toggleMemberDay = (day: number) => {
+    setConfig(prev => ({
+      ...prev,
+      memberDays: prev.memberDays.includes(day)
+        ? prev.memberDays.filter(d => d !== day)
+        : [...prev.memberDays, day].sort(),
+    }))
+  }
+
+  const updateLevel = (index: number, field: string, value: any) => {
+    setConfig(prev => ({
+      ...prev,
+      levels: prev.levels.map((level, i) => 
+        i === index ? { ...level, [field]: value } : level
+      ),
+    }))
+  }
+
+  if (!currentStore) {
+    return <div className="text-center py-12 text-apple-400">请先选择店家</div>
+  }
+
+  if (isLoading) {
+    return <div className="text-center py-8 text-apple-400">加载中...</div>
+  }
+
+  const weekDays = [
+    { value: 1, label: '周一' },
+    { value: 2, label: '周二' },
+    { value: 3, label: '周三' },
+    { value: 4, label: '周四' },
+    { value: 5, label: '周五' },
+    { value: 6, label: '周六' },
+    { value: 0, label: '周日' },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {/* 开关 */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-apple-900">会员系统</h3>
+          <p className="text-sm text-apple-400">启用会员充值和折扣功能</p>
+        </div>
+        <button
+          onClick={() => setConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+          className={cn(
+            "w-12 h-6 rounded-full transition-colors relative",
+            config.enabled ? "bg-apple-blue" : "bg-apple-200"
+          )}
+        >
+          <span
+            className={cn(
+              "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
+              config.enabled ? "left-7" : "left-1"
+            )}
+          />
+        </button>
+      </div>
+
+      {config.enabled && (
+        <>
+          {/* 会员日设置 */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <h3 className="font-semibold text-apple-900 mb-3">会员日设置</h3>
+            <div className="flex flex-wrap gap-2">
+              {weekDays.map(day => (
+                <button
+                  key={day.value}
+                  onClick={() => toggleMemberDay(day.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-sm transition-colors",
+                    config.memberDays.includes(day.value)
+                      ? "bg-apple-blue text-white"
+                      : "bg-apple-100 text-apple-600"
+                  )}
+                >
+                  {day.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Label className="text-sm">会员日最低余额比例 (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={config.minBalancePercent}
+                onChange={(e) => setConfig(prev => ({ ...prev, minBalancePercent: parseInt(e.target.value) || 50 }))}
+                className="mt-1 w-32"
+              />
+              <p className="text-xs text-apple-400 mt-1">余额需达到充值额度的此比例才可享受会员日折扣</p>
+            </div>
+          </div>
+
+          {/* 会员等级配置 */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <h3 className="font-semibold text-apple-900 mb-3">会员等级配置</h3>
+            <div className="space-y-3">
+              {config.levels.map((level, index) => (
+                <div key={level.level} className="p-3 bg-apple-50 rounded-xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crown className="w-4 h-4 text-yellow-500" />
+                    <Input
+                      value={level.name}
+                      onChange={(e) => updateLevel(index, 'name', e.target.value)}
+                      className="h-8 w-32 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <Label className="text-xs text-apple-400">最低充值 (¥)</Label>
+                      <Input
+                        type="number"
+                        value={level.minRecharge}
+                        onChange={(e) => updateLevel(index, 'minRecharge', parseInt(e.target.value) || 0)}
+                        className="h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-apple-400">常规折扣 (%)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={level.regularDiscount}
+                        onChange={(e) => updateLevel(index, 'regularDiscount', parseInt(e.target.value) || 100)}
+                        className="h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-apple-400">会员日折扣 (%)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={level.memberDayDiscount}
+                        onChange={(e) => updateLevel(index, 'memberDayDiscount', parseInt(e.target.value) || 100)}
+                        className="h-8 mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      <Button
+        onClick={handleSave}
+        disabled={isSaving}
+        className="w-full bg-apple-blue text-white"
+      >
+        {isSaving ? '保存中...' : '保存设置'}
+      </Button>
+    </div>
+  )
+}
+
 export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'menu' | 'packages' | 'commission'>('menu')
+  const [activeTab, setActiveTab] = useState<'menu' | 'packages' | 'commission' | 'member'>('menu')
 
   const menuItems = [
     { id: 'packages', label: '套餐管理', icon: Package, description: '管理套餐及价格' },
+    { id: 'member', label: '会员设置', icon: Crown, description: '配置会员等级和折扣' },
     { id: 'commission', label: '提成设置', icon: Percent, description: '设置客服提成规则' },
   ]
 
@@ -317,6 +539,24 @@ export function SettingsPage() {
         </div>
         <div className="px-4">
           <CommissionSettings />
+        </div>
+      </div>
+    )
+  }
+
+  if (activeTab === 'member') {
+    return (
+      <div className="pb-24">
+        <div className="sticky top-0 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-apple-400">
+              <ChevronRight className="w-5 h-5 rotate-180" />
+            </Button>
+            <h1 className="text-xl font-semibold">会员设置</h1>
+          </div>
+        </div>
+        <div className="px-4">
+          <MemberSettings />
         </div>
       </div>
     )

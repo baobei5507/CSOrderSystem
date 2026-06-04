@@ -208,6 +208,87 @@ export function useApi() {
     return fetchApi(`/girl-package-prices?girlId=${girlId}`)
   }, [])
 
+  // Member Config
+  const getMemberConfig = useCallback(async (storeId: string): Promise<{
+    enabled: boolean
+    levels: { level: number; name: string; minRecharge: number; regularDiscount: number; memberDayDiscount: number }[]
+    memberDays: number[]
+    minBalancePercent: number
+  }> => {
+    return fetchApi(`/member-config?storeId=${storeId}`)
+  }, [])
+
+  const saveMemberConfig = useCallback(async (data: {
+    storeId: string
+    enabled: boolean
+    levels: { level: number; name: string; minRecharge: number; regularDiscount: number; memberDayDiscount: number }[]
+    memberDays: number[]
+    minBalancePercent: number
+  }): Promise<{ id: string }> => {
+    return fetchApi('/member-config', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }, [])
+
+  // Recharge
+  const recharge = useCallback(async (data: {
+    customerId: string
+    storeId: string
+    amount: number
+    giftAmount?: number
+    remark?: string
+  }): Promise<{
+    rechargeId: string
+    beforeLevel: number
+    afterLevel: number
+    beforeBalance: number
+    afterBalance: number
+    addedAmount: number
+  }> => {
+    return fetchApi('/recharge', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }, [])
+
+  const getRechargeHistory = useCallback(async (customerId: string): Promise<any[]> => {
+    return fetchApi(`/recharge/history?customerId=${customerId}`)
+  }, [])
+
+  const getBalanceTransactions = useCallback(async (customerId: string): Promise<any[]> => {
+    return fetchApi(`/recharge/transactions?customerId=${customerId}`)
+  }, [])
+
+  // Order Calculation
+  const calculateOrderPrice = useCallback(async (data: {
+    storeId: string
+    customerId: string
+    girlId: string
+    packageId: string
+    hours?: number
+    date?: string
+  }): Promise<{
+    originalPricePerHour: number
+    hours: number
+    totalOriginalAmount: number
+    discountType: 'memberDay' | 'memberRegular' | 'none'
+    discountPercent: number
+    discountAmount: number
+    finalPrice: number
+    deductedBalance: number
+    breakdown: { hour: number; originalPrice: number; discountPercent: number; finalPrice: number; type: string }[]
+    girlIncome: number
+    serviceCommission: number
+    usedMemberDayBenefit: boolean
+    reason: string
+  }> => {
+    return fetchApi('/orders/calculate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }, [])
+
   return {
     error,
     setError,
@@ -244,6 +325,15 @@ export function useApi() {
     getDashboard,
     // Girl Package Prices
     getGirlPackagePrices,
+    // Member Config
+    getMemberConfig,
+    saveMemberConfig,
+    // Recharge
+    recharge,
+    getRechargeHistory,
+    getBalanceTransactions,
+    // Order Calculation
+    calculateOrderPrice,
   }
 }
 

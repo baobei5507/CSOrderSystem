@@ -119,3 +119,53 @@ export const orderSnapshots = sqliteTable('order_snapshots', {
   serviceCommissionValueSnapshot: real('service_commission_value_snapshot').notNull(),
   createdAt: integer('created_at').notNull(),
 })
+
+// 店铺会员配置
+export const storeMemberConfigs = sqliteTable('store_member_configs', {
+  id: text('id').primaryKey(),
+  storeId: text('store_id').notNull().references(() => stores.id).unique(),
+  levels: text('levels').notNull(), // JSON: 会员等级数组
+  memberDays: text('member_days').notNull(), // JSON: 会员日 [1, 2]
+  minBalancePercent: integer('min_balance_percent').notNull().default(50),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+})
+
+// 余额流水
+export const balanceTransactions = sqliteTable('balance_transactions', {
+  id: text('id').primaryKey(),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  orderId: text('order_id').references(() => orders.id),
+  type: text('type', { enum: ['recharge', 'consume', 'refund', 'adjust'] }).notNull(),
+  amount: integer('amount').notNull(), // 分，正数增加，负数减少
+  balanceBefore: integer('balance_before'),
+  balanceAfter: integer('balance_after'),
+  remark: text('remark'),
+  createdAt: integer('created_at').notNull(),
+})
+
+// 会员日使用记录
+export const memberDayUsage = sqliteTable('member_day_usage', {
+  id: text('id').primaryKey(),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  storeId: text('store_id').notNull().references(() => stores.id),
+  date: text('date').notNull(), // YYYY-MM-DD
+  usedCount: integer('used_count').notNull().default(1),
+  createdAt: integer('created_at').notNull(),
+}, (table) => ({
+  unique: { columns: [table.customerId, table.storeId, table.date] },
+}))
+
+// 充值记录
+export const rechargeRecords = sqliteTable('recharge_records', {
+  id: text('id').primaryKey(),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  storeId: text('store_id').notNull().references(() => stores.id),
+  amount: integer('amount').notNull(), // 充值金额（分）
+  giftAmount: integer('gift_amount').default(0), // 赠送金额（分）
+  beforeLevel: integer('before_level'),
+  afterLevel: integer('after_level'),
+  remark: text('remark'),
+  createdAt: integer('created_at').notNull(),
+})

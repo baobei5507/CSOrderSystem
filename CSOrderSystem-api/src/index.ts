@@ -13,6 +13,8 @@ import analysisRoute from './routes/analysis'
 import customerAnalysisRoute from './routes/customerAnalysis'
 import trendsRoute from './routes/trends'
 import dailyReportRoute from './routes/dailyReport'
+import memberConfigRoute from './routes/memberConfig'
+import rechargeRoute from './routes/recharge'
 
 // 环境变量类型
 export interface Env {
@@ -50,6 +52,8 @@ app.route('/api/analysis', analysisRoute)
 app.route('/api/analysis', customerAnalysisRoute)
 app.route('/api/trends', trendsRoute)
 app.route('/api/daily-report', dailyReportRoute)
+app.route('/api/member-config', memberConfigRoute)
+app.route('/api/recharge', rechargeRoute)
 
 // 错误处理
 app.onError((err, c) => {
