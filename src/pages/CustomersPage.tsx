@@ -130,6 +130,9 @@ export function CustomersPage() {
     name: '',
     accounts: [] as { platform: string; accountId: string; note?: string }[],
     selectedTags: [] as string[],
+    balance: 0, // 余额（分）
+    totalRecharge: 0, // 累计充值（分）
+    memberLevel: 0, // 会员等级
   })
 
   // 自定义标签输入
@@ -184,6 +187,9 @@ export function CustomersPage() {
         name: customer.name,
         accounts: customer.accounts || [],
         selectedTags: customer.tagIds || [],
+        balance: customer.balance || 0,
+        totalRecharge: customer.totalRecharge || 0,
+        memberLevel: customer.memberLevel || 0,
       })
     } else {
       setEditingCustomer(null)
@@ -191,6 +197,9 @@ export function CustomersPage() {
         name: '',
         accounts: [],
         selectedTags: [],
+        balance: 0,
+        totalRecharge: 0,
+        memberLevel: 0,
       })
     }
     // 重置自定义标签输入
@@ -209,6 +218,9 @@ export function CustomersPage() {
           storeId: currentStore.id,
           accounts: formData.accounts,
           tagIds: formData.selectedTags,
+          balance: formData.balance,
+          totalRecharge: formData.totalRecharge,
+          memberLevel: formData.memberLevel,
         })
       } else {
         await createCustomer({
@@ -566,6 +578,70 @@ export function CustomersPage() {
                 onChange={(accounts) => setFormData({ ...formData, accounts })}
               />
             </div>
+
+            {/* 存量会员设置 - 仅在编辑模式下显示 */}
+            {editingCustomer && (
+              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-medium text-amber-800">存量会员设置</span>
+                </div>
+                
+                {/* 余额设置 */}
+                <div className="grid gap-2">
+                  <Label htmlFor="balance">余额 (元)</Label>
+                  <Input
+                    id="balance"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={(formData.balance / 100).toFixed(2)}
+                    onChange={(e) => {
+                      const yuan = parseFloat(e.target.value) || 0
+                      setFormData({ ...formData, balance: Math.round(yuan * 100) })
+                    }}
+                  />
+                </div>
+
+                {/* 累计充值设置 */}
+                <div className="grid gap-2">
+                  <Label htmlFor="totalRecharge">累计充值 (元)</Label>
+                  <Input
+                    id="totalRecharge"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={(formData.totalRecharge / 100).toFixed(2)}
+                    onChange={(e) => {
+                      const yuan = parseFloat(e.target.value) || 0
+                      setFormData({ ...formData, totalRecharge: Math.round(yuan * 100) })
+                    }}
+                  />
+                  <p className="text-xs text-apple-400">用于计算会员等级，系统自动根据累计充值判断</p>
+                </div>
+
+                {/* 会员等级设置 */}
+                <div className="grid gap-2">
+                  <Label htmlFor="memberLevel">会员等级</Label>
+                  <Select 
+                    value={formData.memberLevel.toString()} 
+                    onValueChange={(value) => setFormData({ ...formData, memberLevel: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">普通用户</SelectItem>
+                      <SelectItem value="1">3K会员</SelectItem>
+                      <SelectItem value="2">5K会员</SelectItem>
+                      <SelectItem value="3">7K会员</SelectItem>
+                      <SelectItem value="4">1w会员</SelectItem>
+                      <SelectItem value="5">2w会员</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label>标签</Label>

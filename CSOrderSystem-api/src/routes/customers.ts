@@ -135,9 +135,16 @@ app.put('/', async (c) => {
   const body = await c.req.json()
   const now = Date.now()
 
+  // 构建更新数据
+  const updateData: any = { updatedAt: now }
+  if (body.name !== undefined) updateData.nickname = body.name
+  if (body.balance !== undefined) updateData.balance = body.balance
+  if (body.totalRecharge !== undefined) updateData.totalRecharge = body.totalRecharge
+  if (body.memberLevel !== undefined) updateData.memberLevel = body.memberLevel
+
   // 更新顾客基本信息
   await db.update(customers)
-    .set({ nickname: body.name, updatedAt: now })
+    .set(updateData)
     .where(eq(customers.id, id))
 
   // 获取现有账号，避免删除被订单引用的账号
