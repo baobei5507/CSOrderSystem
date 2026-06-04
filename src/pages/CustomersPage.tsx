@@ -188,14 +188,17 @@ export function CustomersPage() {
 
   const handleOpenDialog = (customer?: Customer) => {
     if (customer) {
-      setEditingCustomer(customer)
+      // 从最新的customers数组中获取该顾客的最新数据
+      const latestCustomer = customers.find(c => c.id === customer.id)
+      const targetCustomer = latestCustomer || customer
+      setEditingCustomer(targetCustomer)
       setFormData({
-        name: customer.name,
-        accounts: customer.accounts || [],
-        selectedTags: customer.tagIds || [],
-        balance: customer.balance || 0,
-        totalRecharge: customer.totalRecharge || 0,
-        memberLevel: customer.memberLevel || 0,
+        name: targetCustomer.name,
+        accounts: targetCustomer.accounts || [],
+        selectedTags: targetCustomer.tagIds || [],
+        balance: targetCustomer.balance || 0,
+        totalRecharge: targetCustomer.totalRecharge || 0,
+        memberLevel: targetCustomer.memberLevel || 0,
       })
     } else {
       setEditingCustomer(null)
@@ -506,12 +509,10 @@ export function CustomersPage() {
                     </div>
                     <div className="flex items-center gap-3 text-sm text-apple-400">
                       <span>{customer.accounts?.length || 0} 个账号</span>
-                      {(customer.balance || 0) > 0 && (
-                        <span className="text-green-600 flex items-center gap-1">
-                          <Wallet className="w-3 h-3" />
-                          ¥{((customer.balance || 0) / 100).toFixed(2)}
-                        </span>
-                      )}
+                      <span className={(customer.balance || 0) > 0 ? "text-green-600 flex items-center gap-1" : "text-apple-400 flex items-center gap-1"}>
+                        <Wallet className="w-3 h-3" />
+                        ¥{((customer.balance || 0) / 100).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
