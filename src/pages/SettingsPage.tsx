@@ -7,6 +7,7 @@ import { useAppStore } from '@/stores/appStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CuteCard, CharacterAvatar, ChiikawaLoading } from '@/components/ChiikawaTheme'
 
 import {
   Dialog,
@@ -101,43 +102,46 @@ function PackagesSettings() {
   }
 
   if (!currentStore) {
-    return <div className="text-center py-12 text-apple-400">请先选择店家</div>
+    return <div className="text-center py-12 text-chiikawa-brown/60">请先选择店家</div>
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">套餐管理</h2>
-        <Button onClick={() => handleOpenDialog()} size="sm" className="bg-apple-blue text-white rounded-full">
+        <h2 className="text-lg font-bold text-chiikawa-brown">套餐管理</h2>
+        <Button onClick={() => handleOpenDialog()} size="sm" className="bg-chiikawa-blue text-white rounded-full">
           <Plus className="w-4 h-4 mr-1" />
           新增
         </Button>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8 text-apple-400">加载中...</div>
+        <ChiikawaLoading />
       ) : packages.length === 0 ? (
-        <div className="text-center py-8 text-apple-400">暂无套餐</div>
+        <div className="text-center py-8 text-chiikawa-brown/60">
+          <CharacterAvatar character="hachiware" size="lg" className="mx-auto mb-4 opacity-50" />
+          暂无套餐
+        </div>
       ) : (
         <div className="space-y-3">
           {packages.map((pkg) => (
-            <div key={pkg.id} className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <CuteCard key={pkg.id} variant="cream" className="p-4 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-apple-900">{pkg.name}</h3>
-                  <Badge variant="secondary" className="text-xs">{pkg.code}</Badge>
+                  <h3 className="font-semibold text-chiikawa-brown">{pkg.name}</h3>
+                  <Badge variant="secondary" className="text-xs bg-chiikawa-blue-light text-chiikawa-blue">{pkg.code}</Badge>
                 </div>
-                <p className="text-sm text-apple-400 mt-1">基础价格: ¥{pkg.basePrice}</p>
+                <p className="text-sm text-chiikawa-brown/60 mt-1">基础价格: ¥{pkg.basePrice}</p>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenDialog(pkg)}>
-                  <Edit2 className="w-4 h-4 text-apple-400" />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-chiikawa-blue" onClick={() => handleOpenDialog(pkg)}>
+                  <Edit2 className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(pkg.id)}>
-                  <Trash2 className="w-4 h-4 text-red-400" />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-red-500" onClick={() => handleDelete(pkg.id)}>
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
+            </CuteCard>
           ))}
         </div>
       )}
@@ -180,7 +184,7 @@ function PackagesSettings() {
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
-            <Button onClick={handleSubmit} disabled={!formData.name.trim()} className="bg-apple-blue text-white">
+            <Button onClick={handleSubmit} disabled={!formData.name.trim()} className="bg-chiikawa-blue text-white hover:bg-chiikawa-blue/90">
               {editingPkg ? '保存' : '创建'}
             </Button>
           </div>
@@ -229,16 +233,16 @@ function CommissionSettings() {
   }
 
   if (!currentStore) {
-    return <div className="text-center py-12 text-apple-400">请先选择店家</div>
+    return <div className="text-center py-12 text-chiikawa-brown/60">请先选择店家</div>
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">客服提成设置</h2>
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
+      <h2 className="text-lg font-bold text-chiikawa-brown">客服提成设置</h2>
+      <CuteCard variant="cream" className="p-4">
         <div className="grid gap-4">
           <div>
-            <Label>提成类型</Label>
+            <Label className="text-chiikawa-brown/70">提成类型</Label>
             <Select
               value={commissionType}
               onValueChange={(v: 'percent' | 'fixed') => setCommissionType(v)}
@@ -253,7 +257,7 @@ function CommissionSettings() {
             </Select>
           </div>
           <div>
-            <Label htmlFor="commissionValue">
+            <Label htmlFor="commissionValue" className="text-chiikawa-brown/70">
               {commissionType === 'percent' ? '提成比例 (%)' : '提成金额 (¥)'}
             </Label>
             <Input
@@ -269,12 +273,12 @@ function CommissionSettings() {
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-apple-blue text-white"
+            className="bg-chiikawa-blue text-white hover:bg-chiikawa-blue/90"
           >
             {isSaving ? '保存中...' : '保存设置'}
           </Button>
         </div>
-      </div>
+      </CuteCard>
     </div>
   )
 }
@@ -358,11 +362,16 @@ function MemberSettings() {
   }
 
   if (!currentStore) {
-    return <div className="text-center py-12 text-apple-400">请先选择店家</div>
+    return <div className="text-center py-12 text-chiikawa-brown/60">请先选择店家</div>
   }
 
   if (isLoading) {
-    return <div className="text-center py-8 text-apple-400">加载中...</div>
+    return (
+      <div className="text-center py-8 text-chiikawa-brown/60">
+        <CharacterAvatar character="usagi" size="md" className="mx-auto mb-2 opacity-50" />
+        加载中...
+      </div>
+    )
   }
 
   const weekDays = [
@@ -378,16 +387,16 @@ function MemberSettings() {
   return (
     <div className="space-y-6">
       {/* 开关 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+      <CuteCard variant="cream" className="p-4 flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-apple-900">会员系统</h3>
-          <p className="text-sm text-apple-400">启用会员充值和折扣功能</p>
+          <h3 className="font-semibold text-chiikawa-brown">会员系统</h3>
+          <p className="text-sm text-chiikawa-brown/60">启用会员充值和折扣功能</p>
         </div>
         <button
           onClick={() => setConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
           className={cn(
             "w-12 h-6 rounded-full transition-colors relative",
-            config.enabled ? "bg-apple-blue" : "bg-apple-200"
+            config.enabled ? "bg-chiikawa-pink" : "bg-chiikawa-peach/50"
           )}
         >
           <span
@@ -397,13 +406,13 @@ function MemberSettings() {
             )}
           />
         </button>
-      </div>
+      </CuteCard>
 
       {config.enabled && (
         <>
           {/* 会员日设置 */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <h3 className="font-semibold text-apple-900 mb-3">会员日设置</h3>
+          <CuteCard variant="cream" className="p-4">
+            <h3 className="font-semibold text-chiikawa-brown mb-3">会员日设置</h3>
             <div className="flex flex-wrap gap-2">
               {weekDays.map(day => (
                 <button
@@ -412,8 +421,8 @@ function MemberSettings() {
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-sm transition-colors",
                     config.memberDays.includes(day.value)
-                      ? "bg-apple-blue text-white"
-                      : "bg-apple-100 text-apple-600"
+                      ? "bg-chiikawa-pink text-white"
+                      : "bg-chiikawa-pink-light text-chiikawa-brown"
                   )}
                 >
                   {day.label}
@@ -421,7 +430,7 @@ function MemberSettings() {
               ))}
             </div>
             <div className="mt-4">
-              <Label className="text-sm">会员日最低余额比例 (%)</Label>
+              <Label className="text-sm text-chiikawa-brown/70">会员日最低余额比例 (%)</Label>
               <Input
                 type="number"
                 min={0}
@@ -430,18 +439,18 @@ function MemberSettings() {
                 onChange={(e) => setConfig(prev => ({ ...prev, minBalancePercent: parseInt(e.target.value) || 50 }))}
                 className="mt-1 w-32"
               />
-              <p className="text-xs text-apple-400 mt-1">余额需达到充值额度的此比例才可享受会员日折扣</p>
+              <p className="text-xs text-chiikawa-brown/50 mt-1">余额需达到充值额度的此比例才可享受会员日折扣</p>
             </div>
-          </div>
+          </CuteCard>
 
           {/* 会员等级配置 */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <h3 className="font-semibold text-apple-900 mb-3">会员等级配置</h3>
+          <CuteCard variant="cream" className="p-4">
+            <h3 className="font-semibold text-chiikawa-brown mb-3">会员等级配置</h3>
             <div className="space-y-3">
               {config.levels.map((level, index) => (
-                <div key={level.level} className="p-3 bg-apple-50 rounded-xl">
+                <div key={level.level} className="p-3 bg-chiikawa-cream rounded-xl border border-chiikawa-peach/20">
                   <div className="flex items-center gap-2 mb-2">
-                    <Crown className="w-4 h-4 text-yellow-500" />
+                    <Crown className="w-4 h-4 text-chiikawa-yellow" />
                     <Input
                       value={level.name}
                       onChange={(e) => updateLevel(index, 'name', e.target.value)}
@@ -450,7 +459,7 @@ function MemberSettings() {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div>
-                      <Label className="text-xs text-apple-400">最低充值 (¥)</Label>
+                      <Label className="text-xs text-chiikawa-brown/60">最低充值 (¥)</Label>
                       <Input
                         type="number"
                         value={level.minRecharge}
@@ -459,7 +468,7 @@ function MemberSettings() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-apple-400">常规折扣 (%)</Label>
+                      <Label className="text-xs text-chiikawa-brown/60">常规折扣 (%)</Label>
                       <Input
                         type="number"
                         min={1}
@@ -470,7 +479,7 @@ function MemberSettings() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-apple-400">会员日折扣 (%)</Label>
+                      <Label className="text-xs text-chiikawa-brown/60">会员日折扣 (%)</Label>
                       <Input
                         type="number"
                         min={1}
@@ -484,14 +493,14 @@ function MemberSettings() {
                 </div>
               ))}
             </div>
-          </div>
+          </CuteCard>
         </>
       )}
 
       <Button
         onClick={handleSave}
         disabled={isSaving}
-        className="w-full bg-apple-blue text-white"
+        className="w-full bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
       >
         {isSaving ? '保存中...' : '保存设置'}
       </Button>
@@ -510,13 +519,16 @@ export function SettingsPage() {
 
   if (activeTab === 'packages') {
     return (
-      <div className="pb-24">
-        <div className="sticky top-0 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
+      <div className="pb-24 bg-chiikawa-cream min-h-screen">
+        <div className="sticky top-0 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-apple-400">
+            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-chiikawa-brown/60">
               <ChevronRight className="w-5 h-5 rotate-180" />
             </Button>
-            <h1 className="text-xl font-semibold">套餐管理</h1>
+            <div className="flex items-center gap-3">
+              <CharacterAvatar character="chiikawa" size="xs" />
+              <h1 className="text-xl font-bold text-chiikawa-brown">套餐管理</h1>
+            </div>
           </div>
         </div>
         <div className="px-4">
@@ -528,13 +540,16 @@ export function SettingsPage() {
 
   if (activeTab === 'commission') {
     return (
-      <div className="pb-24">
-        <div className="sticky top-0 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
+      <div className="pb-24 bg-chiikawa-cream min-h-screen">
+        <div className="sticky top-0 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-apple-400">
+            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-chiikawa-brown/60">
               <ChevronRight className="w-5 h-5 rotate-180" />
             </Button>
-            <h1 className="text-xl font-semibold">提成设置</h1>
+            <div className="flex items-center gap-3">
+              <CharacterAvatar character="hachiware" size="xs" />
+              <h1 className="text-xl font-bold text-chiikawa-brown">提成设置</h1>
+            </div>
           </div>
         </div>
         <div className="px-4">
@@ -546,13 +561,16 @@ export function SettingsPage() {
 
   if (activeTab === 'member') {
     return (
-      <div className="pb-24">
-        <div className="sticky top-0 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
+      <div className="pb-24 bg-chiikawa-cream min-h-screen">
+        <div className="sticky top-0 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-apple-400">
+            <Button variant="ghost" size="sm" onClick={() => setActiveTab('menu')} className="text-chiikawa-brown/60">
               <ChevronRight className="w-5 h-5 rotate-180" />
             </Button>
-            <h1 className="text-xl font-semibold">会员设置</h1>
+            <div className="flex items-center gap-3">
+              <CharacterAvatar character="usagi" size="xs" />
+              <h1 className="text-xl font-bold text-chiikawa-brown">会员设置</h1>
+            </div>
           </div>
         </div>
         <div className="px-4">
@@ -563,33 +581,36 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-24 bg-chiikawa-cream min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
-        <h1 className="text-2xl font-semibold text-apple-900">设置</h1>
-        <p className="text-sm text-apple-400 mt-1">管理系统配置</p>
+      <div className="sticky top-0 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
+        <div className="flex items-center gap-3">
+          <CharacterAvatar character="kuri" size="sm" />
+          <div>
+            <h1 className="text-xl font-bold text-chiikawa-brown">设置</h1>
+            <p className="text-sm text-chiikawa-brown/60">管理系统配置</p>
+          </div>
+        </div>
       </div>
 
       {/* Menu Items */}
       <div className="px-4 space-y-3">
         {menuItems.map((item) => (
-          <button
+          <CuteCard
             key={item.id}
+            variant="cream"
+            className="w-full flex items-center gap-4 p-4 cursor-pointer active:scale-[0.98]"
             onClick={() => setActiveTab(item.id as any)}
-            className={cn(
-              "w-full flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm",
-              "transition-all duration-200 active:scale-[0.98]"
-            )}
           >
-            <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center">
-              <item.icon className="w-5 h-5 text-apple-blue" />
+            <div className="w-10 h-10 rounded-xl bg-chiikawa-blue-light flex items-center justify-center">
+              <item.icon className="w-5 h-5 text-chiikawa-blue" />
             </div>
             <div className="flex-1 text-left">
-              <h3 className="font-medium text-apple-900">{item.label}</h3>
-              <p className="text-sm text-apple-400">{item.description}</p>
+              <h3 className="font-medium text-chiikawa-brown">{item.label}</h3>
+              <p className="text-sm text-chiikawa-brown/60">{item.description}</p>
             </div>
-            <ChevronRight className="w-5 h-5 text-apple-300" />
-          </button>
+            <ChevronRight className="w-5 h-5 text-chiikawa-brown/30" />
+          </CuteCard>
         ))}
       </div>
     </div>

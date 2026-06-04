@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import { EmptyGirlsState } from '@/components/EmptyState'
+import { CuteCard, CharacterAvatar, ChiikawaLoading } from '@/components/ChiikawaTheme'
 import {
   Dialog,
   DialogContent,
@@ -34,9 +35,9 @@ type GirlStatus = 'active' | 'rest' | 'left'
 type CommissionType = 'percent' | 'fixed'
 
 const statusMap: Record<GirlStatus, { label: string; color: string; bgColor: string }> = {
-  active: { label: '在岗', color: 'text-apple-green', bgColor: 'bg-green-100' },
-  rest: { label: '休息', color: 'text-apple-orange', bgColor: 'bg-orange-100' },
-  left: { label: '离职', color: 'text-apple-400', bgColor: 'bg-gray-100' },
+  active: { label: '在岗', color: 'text-green-600', bgColor: 'bg-chiikawa-mint/50' },
+  rest: { label: '休息', color: 'text-orange-600', bgColor: 'bg-chiikawa-peach/50' },
+  left: { label: '离职', color: 'text-gray-500', bgColor: 'bg-gray-100' },
 }
 
 export function GirlsPage() {
@@ -211,20 +212,23 @@ export function GirlsPage() {
   if (!currentStore) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <p className="text-apple-400">请先选择店家</p>
+        <p className="text-chiikawa-brown/60">请先选择店家</p>
       </div>
     )
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-24 bg-chiikawa-cream min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
+      <div className="sticky top-0 z-10 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-apple-900">妹妹管理</h1>
+          <div className="flex items-center gap-3">
+            <CharacterAvatar character="rakko" size="sm" />
+            <h1 className="text-xl font-bold text-chiikawa-brown">妹妹管理</h1>
+          </div>
           <Button
             onClick={() => handleOpenDialog()}
-            className="bg-apple-blue text-white rounded-full px-4 h-10 hover:bg-apple-blue/90"
+            className="bg-chiikawa-blue text-white rounded-full px-4 h-10 hover:bg-chiikawa-blue/90"
           >
             <Plus className="w-4 h-4 mr-1" />
             新增妹妹
@@ -233,23 +237,23 @@ export function GirlsPage() {
 
         {/* Stats */}
         <div className="flex gap-3 mb-4">
-          <div className="flex-1 bg-white rounded-2xl p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold text-apple-green">{activeCount}</p>
-            <p className="text-xs text-apple-400">在岗</p>
-          </div>
-          <div className="flex-1 bg-white rounded-2xl p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold text-apple-orange">{restCount}</p>
-            <p className="text-xs text-apple-400">休息</p>
-          </div>
-          <div className="flex-1 bg-white rounded-2xl p-3 text-center shadow-sm">
-            <p className="text-2xl font-bold text-apple-600">{girls.length}</p>
-            <p className="text-xs text-apple-400">总计</p>
-          </div>
+          <CuteCard variant="mint" className="flex-1 p-3 text-center">
+            <p className="text-2xl font-bold text-green-600">{activeCount}</p>
+            <p className="text-xs text-chiikawa-brown/60">在岗</p>
+          </CuteCard>
+          <CuteCard variant="cream" className="flex-1 p-3 text-center">
+            <p className="text-2xl font-bold text-orange-500">{restCount}</p>
+            <p className="text-xs text-chiikawa-brown/60">休息</p>
+          </CuteCard>
+          <CuteCard variant="pink" className="flex-1 p-3 text-center">
+            <p className="text-2xl font-bold text-chiikawa-pink">{girls.length}</p>
+            <p className="text-xs text-chiikawa-brown/60">总计</p>
+          </CuteCard>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-chiikawa-brown/40" />
           <Input
             placeholder="搜索妹妹..."
             className="pl-10 h-12 bg-white border-0 rounded-2xl shadow-sm"
@@ -262,10 +266,13 @@ export function GirlsPage() {
       {/* Girls List */}
       <div className="px-4 space-y-3">
         {isLoading ? (
-          <div className="text-center py-12 text-apple-400">加载中...</div>
+          <ChiikawaLoading />
         ) : filteredGirls.length === 0 ? (
           searchQuery ? (
-            <div className="text-center py-12 text-apple-400">未找到匹配的结果</div>
+            <div className="text-center py-12 text-chiikawa-brown/60">
+              <CharacterAvatar character="chiikawa" size="lg" className="mx-auto mb-4 opacity-50" />
+              未找到匹配的结果
+            </div>
           ) : (
             <EmptyGirlsState />
           )
@@ -273,24 +280,25 @@ export function GirlsPage() {
           filteredGirls.map((girl) => {
             const status = statusMap[girl.status as GirlStatus]
             return (
-              <div
+              <CuteCard
                 key={girl.id}
-                className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4"
+                variant="cream"
+                className="p-4 flex items-center gap-4"
               >
                 {/* Avatar */}
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-apple-pink to-apple-orange flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold text-lg">
                   {girl.name[0]}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-apple-900">{girl.name}</h3>
+                    <h3 className="font-semibold text-chiikawa-brown">{girl.name}</h3>
                     <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
                       {status.label}
                     </Badge>
                   </div>
-                  <p className="text-sm text-apple-400 mt-1">
+                  <p className="text-sm text-chiikawa-brown/60 mt-1">
                     提成: {girl.commissionType === 'percent' ? `${girl.commissionValue}%` : `¥${girl.commissionValue}`}
                   </p>
                 </div>
@@ -300,7 +308,7 @@ export function GirlsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-apple-green"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-green-500"
                     onClick={() => handleOpenPriceDialog(girl)}
                     title="设置套餐价格"
                   >
@@ -309,7 +317,7 @@ export function GirlsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-apple-blue"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-chiikawa-blue"
                     onClick={() => handleOpenDialog(girl)}
                   >
                     <Edit2 className="w-4 h-4" />
@@ -317,14 +325,14 @@ export function GirlsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-red-500"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-red-500"
                     onClick={() => handleDelete(girl.id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
-                  <ChevronRight className="w-5 h-5 text-apple-300" />
+                  <ChevronRight className="w-5 h-5 text-chiikawa-brown/30" />
                 </div>
-              </div>
+              </CuteCard>
             )
           })
         )}
@@ -396,7 +404,7 @@ export function GirlsPage() {
             <Button
               onClick={handleSubmit}
               disabled={!formData.name.trim()}
-              className="bg-apple-blue text-white hover:bg-apple-blue/90"
+              className="bg-chiikawa-blue text-white hover:bg-chiikawa-blue/90"
             >
               {editingGirl ? '保存' : '创建'}
             </Button>
@@ -412,16 +420,19 @@ export function GirlsPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             {packages.length === 0 ? (
-              <div className="text-center text-apple-400 py-4">暂无套餐，请先创建套餐</div>
+              <div className="text-center text-chiikawa-brown/60 py-4">
+                <CharacterAvatar character="hachiware" size="md" className="mx-auto mb-2 opacity-50" />
+                暂无套餐，请先创建套餐
+              </div>
             ) : (
               packages.map((pkg) => (
-                <div key={pkg.id} className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
+                <CuteCard key={pkg.id} variant="cream" className="flex items-center gap-3 p-3">
                   <div className="flex-1">
-                    <div className="font-medium text-apple-900">{pkg.name}</div>
-                    <div className="text-xs text-apple-400">基础价: ¥{pkg.basePrice}</div>
+                    <div className="font-medium text-chiikawa-brown">{pkg.name}</div>
+                    <div className="text-xs text-chiikawa-brown/60">基础价: ¥{pkg.basePrice}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="text-sm whitespace-nowrap">定价:</Label>
+                    <Label className="text-sm whitespace-nowrap text-chiikawa-brown/70">定价:</Label>
                     <Input
                       type="number"
                       min={0}
@@ -432,7 +443,7 @@ export function GirlsPage() {
                       onChange={(e) => handlePriceChange(pkg.id, e.target.value)}
                     />
                   </div>
-                </div>
+                </CuteCard>
               ))
             )}
           </div>
@@ -447,7 +458,7 @@ export function GirlsPage() {
             <Button 
               onClick={handleSaveGirlPrices}
               disabled={isSavingPrices || packages.length === 0}
-              className="bg-apple-blue text-white hover:bg-apple-blue/90"
+              className="bg-chiikawa-blue text-white hover:bg-chiikawa-blue/90"
             >
               {isSavingPrices ? '保存中...' : '保存'}
             </Button>

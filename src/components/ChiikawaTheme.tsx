@@ -8,14 +8,6 @@ interface CharacterAvatarProps {
   className?: string
 }
 
-const characterImages: Record<string, string> = {
-  chiikawa: '/images/chiikawa.png',    // 吉伊 - 白色仓鼠
-  hachiware: '/images/hachiware.png',   // 小八 - 蓝耳猫
-  usagi: '/images/usagi.png',           // 乌萨奇 - 黄色兔子
-  kuri: '/images/kuri.png',             // 栗子馒头
-  rakko: '/images/rakko.png',           // 海獭师傅
-}
-
 const characterColors: Record<string, string> = {
   chiikawa: 'bg-chiikawa-pink-light',
   hachiware: 'bg-chiikawa-blue-light',
@@ -37,7 +29,7 @@ export function CharacterAvatar({
   size = 'md', 
   className 
 }: CharacterAvatarProps) {
-  const fallbackSvg = getFallbackSvg(character)
+  const svgContent = getFallbackSvg(character)
   
   return (
     <div 
@@ -48,21 +40,8 @@ export function CharacterAvatar({
         sizeClasses[size],
         className
       )}
-    >
-      <img
-        src={characterImages[character]}
-        alt={character}
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement
-          target.style.display = 'none'
-          const parent = target.parentElement
-          if (parent) {
-            parent.innerHTML = fallbackSvg
-          }
-        }}
-      />
-    </div>
+      dangerouslySetInnerHTML={{ __html: svgContent }}
+    />
   )
 }
 
@@ -129,6 +108,7 @@ interface CuteCardProps {
   children: ReactNode
   className?: string
   variant?: 'cream' | 'pink' | 'blue' | 'yellow' | 'mint'
+  onClick?: () => void
 }
 
 const variantClasses = {
@@ -139,14 +119,18 @@ const variantClasses = {
   mint: 'bg-chiikawa-mint/30 border-chiikawa-mint',
 }
 
-export function CuteCard({ children, className, variant = 'cream' }: CuteCardProps) {
+export function CuteCard({ children, className, variant = 'cream', onClick }: CuteCardProps) {
   return (
-    <div className={cn(
-      'rounded-3xl border-2 shadow-sm overflow-hidden',
-      'transition-all duration-200 hover:shadow-md',
-      variantClasses[variant],
-      className
-    )}>
+    <div 
+      onClick={onClick}
+      className={cn(
+        'rounded-3xl border-2 shadow-sm overflow-hidden',
+        'transition-all duration-200 hover:shadow-md',
+        onClick && 'cursor-pointer',
+        variantClasses[variant],
+        className
+      )}
+    >
       {children}
     </div>
   )

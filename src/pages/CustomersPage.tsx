@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import { EmptyCustomersState } from '@/components/EmptyState'
+import { CuteCard, CharacterAvatar, ChiikawaLoading } from '@/components/ChiikawaTheme'
 import {
   Dialog,
   DialogContent,
@@ -78,7 +79,7 @@ function AccountForm({ accounts, onChange }: AccountFormProps) {
   return (
     <div className="space-y-3">
       {accounts.map((account, index) => (
-        <div key={index} className="p-3 bg-apple-50 rounded-xl space-y-2">
+        <div key={index} className="p-3 bg-chiikawa-cream rounded-xl space-y-2">
           <div className="flex gap-2">
             <Select
               value={account.platform}
@@ -446,20 +447,23 @@ export function CustomersPage() {
   if (!currentStore) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <p className="text-apple-400">请先选择店家</p>
+        <p className="text-chiikawa-brown/60">请先选择店家</p>
       </div>
     )
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-24 bg-chiikawa-cream min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-apple-50/95 backdrop-blur-md px-4 pt-4 pb-4">
+      <div className="sticky top-0 z-10 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-apple-900">顾客管理</h1>
+          <div className="flex items-center gap-3">
+            <CharacterAvatar character="kuri" size="sm" />
+            <h1 className="text-xl font-bold text-chiikawa-brown">顾客管理</h1>
+          </div>
           <Button
             onClick={() => handleOpenDialog()}
-            className="bg-apple-blue text-white rounded-full px-4 h-10 hover:bg-apple-blue/90"
+            className="bg-chiikawa-pink text-white rounded-full px-4 h-10 hover:bg-chiikawa-pink/90"
           >
             <Plus className="w-4 h-4 mr-1" />
             新增顾客
@@ -468,7 +472,7 @@ export function CustomersPage() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-chiikawa-brown/40" />
           <Input
             placeholder="搜索顾客姓名或账号..."
             className="pl-10 h-12 bg-white border-0 rounded-2xl shadow-sm"
@@ -481,38 +485,42 @@ export function CustomersPage() {
       {/* Customers List */}
       <div className="px-4 space-y-3">
         {isLoading ? (
-          <div className="text-center py-12 text-apple-400">加载中...</div>
+          <ChiikawaLoading />
         ) : filteredCustomers.length === 0 ? (
           searchQuery ? (
-            <div className="text-center py-12 text-apple-400">未找到匹配的结果</div>
+            <div className="text-center py-12 text-chiikawa-brown/60">
+              <CharacterAvatar character="chiikawa" size="lg" className="mx-auto mb-4 opacity-50" />
+              未找到匹配的结果
+            </div>
           ) : (
             <EmptyCustomersState />
           )
         ) : (
           filteredCustomers.map((customer) => (
-            <div
+            <CuteCard
               key={customer.id}
-              className="bg-white rounded-2xl p-4 shadow-sm"
+              variant="cream"
+              className="p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-apple-blue to-apple-indigo flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold">
                     {customer.name[0]}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-apple-900">{customer.name}</h3>
+                      <h3 className="font-semibold text-chiikawa-brown">{customer.name}</h3>
                       {/* 会员等级徽章 */}
                       {(customer.memberLevel || 0) > 0 && (
-                        <Badge className="bg-amber-100 text-amber-700 text-xs">
+                        <Badge className="bg-chiikawa-yellow-light text-chiikawa-brown text-xs">
                           <Crown className="w-3 h-3 mr-0.5" />
                           {MEMBER_LEVEL_NAMES[customer.memberLevel || 0]}
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-apple-400">
+                    <div className="flex items-center gap-3 text-sm text-chiikawa-brown/60">
                       <span>{customer.accounts?.length || 0} 个账号</span>
-                      <span className={(customer.balance || 0) > 0 ? "text-green-600 flex items-center gap-1" : "text-apple-400 flex items-center gap-1"}>
+                      <span className={(customer.balance || 0) > 0 ? "text-green-600 flex items-center gap-1" : "text-chiikawa-brown/60 flex items-center gap-1"}>
                         <Wallet className="w-3 h-3" />
                         ¥{((customer.balance || 0) / 100).toFixed(2)}
                       </span>
@@ -524,7 +532,7 @@ export function CustomersPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-green-500"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-green-500"
                     onClick={() => handleOpenRecharge(customer)}
                     title="充值"
                   >
@@ -534,7 +542,7 @@ export function CustomersPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-blue-500"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-chiikawa-blue"
                     onClick={() => handleViewHistory(customer)}
                     title="余额变动历史"
                   >
@@ -543,7 +551,7 @@ export function CustomersPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-purple-500"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-chiikawa-pink"
                     onClick={() => loadGirlStats(customer)}
                     title="查看预约统计"
                   >
@@ -552,7 +560,7 @@ export function CustomersPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-apple-blue"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-chiikawa-blue"
                     onClick={() => handleOpenDialog(customer)}
                   >
                     <Edit2 className="w-4 h-4" />
@@ -560,7 +568,7 @@ export function CustomersPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-apple-400 hover:text-red-500"
+                    className="h-8 w-8 p-0 text-chiikawa-brown/60 hover:text-red-500"
                     onClick={() => handleDelete(customer.id)}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -570,11 +578,11 @@ export function CustomersPage() {
 
               {/* Accounts */}
               {customer.accounts && customer.accounts.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-apple-100 space-y-1">
+                <div className="mt-3 pt-3 border-t border-chiikawa-peach/20 space-y-1">
                   {customer.accounts.map((account, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-sm">
-                      <Badge variant="secondary" className="text-xs">{account.platform}</Badge>
-                      <span className="text-apple-600">{account.accountId}</span>
+                      <Badge variant="secondary" className="text-xs bg-chiikawa-blue-light text-chiikawa-blue">{account.platform}</Badge>
+                      <span className="text-chiikawa-brown/70">{account.accountId}</span>
                     </div>
                   ))}
                 </div>
@@ -598,7 +606,7 @@ export function CustomersPage() {
                   })}
                 </div>
               )}
-            </div>
+            </CuteCard>
           ))
         )}
       </div>
@@ -628,12 +636,12 @@ export function CustomersPage() {
               />
             </div>
 
-            {/* 存量会员设置 - 仅在编辑模式下显示 */}
+              {/* 存量会员设置 - 仅在编辑模式下显示 */}
             {editingCustomer && (
-              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 space-y-4">
+              <div className="p-4 bg-chiikawa-yellow-light rounded-xl border border-chiikawa-yellow/30 space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Crown className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-medium text-amber-800">存量会员设置</span>
+                  <Crown className="w-4 h-4 text-chiikawa-brown" />
+                  <span className="text-sm font-medium text-chiikawa-brown">存量会员设置</span>
                 </div>
                 
                 {/* 余额设置 */}
@@ -666,7 +674,7 @@ export function CustomersPage() {
                       setFormData({ ...formData, totalRecharge: Math.round(yuan * 100) })
                     }}
                   />
-                  <p className="text-xs text-apple-400">用于计算会员等级，系统自动根据累计充值判断</p>
+                  <p className="text-xs text-chiikawa-brown/60">用于计算会员等级，系统自动根据累计充值判断</p>
                 </div>
 
                 {/* 会员等级设置 */}
@@ -696,7 +704,7 @@ export function CustomersPage() {
               <Label>标签</Label>
 
               {/* 自定义标签输入 */}
-              <div className="p-3 bg-apple-50 rounded-xl space-y-3">
+              <div className="p-3 bg-chiikawa-cream rounded-xl space-y-3">
                 <div className="flex gap-2">
                   <Input
                     placeholder="输入新标签名称"
@@ -715,7 +723,7 @@ export function CustomersPage() {
                     onClick={handleAddCustomTag}
                     disabled={!newTagName.trim() || isAddingTag}
                     size="sm"
-                    className="bg-apple-blue text-white"
+                    className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -730,7 +738,7 @@ export function CustomersPage() {
                       onClick={() => setSelectedColor(color)}
                       className={cn(
                         "w-6 h-6 rounded-full transition-all",
-                        selectedColor === color && "ring-2 ring-offset-1 ring-apple-blue scale-110"
+                        selectedColor === color && "ring-2 ring-offset-1 ring-chiikawa-pink scale-110"
                       )}
                       style={{ backgroundColor: color }}
                     />
@@ -773,7 +781,7 @@ export function CustomersPage() {
             <Button
               onClick={handleSubmit}
               disabled={!formData.name.trim()}
-              className="bg-apple-blue text-white hover:bg-apple-blue/90"
+              className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
             >
               {editingCustomer ? '保存' : '创建'}
             </Button>
@@ -791,13 +799,13 @@ export function CustomersPage() {
           {selectedCustomerForStats && (
             <div className="py-4 space-y-4">
               {/* 顾客信息 */}
-              <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-apple-blue to-apple-indigo flex items-center justify-center text-white font-bold">
+              <div className="flex items-center gap-3 p-3 bg-chiikawa-cream rounded-xl">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold">
                   {selectedCustomerForStats.name[0]}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-apple-900">{selectedCustomerForStats.name}</h3>
-                  <p className="text-sm text-apple-400">
+                  <h3 className="font-semibold text-chiikawa-brown">{selectedCustomerForStats.name}</h3>
+                  <p className="text-sm text-chiikawa-brown/60">
                     共预约 {girlStats.reduce((sum, g) => sum + g.orderCount, 0)} 次
                   </p>
                 </div>
@@ -810,8 +818,8 @@ export function CustomersPage() {
                   className={cn(
                     "flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all",
                     statsSortBy === 'orders'
-                      ? "bg-apple-blue text-white"
-                      : "bg-apple-100 text-apple-600"
+                      ? "bg-chiikawa-pink text-white"
+                      : "bg-chiikawa-pink-light text-chiikawa-brown"
                   )}
                 >
                   按次数排序
@@ -821,8 +829,8 @@ export function CustomersPage() {
                   className={cn(
                     "flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all",
                     statsSortBy === 'amount'
-                      ? "bg-apple-blue text-white"
-                      : "bg-apple-100 text-apple-600"
+                      ? "bg-chiikawa-pink text-white"
+                      : "bg-chiikawa-pink-light text-chiikawa-brown"
                   )}
                 >
                   按金额排序
@@ -831,25 +839,31 @@ export function CustomersPage() {
 
               {/* 统计列表 */}
               {isLoadingStats ? (
-                <div className="text-center py-8 text-apple-400">加载中...</div>
+                <div className="text-center py-8 text-chiikawa-brown/60">
+                  <CharacterAvatar character="usagi" size="md" className="mx-auto mb-2 opacity-50" />
+                  加载中...
+                </div>
               ) : girlStats.length === 0 ? (
-                <div className="text-center py-8 text-apple-400">暂无预约记录</div>
+                <div className="text-center py-8 text-chiikawa-brown/60">
+                  <CharacterAvatar character="hachiware" size="lg" className="mx-auto mb-4 opacity-50" />
+                  暂无预约记录
+                </div>
               ) : (
                 <div className="space-y-3">
                   {getSortedStats().map((stat, index) => (
-                    <div key={stat.girlId} className="p-3 bg-apple-50 rounded-xl">
+                    <CuteCard key={stat.girlId} variant="cream" className="p-3">
                       <div className="flex items-center gap-3">
                         <span className={cn(
                           "w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center",
-                          index === 0 ? "bg-yellow-100 text-yellow-700" :
+                          index === 0 ? "bg-chiikawa-yellow text-chiikawa-brown" :
                           index === 1 ? "bg-gray-200 text-gray-700" :
-                          index === 2 ? "bg-orange-100 text-orange-700" :
-                          "bg-apple-100 text-apple-600"
+                          index === 2 ? "bg-chiikawa-peach text-chiikawa-brown" :
+                          "bg-chiikawa-blue-light text-chiikawa-blue"
                         )}>
                           {index + 1}
                         </span>
                         <div className="flex-1">
-                          <p className="font-medium text-apple-900">{stat.girlName}</p>
+                          <p className="font-medium text-chiikawa-brown">{stat.girlName}</p>
                           <div className="flex gap-2 text-xs">
                             <span className="text-green-600">完成 {stat.completedCount} 次</span>
                             {stat.cancelledCount > 0 && (
@@ -858,23 +872,23 @@ export function CustomersPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-apple-900">
+                          <p className="text-sm font-bold text-chiikawa-brown">
                             {statsSortBy === 'orders' ? `${stat.orderCount}次` : `¥${stat.totalAmount}`}
                           </p>
-                          <p className="text-xs text-apple-400">
+                          <p className="text-xs text-chiikawa-brown/60">
                             {statsSortBy === 'orders' ? `¥${stat.totalAmount}` : `${stat.orderCount}次`}
                           </p>
                         </div>
                       </div>
                       {/* 进度条 */}
-                      <div className="mt-2 h-1.5 bg-apple-200 rounded-full overflow-hidden">
+                      <div className="mt-2 h-1.5 bg-chiikawa-peach/30 rounded-full overflow-hidden">
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
-                            index === 0 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
+                            index === 0 ? "bg-gradient-to-r from-chiikawa-yellow to-chiikawa-peach" :
                             index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400" :
-                            index === 2 ? "bg-gradient-to-r from-orange-300 to-orange-400" :
-                            "bg-gradient-to-r from-apple-blue to-apple-purple"
+                            index === 2 ? "bg-gradient-to-r from-chiikawa-peach to-orange-300" :
+                            "bg-gradient-to-r from-chiikawa-blue to-chiikawa-pink"
                           )}
                           style={{
                             width: `${statsSortBy === 'orders'
@@ -884,7 +898,7 @@ export function CustomersPage() {
                           }}
                         />
                       </div>
-                    </div>
+                    </CuteCard>
                   ))}
                 </div>
               )}
@@ -903,20 +917,20 @@ export function CustomersPage() {
           {rechargingCustomer && (
             <div className="py-4 space-y-4">
               {/* 顾客信息 */}
-              <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold">
+              <div className="flex items-center gap-3 p-3 bg-chiikawa-cream rounded-xl">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-chiikawa-yellow to-chiikawa-peach flex items-center justify-center text-white font-bold">
                   {rechargingCustomer.name[0]}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-apple-900">{rechargingCustomer.name}</h3>
+                  <h3 className="font-semibold text-chiikawa-brown">{rechargingCustomer.name}</h3>
                   <div className="flex items-center gap-2 text-sm">
                     {(rechargingCustomer.memberLevel || 0) > 0 ? (
-                      <Badge className="bg-amber-100 text-amber-700 text-xs">
+                      <Badge className="bg-chiikawa-yellow-light text-chiikawa-brown text-xs">
                         <Crown className="w-3 h-3 mr-0.5" />
                         {MEMBER_LEVEL_NAMES[rechargingCustomer.memberLevel || 0]}
                       </Badge>
                     ) : (
-                      <span className="text-apple-400">普通用户</span>
+                      <span className="text-chiikawa-brown/60">普通用户</span>
                     )}
                     <span className="text-green-600">
                       余额: ¥{((rechargingCustomer.balance || 0) / 100).toFixed(2)}
@@ -966,8 +980,8 @@ export function CustomersPage() {
 
               {/* 充值后预估 */}
               {rechargeAmount && parseFloat(rechargeAmount) > 0 && (
-                <div className="p-3 bg-green-50 rounded-xl text-sm">
-                  <p className="text-green-800 font-medium mb-1">充值预览</p>
+                <div className="p-3 bg-chiikawa-mint/30 rounded-xl text-sm">
+                  <p className="text-green-700 font-medium mb-1">充值预览</p>
                   <p className="text-green-600">
                     充值后余额: ¥{(((rechargingCustomer.balance || 0) / 100) + parseFloat(rechargeAmount) + (giftAmount ? parseFloat(giftAmount) : 0)).toFixed(2)}
                   </p>
@@ -1011,20 +1025,20 @@ export function CustomersPage() {
                 const latestLevel = latestRechargeRecord?.afterLevel ?? historyCustomer.memberLevel
                 
                 return (
-                  <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
+                  <div className="flex items-center gap-3 p-3 bg-chiikawa-cream rounded-xl">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-chiikawa-blue to-blue-400 flex items-center justify-center text-white font-bold">
                       {historyCustomer.name[0]}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-apple-900">{historyCustomer.name}</h3>
+                      <h3 className="font-semibold text-chiikawa-brown">{historyCustomer.name}</h3>
                       <div className="flex items-center gap-2 text-sm">
                         {(latestLevel || 0) > 0 ? (
-                          <Badge className="bg-amber-100 text-amber-700 text-xs">
+                          <Badge className="bg-chiikawa-yellow-light text-chiikawa-brown text-xs">
                             <Crown className="w-3 h-3 mr-0.5" />
                             {MEMBER_LEVEL_NAMES[latestLevel || 0]}
                           </Badge>
                         ) : (
-                          <span className="text-apple-400">普通用户</span>
+                          <span className="text-chiikawa-brown/60">普通用户</span>
                         )}
                         <span className="text-green-600">
                           当前余额: ¥{((latestBalance || 0) / 100).toFixed(2)}
@@ -1037,20 +1051,26 @@ export function CustomersPage() {
 
               {/* 历史记录列表 */}
               {isLoadingHistory ? (
-                <div className="text-center py-8 text-apple-400">加载中...</div>
+                <div className="text-center py-8 text-chiikawa-brown/60">
+                  <CharacterAvatar character="usagi" size="md" className="mx-auto mb-2 opacity-50" />
+                  加载中...
+                </div>
               ) : balanceHistory.length === 0 ? (
-                <div className="text-center py-8 text-apple-400">暂无余额变动记录</div>
+                <div className="text-center py-8 text-chiikawa-brown/60">
+                  <CharacterAvatar character="hachiware" size="lg" className="mx-auto mb-4 opacity-50" />
+                  暂无余额变动记录
+                </div>
               ) : (
                 <div className="space-y-2">
                   {[...balanceHistory].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((record) => (
-                    <div key={record.id} className="p-3 bg-apple-50 rounded-xl">
+                    <CuteCard key={record.id} variant="cream" className="p-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Badge className={cn(
                             "text-xs",
-                            record.type === 'recharge' ? "bg-green-100 text-green-700" :
-                            record.type === 'consume' ? "bg-red-100 text-red-700" :
-                            "bg-blue-100 text-blue-700"
+                            record.type === 'recharge' ? "bg-chiikawa-mint/50 text-green-700" :
+                            record.type === 'consume' ? "bg-chiikawa-pink-light text-red-600" :
+                            "bg-chiikawa-blue-light text-chiikawa-blue"
                           )}>
                             {record.type === 'recharge' ? '充值' :
                              record.type === 'consume' ? '消费' : '退款'}
@@ -1062,17 +1082,17 @@ export function CustomersPage() {
                             {record.amount > 0 ? '+' : ''}¥{(record.amount / 100).toFixed(2)}
                           </span>
                         </div>
-                        <span className="text-xs text-apple-400">
+                        <span className="text-xs text-chiikawa-brown/50">
                           {new Date(record.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between mt-1 text-xs text-apple-500">
+                      <div className="flex items-center justify-between mt-1 text-xs text-chiikawa-brown/70">
                         <span>余额: ¥{(record.balanceBefore / 100).toFixed(2)} → ¥{(record.balanceAfter / 100).toFixed(2)}</span>
                       </div>
                       {record.remark && (
-                        <p className="text-xs text-apple-400 mt-1">{record.remark}</p>
+                        <p className="text-xs text-chiikawa-brown/50 mt-1">{record.remark}</p>
                       )}
-                    </div>
+                    </CuteCard>
                   ))}
                 </div>
               )}
