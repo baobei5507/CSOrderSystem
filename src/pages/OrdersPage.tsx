@@ -526,10 +526,11 @@ export function OrdersPage() {
             <EmptyOrdersState />
           )
         ) : (
-          filteredOrders.map((order) => {
-            const status = statusMap[order.status as OrderStatus]
-            return (
-              <CuteCard
+          <>
+            {filteredOrders.map((order) => {
+              const status = statusMap[order.status as OrderStatus]
+              return (
+                <CuteCard
                 key={order.id}
                 variant="cream"
                 className="p-4"
@@ -643,9 +644,10 @@ export function OrdersPage() {
                     </Button>
                   </div>
                 )}
-              </CuteCard>
-            )}
-          })
+                </CuteCard>
+              )
+            })}
+          </>
         )}
       </div>
 
