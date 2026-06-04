@@ -52,6 +52,9 @@ export const customers = sqliteTable('customers', {
   storeId: text('store_id').notNull().references(() => stores.id),
   nickname: text('nickname'),
   remark: text('remark'),
+  balance: integer('balance').notNull().default(0), // 余额（分）
+  totalRecharge: integer('total_recharge').notNull().default(0), // 累计充值（分）
+  memberLevel: integer('member_level').notNull().default(0), // 会员等级 0-5
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 })
@@ -92,6 +95,7 @@ export const orders = sqliteTable('orders', {
   girlId: text('girl_id').notNull().references(() => girls.id),
   packageId: text('package_id').notNull().references(() => packages.id),
   appointmentTime: integer('appointment_time'),
+  hours: integer('hours').notNull().default(1), // 预约小时数
   price: real('price').notNull(),
   discount: real('discount').default(0),
   finalPrice: real('final_price').notNull(),
@@ -99,6 +103,15 @@ export const orders = sqliteTable('orders', {
   serviceStaffName: text('service_staff_name').notNull(),
   girlIncome: real('girl_income').notNull(),
   serviceCommission: real('service_commission').notNull(),
+  // 会员折扣相关字段
+  originalPrice: integer('original_price'), // 每小时原价（分）
+  totalOriginalAmount: integer('total_original_amount'), // 原价总计（分）
+  discountType: text('discount_type', { enum: ['memberDay', 'memberRegular', 'coupon', 'none'] }), // 折扣类型
+  discountPercent: integer('discount_percent'), // 实际折扣率
+  discountAmount: integer('discount_amount'), // 优惠金额（分）
+  deductedBalance: integer('deducted_balance'), // 实际扣除余额（分）
+  usedMemberDayBenefit: integer('used_member_day_benefit', { mode: 'boolean' }).notNull().default(false), // 是否使用了会员日权益
+  storeProfit: integer('store_profit'), // 店家利润（分）
   remark: text('remark'),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
