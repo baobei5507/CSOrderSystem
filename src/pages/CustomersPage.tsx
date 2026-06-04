@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3, Wallet, Crown } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3, Wallet, Crown, History } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -155,8 +155,14 @@ export function CustomersPage() {
   const [rechargeRemark, setRechargeRemark] = useState('')
   const [isRecharging, setIsRecharging] = useState(false)
 
+  // 余额历史弹窗状态
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false)
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null)
+  const [balanceHistory, setBalanceHistory] = useState<any[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+
   const { currentStore } = useAppStore()
-  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer, createTag, getOrders, getGirls, recharge, getMemberConfig } = useApi()
+  const { getCustomers, getTags, createCustomer, updateCustomer, deleteCustomer, createTag, getOrders, getGirls, recharge, getBalanceTransactions } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -304,6 +310,21 @@ export function CustomersPage() {
       alert('充值失败: ' + (err.message || '未知错误'))
     } finally {
       setIsRecharging(false)
+    }
+  }
+
+  // 查看余额历史
+  const handleViewHistory = async (customer: Customer) => {
+    setHistoryCustomer(customer)
+    setHistoryDialogOpen(true)
+    setIsLoadingHistory(true)
+    try {
+      const history = await getBalanceTransactions(customer.id)
+      setBalanceHistory(history)
+    } catch (err) {
+      console.error('加载余额历史失败:', err)
+    } finally {
+      setIsLoadingHistory(false)
     }
   }
 
@@ -490,6 +511,16 @@ export function CustomersPage() {
                     title="充值"
                   >
                     <Wallet className="w-4 h-4" />
+                  </Button>
+                  {/* 余额历史按钮 */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-apple-400 hover:text-blue-500"
+                    onClick={() => handleViewHistory(customer)}
+                    title="余额变动历史"
+                  >
+                    <History className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -937,6 +968,90 @@ export function CustomersPage() {
               className="bg-green-500 text-white hover:bg-green-600"
             >
               {isRecharging ? '充值中...' : '确认充值'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 余额历史弹窗 */}
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>余额变动历史</DialogTitle>
+          </DialogHeader>
+          
+          {historyCustomer && (
+            <div className="py-4 space-y-4">
+              {/* 顾客信息 */}
+              <div className="flex items-center gap-3 p-3 bg-apple-50 rounded-xl">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
+                  {historyCustomer.name[0]}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-apple-900">{historyCustomer.name}</h3>
+                  <div className="flex items-center gap-2 text-sm">
+                    {(historyCustomer.memberLevel || 0) > 0 ? (
+                      <Badge className="bg-amber-100 text-amber-700 text-xs">
+                        <Crown className="w-3 h-3 mr-0.5" />
+                        {MEMBER_LEVEL_NAMES[historyCustomer.memberLevel || 0]}
+                      </Badge>
+                    ) : (
+                      <span className="text-apple-400">普通用户</span>
+                    )}
+                    <span className="text-green-600">
+                      当前余额: ¥{((historyCustomer.balance || 0) / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 历史记录列表 */}
+              {isLoadingHistory ? (
+                <div className="text-center py-8 text-apple-400">加载中...</div>
+              ) : balanceHistory.length === 0 ? (
+                <div className="text-center py-8 text-apple-400">暂无余额变动记录</div>
+              ) : (
+                <div className="space-y-2">
+                  {balanceHistory.map((record) => (
+                    <div key={record.id} className="p-3 bg-apple-50 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className={cn(
+                            "text-xs",
+                            record.type === 'recharge' ? "bg-green-100 text-green-700" :
+                            record.type === 'consume' ? "bg-red-100 text-red-700" :
+                            "bg-blue-100 text-blue-700"
+                          )}>
+                            {record.type === 'recharge' ? '充值' :
+                             record.type === 'consume' ? '消费' : '退款'}
+                          </Badge>
+                          <span className={cn(
+                            "font-medium",
+                            record.amount > 0 ? "text-green-600" : "text-red-600"
+                          )}>
+                            {record.amount > 0 ? '+' : ''}¥{(record.amount / 100).toFixed(2)}
+                          </span>
+                        </div>
+                        <span className="text-xs text-apple-400">
+                          {new Date(record.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1 text-xs text-apple-500">
+                        <span>余额: ¥{(record.balanceBefore / 100).toFixed(2)} → ¥{(record.balanceAfter / 100).toFixed(2)}</span>
+                      </div>
+                      {record.remark && (
+                        <p className="text-xs text-apple-400 mt-1">{record.remark}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setHistoryDialogOpen(false)}>
+              关闭
             </Button>
           </div>
         </DialogContent>
