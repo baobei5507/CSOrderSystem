@@ -250,6 +250,11 @@ export function OrdersPage() {
   }
 
   const handleOpenDialog = () => {
+    // 获取当前时间并设置为整点
+    const now = new Date()
+    const currentHour = String(now.getHours()).padStart(2, '0')
+    const currentDate = now.toISOString().split('T')[0]
+    
     setFormData({
       customerId: '',
       customerAccountId: '',
@@ -257,8 +262,8 @@ export function OrdersPage() {
       packageId: '',
       price: 0,
       discount: 0,
-      appointmentDate: '',
-      appointmentTime: '',
+      appointmentDate: currentDate,
+      appointmentTime: `${currentHour}:00`,
       hours: 1,
       couponSource: '',
     })
@@ -299,10 +304,22 @@ export function OrdersPage() {
 
       // 如果是创建新顾客
       if (isCreatingCustomer && customerSearch.trim()) {
+        // 验证联系方式：检查是否有未填写完整的账号
+        const hasInvalidAccount = newCustomerAccounts.some(a => 
+          (a.platform && !a.accountId.trim()) || (!a.platform && a.accountId.trim())
+        )
+        if (hasInvalidAccount) {
+          alert('请填写完整的联系方式（平台和账号ID）')
+          return
+        }
+
+        // 过滤掉完全空的账号
+        const validAccounts = newCustomerAccounts.filter(a => a.platform && a.accountId.trim())
+        
         const newCustomer = await createCustomer({
           name: customerSearch.trim(),
           storeId: currentStore.id,
-          accounts: newCustomerAccounts.filter(a => a.accountId.trim()),
+          accounts: validAccounts,
           tagIds: [],
         })
         finalCustomerId = newCustomer.id
@@ -1125,7 +1142,7 @@ export function OrdersPage() {
                   <SelectTrigger>
                     <SelectValue placeholder="选择时间" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[240px] overflow-y-auto">
                     {Array.from({ length: 24 }, (_, i) => i).flatMap(hour => [
                       <SelectItem key={`${hour}:00`} value={`${String(hour).padStart(2, '0')}:00`}>
                         {String(hour).padStart(2, '0')}:00
