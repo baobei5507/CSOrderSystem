@@ -368,7 +368,7 @@ function MemberSettings() {
   if (isLoading) {
     return (
       <div className="text-center py-8 text-chiikawa-brown/60">
-        <CharacterAvatar character="usagi" size="md" className="mx-auto mb-2 opacity-50" />
+        <CharacterAvatar character="hachiwareDaily1" size="md" className="mx-auto mb-2 opacity-50" />
         加载中...
       </div>
     )
@@ -526,7 +526,7 @@ export function SettingsPage() {
               <ChevronRight className="w-5 h-5 rotate-180" />
             </Button>
             <div className="flex items-center gap-3">
-              <CharacterAvatar character="chiikawa" size="xs" />
+              <CharacterAvatar character="hachiwareDaily2" size="xs" />
               <h1 className="text-xl font-bold text-chiikawa-brown">套餐管理</h1>
             </div>
           </div>
@@ -568,7 +568,7 @@ export function SettingsPage() {
               <ChevronRight className="w-5 h-5 rotate-180" />
             </Button>
             <div className="flex items-center gap-3">
-              <CharacterAvatar character="usagi" size="xs" />
+              <CharacterAvatar character="hachiwareDaily3" size="xs" />
               <h1 className="text-xl font-bold text-chiikawa-brown">会员设置</h1>
             </div>
           </div>
@@ -585,7 +585,7 @@ export function SettingsPage() {
       {/* Header */}
       <div className="sticky top-0 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center gap-3">
-          <CharacterAvatar character="kuri" size="sm" />
+          <CharacterAvatar character="hachiwareDaily4" size="sm" />
           <div>
             <h1 className="text-xl font-bold text-chiikawa-brown">设置</h1>
             <p className="text-sm text-chiikawa-brown/60">管理系统配置</p>

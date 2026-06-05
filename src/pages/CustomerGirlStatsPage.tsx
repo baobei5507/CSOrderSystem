@@ -95,7 +95,7 @@ export function CustomerGirlStatsPage() {
     return (
       <div className="flex items-center justify-center h-screen bg-chiikawa-cream">
         <div className="text-center">
-          <CharacterAvatar character="kuri" size="lg" className="mx-auto mb-4" />
+          <CharacterAvatar character="hachiwareCute1" size="lg" className="mx-auto mb-4" />
           <p className="text-chiikawa-brown/60">请先选择店家</p>
         </div>
       </div>
@@ -106,7 +106,7 @@ export function CustomerGirlStatsPage() {
     return (
       <div className="flex items-center justify-center h-screen bg-chiikawa-cream">
         <div className="text-center">
-          <CharacterAvatar character="usagi" size="lg" className="mx-auto mb-4" />
+          <CharacterAvatar character="hachiwareCute2" size="lg" className="mx-auto mb-4" />
           <p className="text-chiikawa-brown/60">顾客不存在</p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export function CustomerGirlStatsPage() {
             <ArrowLeft className="w-5 h-5 text-chiikawa-brown" />
           </Button>
           <h1 className="text-lg font-semibold text-chiikawa-brown">顾客偏好分析</h1>
-          <CharacterAvatar character="chiikawa" size="sm" />
+          <CharacterAvatar character="hachiwareCute3" size="sm" />
         </div>
       </div>
 
@@ -176,12 +176,12 @@ export function CustomerGirlStatsPage() {
           {/* 统计列表 */}
           {isLoading ? (
             <div className="text-center py-12">
-              <CharacterAvatar character="usagi" size="lg" className="mx-auto mb-4" />
+              <CharacterAvatar character="hachiwareDaily1" size="lg" className="mx-auto mb-4" />
               <p className="text-chiikawa-brown/60">加载中...</p>
             </div>
           ) : girlStats.length === 0 ? (
             <div className="text-center py-12">
-              <CharacterAvatar character="rakko" size="xl" className="mx-auto mb-4" />
+              <CharacterAvatar character="hachiwareDaily2" size="xl" className="mx-auto mb-4" />
               <p className="text-chiikawa-brown/60">暂无预约记录</p>
             </div>
           ) : (

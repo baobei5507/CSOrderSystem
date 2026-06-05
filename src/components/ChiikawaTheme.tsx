@@ -1,18 +1,48 @@
 import { cn } from '@/lib/utils'
 import { ReactNode } from 'react'
 
-// 角色图片映射
+// 角色图片映射 - 小八系列素材
 const characterImages: Record<string, string> = {
   chiikawa: '/images/chiikawa.png',
   hachiware: '/images/hachiware.png',
   usagi: '/images/usagi.png',
   kuri: '/images/kuri.png',
   rakko: '/images/rakko.png',
+  // 小八系列 JPG 素材
+  hachiwareCute1: '/images/hachiware_cute_1.jpg',
+  hachiwareCute2: '/images/hachiware_cute_2.jpg',
+  hachiwareCute3: '/images/hachiware_cute_3.jpg',
+  hachiwareDaily1: '/images/hachiware_daily_1.jpg',
+  hachiwareDaily2: '/images/hachiware_daily_2.jpg',
+  hachiwareDaily3: '/images/hachiware_daily_3.jpg',
+  hachiwareDaily4: '/images/hachiware_daily_4.jpg',
+  hachiwareDaily5: '/images/hachiware_daily_5.jpg',
+  hachiwareDaily6: '/images/hachiware_daily_6.jpg',
+  hachiwareDaily7: '/images/hachiware_daily_7.jpg',
+  hachiwareAvatar1: '/images/hachiware_avatar_1.jpg',
+  hachiwareAvatar2: '/images/hachiware_avatar_2.jpg',
+  // 小八其他系列素材
+  hachiwareFace6: '/images/hachiware_face_6.jpg',
+  hachiwareFace7: '/images/hachiware_face_7.jpg',
+  hachiwareFace8: '/images/hachiware_face_8.jpg',
+  hachiwareFace9: '/images/hachiware_face_9.jpg',
+  hachiwareFace10: '/images/hachiware_face_10.jpg',
+  hachiwareCamera1: '/images/hachiware_camera_1.jpg',
+  hachiwareCamera2: '/images/hachiware_camera_2.jpg',
+  hachiwareLineStamp: '/images/line_stamp_poinko.jpg',
 }
 
-// 吉伊卡哇角色头像组件
+// 吉伊卡哇角色头像组件 - 支持小八系列素材
+type HachiwareImageType = 
+  | 'hachiwareCute1' | 'hachiwareCute2' | 'hachiwareCute3'
+  | 'hachiwareDaily1' | 'hachiwareDaily2' | 'hachiwareDaily3' | 'hachiwareDaily4' | 'hachiwareDaily5' | 'hachiwareDaily6' | 'hachiwareDaily7'
+  | 'hachiwareAvatar1' | 'hachiwareAvatar2'
+  | 'hachiwareFace6' | 'hachiwareFace7' | 'hachiwareFace8' | 'hachiwareFace9' | 'hachiwareFace10'
+  | 'hachiwareCamera1' | 'hachiwareCamera2'
+  | 'hachiwareLineStamp'
+
 interface CharacterAvatarProps {
-  character: 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko'
+  character: 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko' | HachiwareImageType
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   useImage?: boolean // 是否使用图片素材（默认 true）
@@ -202,7 +232,7 @@ export function ChiikawaLoading() {
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <div className="relative">
-        <CharacterAvatar character="usagi" size="xl" />
+        <CharacterAvatar character="hachiwareDaily7" size="xl" />
         <div className="absolute -bottom-2 -right-2 animate-bounce">
           <span className="text-2xl">✨</span>
         </div>

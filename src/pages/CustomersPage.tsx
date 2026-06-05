@@ -458,7 +458,7 @@ export function CustomersPage() {
       <div className="sticky top-0 z-10 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <CharacterAvatar character="kuri" size="sm" />
+            <CharacterAvatar character="hachiwareDaily3" size="sm" />
             <h1 className="text-xl font-bold text-chiikawa-brown">顾客管理</h1>
           </div>
           <Button
@@ -489,7 +489,7 @@ export function CustomersPage() {
         ) : filteredCustomers.length === 0 ? (
           searchQuery ? (
             <div className="text-center py-12 text-chiikawa-brown/60">
-              <CharacterAvatar character="chiikawa" size="lg" className="mx-auto mb-4 opacity-50" />
+              <CharacterAvatar character="hachiwareDaily4" size="lg" className="mx-auto mb-4 opacity-50" />
               未找到匹配的结果
             </div>
           ) : (
@@ -840,7 +840,7 @@ export function CustomersPage() {
               {/* 统计列表 */}
               {isLoadingStats ? (
                 <div className="text-center py-8 text-chiikawa-brown/60">
-                  <CharacterAvatar character="usagi" size="md" className="mx-auto mb-2 opacity-50" />
+                  <CharacterAvatar character="hachiwareDaily5" size="md" className="mx-auto mb-2 opacity-50" />
                   加载中...
                 </div>
               ) : girlStats.length === 0 ? (
@@ -1052,7 +1052,7 @@ export function CustomersPage() {
               {/* 历史记录列表 */}
               {isLoadingHistory ? (
                 <div className="text-center py-8 text-chiikawa-brown/60">
-                  <CharacterAvatar character="usagi" size="md" className="mx-auto mb-2 opacity-50" />
+                  <CharacterAvatar character="hachiwareDaily7" size="md" className="mx-auto mb-2 opacity-50" />
                   加载中...
                 </div>
               ) : balanceHistory.length === 0 ? (

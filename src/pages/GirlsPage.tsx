@@ -223,7 +223,7 @@ export function GirlsPage() {
       <div className="sticky top-0 z-10 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <CharacterAvatar character="rakko" size="sm" />
+            <CharacterAvatar character="hachiwareCute3" size="sm" />
             <h1 className="text-xl font-bold text-chiikawa-brown">妹妹管理</h1>
           </div>
           <Button
@@ -270,7 +270,7 @@ export function GirlsPage() {
         ) : filteredGirls.length === 0 ? (
           searchQuery ? (
             <div className="text-center py-12 text-chiikawa-brown/60">
-              <CharacterAvatar character="chiikawa" size="lg" className="mx-auto mb-4 opacity-50" />
+              <CharacterAvatar character="hachiwareDaily7" size="lg" className="mx-auto mb-4 opacity-50" />
               未找到匹配的结果
             </div>
           ) : (

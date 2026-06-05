@@ -1,11 +1,20 @@
 import { cn } from '@/lib/utils'
 
+// 小八系列素材类型
+type HachiwareImageType = 
+  | 'hachiwareCute1' | 'hachiwareCute2' | 'hachiwareCute3'
+  | 'hachiwareDaily1' | 'hachiwareDaily2' | 'hachiwareDaily3' | 'hachiwareDaily4' | 'hachiwareDaily5' | 'hachiwareDaily6' | 'hachiwareDaily7'
+  | 'hachiwareAvatar1' | 'hachiwareAvatar2'
+  | 'hachiwareFace6' | 'hachiwareFace7' | 'hachiwareFace8' | 'hachiwareFace9' | 'hachiwareFace10'
+  | 'hachiwareCamera1' | 'hachiwareCamera2'
+  | 'hachiwareLineStamp'
+
 interface EmptyStateProps {
   title?: string
   description?: string
   className?: string
   size?: 'sm' | 'md' | 'lg'
-  character?: 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko'
+  character?: 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko' | HachiwareImageType
 }
 
 const characterImages: Record<string, string> = {
@@ -14,6 +23,28 @@ const characterImages: Record<string, string> = {
   usagi: '/images/usagi.png',
   kuri: '/images/kuri.png',
   rakko: '/images/rakko.png',
+  // 小八系列 JPG 素材
+  hachiwareCute1: '/images/hachiware_cute_1.jpg',
+  hachiwareCute2: '/images/hachiware_cute_2.jpg',
+  hachiwareCute3: '/images/hachiware_cute_3.jpg',
+  hachiwareDaily1: '/images/hachiware_daily_1.jpg',
+  hachiwareDaily2: '/images/hachiware_daily_2.jpg',
+  hachiwareDaily3: '/images/hachiware_daily_3.jpg',
+  hachiwareDaily4: '/images/hachiware_daily_4.jpg',
+  hachiwareDaily5: '/images/hachiware_daily_5.jpg',
+  hachiwareDaily6: '/images/hachiware_daily_6.jpg',
+  hachiwareDaily7: '/images/hachiware_daily_7.jpg',
+  hachiwareAvatar1: '/images/hachiware_avatar_1.jpg',
+  hachiwareAvatar2: '/images/hachiware_avatar_2.jpg',
+  // 小八其他系列素材
+  hachiwareFace6: '/images/hachiware_face_6.jpg',
+  hachiwareFace7: '/images/hachiware_face_7.jpg',
+  hachiwareFace8: '/images/hachiware_face_8.jpg',
+  hachiwareFace9: '/images/hachiware_face_9.jpg',
+  hachiwareFace10: '/images/hachiware_face_10.jpg',
+  hachiwareCamera1: '/images/hachiware_camera_1.jpg',
+  hachiwareCamera2: '/images/hachiware_camera_2.jpg',
+  hachiwareLineStamp: '/images/line_stamp_poinko.jpg',
 }
 
 const characterColors: Record<string, string> = {
@@ -122,7 +153,7 @@ export function EmptyCustomersState({ className }: { className?: string }) {
       title="暂无顾客"
       description="添加您的第一位顾客"
       size="md"
-      character="chiikawa"
+      character="hachiwareCute1"
       className={className}
     />
   )
@@ -137,7 +168,7 @@ export function EmptyGirlsState({ className }: { className?: string }) {
       title="暂无妹妹信息"
       description="添加第一位妹妹"
       size="md"
-      character="rakko"
+      character="hachiwareCute2"
       className={className}
     />
   )
@@ -151,7 +182,7 @@ export function EmptyDataState({ className }: { className?: string }) {
     <EmptyState
       title="暂无数据"
       size="sm"
-      character="usagi"
+      character="hachiwareCute3"
       className={className}
     />
   )
@@ -166,7 +197,7 @@ export function EmptyTagsState({ className }: { className?: string }) {
       title="暂无标签"
       description="创建您的第一个标签"
       size="sm"
-      character="kuri"
+      character="hachiwareDaily1"
       className={className}
     />
   )

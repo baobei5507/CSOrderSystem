@@ -519,7 +519,7 @@ export function OrdersPage() {
         ) : filteredOrders.length === 0 ? (
           searchQuery ? (
             <div className="text-center py-12 text-chiikawa-brown/60">
-              <CharacterAvatar character="chiikawa" size="lg" className="mx-auto mb-4 opacity-50" />
+              <CharacterAvatar character="hachiwareDaily6" size="lg" className="mx-auto mb-4 opacity-50" />
               未找到匹配的结果
             </div>
           ) : (

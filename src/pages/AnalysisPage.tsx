@@ -191,7 +191,7 @@ export function AnalysisPage() {
     return (
       <div className="flex items-center justify-center min-h-screen pb-20 bg-chiikawa-cream">
         <div className="text-center">
-          <CharacterAvatar character="kuri" size="lg" className="mx-auto mb-4" />
+          <CharacterAvatar character="hachiwareCute1" size="lg" className="mx-auto mb-4" />
           <p className="text-chiikawa-brown/60">请先选择店铺</p>
         </div>
       </div>
@@ -276,7 +276,7 @@ export function AnalysisPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <CharacterAvatar character="rakko" size="md" className="mx-auto mb-3" />
+                    <CharacterAvatar character="hachiwareCute2" size="md" className="mx-auto mb-3" />
                     <p className="text-chiikawa-brown/60">暂无数据</p>
                   </div>
                 )}
@@ -319,7 +319,7 @@ export function AnalysisPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <CharacterAvatar character="usagi" size="md" className="mx-auto mb-3" />
+                    <CharacterAvatar character="hachiwareCute3" size="md" className="mx-auto mb-3" />
                     <p className="text-chiikawa-brown/60">暂无数据</p>
                   </div>
                 )}
@@ -381,7 +381,7 @@ export function AnalysisPage() {
         <div className="px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-chiikawa-brown">顾客偏好分析</h1>
-            <CharacterAvatar character="kuri" size="sm" />
+            <CharacterAvatar character="hachiwareDaily1" size="sm" />
           </div>
           
           {/* 顾客搜索 */}
@@ -472,7 +472,7 @@ export function AnalysisPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">{summary.totalCustomers}</p>
                   </div>
-                  <CharacterAvatar character="chiikawa" size="sm" />
+                  <CharacterAvatar character="hachiwareDaily5" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="pink" className="p-4">
@@ -484,7 +484,7 @@ export function AnalysisPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">¥{summary.totalRevenue.toLocaleString()}</p>
                   </div>
-                  <CharacterAvatar character="usagi" size="sm" />
+                  <CharacterAvatar character="hachiwareDaily6" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="yellow" className="p-4">
@@ -508,7 +508,7 @@ export function AnalysisPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">{summary.inactiveCount}</p>
                   </div>
-                  <CharacterAvatar character="kuri" size="sm" />
+                  <CharacterAvatar character="hachiwareDaily4" size="sm" />
                 </div>
               </CuteCard>
             </div>
@@ -602,7 +602,7 @@ export function AnalysisPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <CharacterAvatar character="usagi" size="md" className="mx-auto mb-3" />
+                  <CharacterAvatar character="hachiwareDaily7" size="md" className="mx-auto mb-3" />
                   <p className="text-chiikawa-brown/60">暂无趋势数据</p>
                 </div>
               )}
@@ -669,7 +669,7 @@ export function AnalysisPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <CharacterAvatar character="rakko" size="md" className="mx-auto mb-3" />
+                  <CharacterAvatar character="hachiwareAvatar1" size="md" className="mx-auto mb-3" />
                   <p className="text-chiikawa-brown/60">暂无数据</p>
                 </div>
               )}
@@ -710,7 +710,7 @@ export function AnalysisPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <CharacterAvatar character="usagi" size="md" className="mx-auto mb-3" />
+                  <CharacterAvatar character="hachiwareDaily4" size="md" className="mx-auto mb-3" />
                   <p className="text-chiikawa-brown/60">暂无数据</p>
                 </div>
               )}
@@ -759,7 +759,7 @@ export function AnalysisPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <CharacterAvatar character="chiikawa" size="md" className="mx-auto mb-3" />
+                  <CharacterAvatar character="hachiwareAvatar2" size="md" className="mx-auto mb-3" />
                   <p className="text-chiikawa-brown/60">暂无沉睡顾客</p>
                 </div>
               )}
