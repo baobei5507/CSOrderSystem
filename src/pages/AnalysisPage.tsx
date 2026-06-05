@@ -123,7 +123,7 @@ const timeRangeOptions: { value: TimeRange; label: string }[] = [
 
 export function AnalysisPage() {
   const { currentStore } = useAppStore()
-  const [timeRange, setTimeRange] = useState<TimeRange>('6months')
+  const [timeRange, setTimeRange] = useState<TimeRange>('month')
   const [trendDimension, setTrendDimension] = useState<TrendDimension>('count')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerPreference | null>(null)
