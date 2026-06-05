@@ -95,7 +95,7 @@ export function CustomerGirlStatsPage() {
     return (
       <div className="flex items-center justify-center h-screen bg-chiikawa-cream">
         <div className="text-center">
-          <CharacterAvatar character="hachiwareCute1" size="lg" className="mx-auto mb-4" />
+          <CharacterAvatar character="hachiwareCute2" size="lg" className="mx-auto mb-4" />
           <p className="text-chiikawa-brown/60">请先选择店家</p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export function CustomerGirlStatsPage() {
             <ArrowLeft className="w-5 h-5 text-chiikawa-brown" />
           </Button>
           <h1 className="text-lg font-semibold text-chiikawa-brown">顾客偏好分析</h1>
-          <CharacterAvatar character="hachiwareCute3" size="sm" />
+          <CharacterAvatar character="hachiwareFace6" size="sm" />
         </div>
       </div>
 

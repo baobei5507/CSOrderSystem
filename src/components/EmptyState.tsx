@@ -138,7 +138,7 @@ export function EmptyOrdersState({ className }: { className?: string }) {
       title="今天还没有预约哦"
       description="点击右上角按钮创建新订单"
       size="md"
-      character="hachiware"
+      character="hachiwareDaily2"
       className={className}
     />
   )
@@ -153,7 +153,7 @@ export function EmptyCustomersState({ className }: { className?: string }) {
       title="暂无顾客"
       description="添加您的第一位顾客"
       size="md"
-      character="hachiwareCute1"
+      character="hachiwareDaily3"
       className={className}
     />
   )
@@ -168,7 +168,7 @@ export function EmptyGirlsState({ className }: { className?: string }) {
       title="暂无妹妹信息"
       description="添加第一位妹妹"
       size="md"
-      character="hachiwareCute2"
+      character="hachiwareDaily4"
       className={className}
     />
   )
@@ -182,7 +182,7 @@ export function EmptyDataState({ className }: { className?: string }) {
     <EmptyState
       title="暂无数据"
       size="sm"
-      character="hachiwareCute3"
+      character="hachiwareDaily5"
       className={className}
     />
   )
@@ -197,7 +197,7 @@ export function EmptyTagsState({ className }: { className?: string }) {
       title="暂无标签"
       description="创建您的第一个标签"
       size="sm"
-      character="hachiwareDaily1"
+      character="hachiwareCute3"
       className={className}
     />
   )

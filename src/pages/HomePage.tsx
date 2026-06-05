@@ -87,7 +87,7 @@ export function HomePage() {
         <WelcomeHeader 
           title="今天也要加油哦！"
           subtitle={`${today} · ${currentStore?.name || '未选择店家'}`}
-          character="hachiware"
+          character="hachiwareCamera1"
         />
 
         {isLoading ? (
@@ -105,21 +105,21 @@ export function HomePage() {
                   title="今日收入"
                   value={formatMoney(data.todayRevenue)}
                   subtitle={`${data.todayCompleted} 笔完成订单`}
-                  character="hachiwareCute1"
+                  character="hachiwareDaily1"
                   variant="pink"
                 />
                 <CuteStatCard
                   title="完成订单"
                   value={data.todayCompleted}
                   subtitle="今日已完成"
-                  character="hachiwareDaily1"
+                  character="hachiwareDaily2"
                   variant="blue"
                 />
                 <CuteStatCard
                   title="取消订单"
                   value={data.todayCancelled}
                   subtitle="今日已取消"
-                  character="hachiwareDaily2"
+                  character="hachiwareDaily3"
                   variant="yellow"
                 />
               </div>
@@ -136,27 +136,27 @@ export function HomePage() {
                   title="本月收入"
                   value={formatMoney(data.monthRevenue)}
                   subtitle={`${data.monthCompleted} 笔完成订单`}
-                  character="hachiwareCute2"
+                  character="hachiwareDaily4"
                   variant="pink"
                 />
                 <CuteStatCard
                   title="完成订单"
                   value={data.monthCompleted}
                   subtitle="本月已完成"
-                  character="hachiwareDaily3"
+                  character="hachiwareDaily5"
                   variant="blue"
                 />
                 <CuteStatCard
                   title="取消订单"
                   value={data.monthCancelled}
                   subtitle="本月已取消"
-                  character="hachiwareDaily4"
+                  character="hachiwareDaily6"
                   variant="yellow"
                 />
                 <CuteStatCard
                   title="客服提成"
                   value={formatMoney(data.monthServiceCommission)}
-                  character="hachiwareDaily5"
+                  character="hachiwareDaily7"
                   variant="yellow"
                 />
                 <CuteStatCard

@@ -845,7 +845,7 @@ export function CustomersPage() {
                 </div>
               ) : girlStats.length === 0 ? (
                 <div className="text-center py-8 text-chiikawa-brown/60">
-                  <CharacterAvatar character="hachiware" size="lg" className="mx-auto mb-4 opacity-50" />
+                  <CharacterAvatar character="hachiwareCute1" size="lg" className="mx-auto mb-4 opacity-50" />
                   暂无预约记录
                 </div>
               ) : (
@@ -1057,7 +1057,7 @@ export function CustomersPage() {
                 </div>
               ) : balanceHistory.length === 0 ? (
                 <div className="text-center py-8 text-chiikawa-brown/60">
-                  <CharacterAvatar character="hachiware" size="lg" className="mx-auto mb-4 opacity-50" />
+                  <CharacterAvatar character="hachiwareCute2" size="lg" className="mx-auto mb-4 opacity-50" />
                   暂无余额变动记录
                 </div>
               ) : (

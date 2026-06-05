@@ -472,7 +472,7 @@ export function OrdersPage() {
       <div className="sticky top-0 z-10 bg-gradient-to-b from-chiikawa-cream to-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <CharacterAvatar character="hachiware" size="sm" />
+            <CharacterAvatar character="hachiwareCamera2" size="sm" />
             <h1 className="text-2xl font-bold text-chiikawa-brown">订单管理</h1>
           </div>
           <Button
@@ -519,7 +519,7 @@ export function OrdersPage() {
         ) : filteredOrders.length === 0 ? (
           searchQuery ? (
             <div className="text-center py-12 text-chiikawa-brown/60">
-              <CharacterAvatar character="hachiwareDaily6" size="lg" className="mx-auto mb-4 opacity-50" />
+              <CharacterAvatar character="hachiwareLineStamp" size="lg" className="mx-auto mb-4 opacity-50" />
               未找到匹配的结果
             </div>
           ) : (

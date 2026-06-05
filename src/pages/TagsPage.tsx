@@ -96,7 +96,7 @@ export function TagsPage() {
       <div className="sticky top-0 z-10 bg-chiikawa-cream/95 backdrop-blur-xl border-b border-chiikawa-peach/30">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-3">
-            <CharacterAvatar character="hachiwareAvatar2" size="xs" />
+            <CharacterAvatar character="hachiwareFace6" size="xs" />
             <h1 className="text-lg font-bold text-chiikawa-brown">标签统计</h1>
           </div>
         </div>
@@ -185,7 +185,7 @@ export function TagsPage() {
               </div>
             ) : topTags.length === 0 ? (
               <div className="text-center py-4 text-chiikawa-brown/60">
-                <CharacterAvatar character="hachiwareCute1" size="md" className="mx-auto mb-2 opacity-50" />
+                <CharacterAvatar character="hachiwareFace7" size="md" className="mx-auto mb-2 opacity-50" />
                 暂无标签数据
               </div>
             ) : (
@@ -245,7 +245,7 @@ export function TagsPage() {
               <Skeleton className="h-20 w-full" />
             ) : colorList.length === 0 ? (
               <div className="text-center py-4 text-chiikawa-brown/60">
-                <CharacterAvatar character="hachiware" size="md" className="mx-auto mb-2 opacity-50" />
+                <CharacterAvatar character="hachiwareFace8" size="md" className="mx-auto mb-2 opacity-50" />
                 暂无数据
               </div>
             ) : (
@@ -280,7 +280,7 @@ export function TagsPage() {
               </div>
             ) : recentTags.length === 0 ? (
               <div className="text-center py-4 text-chiikawa-brown/60">
-                <CharacterAvatar character="hachiwareCute2" size="md" className="mx-auto mb-2 opacity-50" />
+                <CharacterAvatar character="hachiwareFace9" size="md" className="mx-auto mb-2 opacity-50" />
                 暂无标签
               </div>
             ) : (
@@ -319,7 +319,7 @@ export function TagsPage() {
                 </div>
               ) : !tagDetail || tagDetail.customers.length === 0 ? (
                 <div className="text-center py-4 text-chiikawa-brown/60">
-                  <CharacterAvatar character="hachiwareCute3" size="md" className="mx-auto mb-2 opacity-50" />
+                  <CharacterAvatar character="hachiwareFace10" size="md" className="mx-auto mb-2 opacity-50" />
                   暂无关联顾客
                 </div>
               ) : (

@@ -191,7 +191,7 @@ export function AnalysisPage() {
     return (
       <div className="flex items-center justify-center min-h-screen pb-20 bg-chiikawa-cream">
         <div className="text-center">
-          <CharacterAvatar character="hachiwareCute1" size="lg" className="mx-auto mb-4" />
+          <CharacterAvatar character="hachiwareCute2" size="lg" className="mx-auto mb-4" />
           <p className="text-chiikawa-brown/60">请先选择店铺</p>
         </div>
       </div>
@@ -276,7 +276,7 @@ export function AnalysisPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <CharacterAvatar character="hachiwareCute2" size="md" className="mx-auto mb-3" />
+                    <CharacterAvatar character="hachiwareCute3" size="md" className="mx-auto mb-3" />
                     <p className="text-chiikawa-brown/60">暂无数据</p>
                   </div>
                 )}
@@ -362,7 +362,7 @@ export function AnalysisPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <CharacterAvatar character="hachiware" size="md" className="mx-auto mb-3" />
+                    <CharacterAvatar character="hachiwareDaily2" size="md" className="mx-auto mb-3" />
                     <p className="text-chiikawa-brown/60">暂无订单</p>
                   </div>
                 )}
@@ -381,7 +381,7 @@ export function AnalysisPage() {
         <div className="px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-chiikawa-brown">顾客偏好分析</h1>
-            <CharacterAvatar character="hachiwareDaily1" size="sm" />
+            <CharacterAvatar character="hachiwareCute1" size="sm" />
           </div>
           
           {/* 顾客搜索 */}
@@ -472,7 +472,7 @@ export function AnalysisPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">{summary.totalCustomers}</p>
                   </div>
-                  <CharacterAvatar character="hachiwareDaily5" size="sm" />
+                  <CharacterAvatar character="hachiwareDaily3" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="pink" className="p-4">
@@ -484,7 +484,7 @@ export function AnalysisPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">¥{summary.totalRevenue.toLocaleString()}</p>
                   </div>
-                  <CharacterAvatar character="hachiwareDaily6" size="sm" />
+                  <CharacterAvatar character="hachiwareDaily4" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="yellow" className="p-4">
@@ -496,7 +496,7 @@ export function AnalysisPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">{summary.totalOrders}</p>
                   </div>
-                  <CharacterAvatar character="hachiware" size="sm" />
+                  <CharacterAvatar character="hachiwareDaily5" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="cream" className="p-4">
@@ -508,7 +508,7 @@ export function AnalysisPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">{summary.inactiveCount}</p>
                   </div>
-                  <CharacterAvatar character="hachiwareDaily4" size="sm" />
+                  <CharacterAvatar character="hachiwareDaily6" size="sm" />
                 </div>
               </CuteCard>
             </div>

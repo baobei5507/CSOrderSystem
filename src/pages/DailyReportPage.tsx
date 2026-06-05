@@ -107,7 +107,7 @@ export function DailyReportPage() {
     return (
       <div className="flex items-center justify-center min-h-screen pb-20 bg-chiikawa-cream">
         <div className="text-center">
-          <CharacterAvatar character="hachiwareCute1" size="lg" className="mx-auto mb-4" />
+          <CharacterAvatar character="hachiwareCute3" size="lg" className="mx-auto mb-4" />
           <p className="text-chiikawa-brown/60">请先选择店铺</p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export function DailyReportPage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold text-chiikawa-brown">当日业绩</h1>
-              <CharacterAvatar character="hachiwareCute2" size="sm" />
+              <CharacterAvatar character="hachiwareFace6" size="sm" />
             </div>
             <Button 
               variant="outline" 
@@ -200,7 +200,7 @@ export function DailyReportPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalRevenue.toLocaleString()}</p>
                   </div>
-                  <CharacterAvatar character="hachiwareCute3" size="sm" />
+                  <CharacterAvatar character="hachiwareFace7" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="pink" className="p-4">
@@ -212,7 +212,7 @@ export function DailyReportPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">{reportData.summary.totalOrders}</p>
                   </div>
-                  <CharacterAvatar character="hachiware" size="sm" />
+                  <CharacterAvatar character="hachiwareFace8" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="yellow" className="p-4">
@@ -224,7 +224,7 @@ export function DailyReportPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalGirlIncome.toLocaleString()}</p>
                   </div>
-                  <CharacterAvatar character="hachiwareDaily1" size="sm" />
+                  <CharacterAvatar character="hachiwareFace9" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="mint" className="p-4">
@@ -236,7 +236,7 @@ export function DailyReportPage() {
                     </div>
                     <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalServiceCommission.toLocaleString()}</p>
                   </div>
-                  <CharacterAvatar character="hachiwareDaily2" size="sm" />
+                  <CharacterAvatar character="hachiwareFace10" size="sm" />
                 </div>
               </CuteCard>
             </div>
@@ -298,7 +298,7 @@ export function DailyReportPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <CharacterAvatar character="hachiwareDaily3" size="md" className="mx-auto mb-3" />
+                  <CharacterAvatar character="hachiwareCute1" size="md" className="mx-auto mb-3" />
                   <p className="text-chiikawa-brown/60">当日暂无数据</p>
                 </div>
               )}
@@ -355,7 +355,7 @@ export function DailyReportPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <CharacterAvatar character="hachiware" size="md" className="mx-auto mb-3" />
+                  <CharacterAvatar character="hachiwareCute2" size="md" className="mx-auto mb-3" />
                   <p className="text-chiikawa-brown/60">当日暂无订单</p>
                 </div>
               )}

@@ -223,7 +223,7 @@ export function GirlsPage() {
       <div className="sticky top-0 z-10 bg-chiikawa-cream/95 backdrop-blur-md px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <CharacterAvatar character="hachiwareCute3" size="sm" />
+            <CharacterAvatar character="hachiwareAvatar2" size="sm" />
             <h1 className="text-xl font-bold text-chiikawa-brown">妹妹管理</h1>
           </div>
           <Button
@@ -270,7 +270,7 @@ export function GirlsPage() {
         ) : filteredGirls.length === 0 ? (
           searchQuery ? (
             <div className="text-center py-12 text-chiikawa-brown/60">
-              <CharacterAvatar character="hachiwareDaily7" size="lg" className="mx-auto mb-4 opacity-50" />
+              <CharacterAvatar character="hachiwareCamera1" size="lg" className="mx-auto mb-4 opacity-50" />
               未找到匹配的结果
             </div>
           ) : (
@@ -421,7 +421,7 @@ export function GirlsPage() {
           <div className="space-y-4 py-4">
             {packages.length === 0 ? (
               <div className="text-center text-chiikawa-brown/60 py-4">
-                <CharacterAvatar character="hachiware" size="md" className="mx-auto mb-2 opacity-50" />
+                <CharacterAvatar character="hachiwareCamera2" size="md" className="mx-auto mb-2 opacity-50" />
                 暂无套餐，请先创建套餐
               </div>
             ) : (
