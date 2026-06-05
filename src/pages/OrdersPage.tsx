@@ -75,6 +75,7 @@ export function OrdersPage() {
     packageId: '',
     price: 0,
     discount: 0,
+    appointmentDate: '',
     appointmentTime: '',
     hours: 1,
     couponSource: '',
@@ -186,7 +187,9 @@ export function OrdersPage() {
             girlId: formData.girlId,
             packageId: formData.packageId,
             hours: formData.hours,
-            date: formData.appointmentTime || new Date().toISOString(),
+            date: (formData.appointmentDate && formData.appointmentTime) 
+              ? `${formData.appointmentDate}T${formData.appointmentTime}` 
+              : new Date().toISOString(),
           })
           setPriceCalculation(result)
           setFinalPricePreview(result.finalPrice)
@@ -213,7 +216,7 @@ export function OrdersPage() {
     }
 
     calculatePrice()
-  }, [selectedGirl, selectedPackage, formData.customerId, formData.hours, formData.appointmentTime, memberConfig])
+  }, [selectedGirl, selectedPackage, formData.customerId, formData.hours, formData.appointmentDate, formData.appointmentTime, memberConfig])
 
   // 计算提成预览
   const calculateCommissions = (price: number) => {
@@ -254,6 +257,7 @@ export function OrdersPage() {
       packageId: '',
       price: 0,
       discount: 0,
+      appointmentDate: '',
       appointmentTime: '',
       hours: 1,
       couponSource: '',
@@ -342,8 +346,8 @@ export function OrdersPage() {
         orderData.customerAccountId = formData.customerAccountId
       }
       // 只有填写了预约时间时才传
-      if (formData.appointmentTime) {
-        orderData.appointmentTime = formData.appointmentTime
+      if (formData.appointmentDate && formData.appointmentTime) {
+        orderData.appointmentTime = `${formData.appointmentDate}T${formData.appointmentTime}`
       }
       // 优惠券来源
       if (formData.couponSource) {
@@ -1107,13 +1111,32 @@ export function OrdersPage() {
             {/* Appointment Time */}
             <div className="grid gap-2">
               <Label>预约时间 (可选)</Label>
-              <Input
-                type="datetime-local"
-                step="1800"
-                value={formData.appointmentTime}
-                onChange={(e) => setFormData({ ...formData, appointmentTime: e.target.value })}
-                className="[&::-webkit-calendar-picker-indicator]:cursor-pointer"
-              />
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  type="date"
+                  value={formData.appointmentDate}
+                  onChange={(e) => setFormData({ ...formData, appointmentDate: e.target.value })}
+                  placeholder="选择日期"
+                />
+                <Select
+                  value={formData.appointmentTime}
+                  onValueChange={(value) => setFormData({ ...formData, appointmentTime: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择时间" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 24 }, (_, i) => i).flatMap(hour => [
+                      <SelectItem key={`${hour}:00`} value={`${String(hour).padStart(2, '0')}:00`}>
+                        {String(hour).padStart(2, '0')}:00
+                      </SelectItem>,
+                      <SelectItem key={`${hour}:30`} value={`${String(hour).padStart(2, '0')}:30`}>
+                        {String(hour).padStart(2, '0')}:30
+                      </SelectItem>
+                    ])}
+                  </SelectContent>
+                </Select>
+              </div>
               <p className="text-xs text-chiikawa-brown/50">请选择整点或整点半</p>
             </div>
           </div>
