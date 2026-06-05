@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2, Crown, Wallet } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2, Crown, Wallet, ChevronDown, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -59,6 +59,250 @@ const statusMap: Record<OrderStatus, { label: string; color: string; bgColor: st
   cancelled: { label: '已取消', color: 'text-gray-600', bgColor: 'bg-gray-100' },
 }
 
+// 按日期分组展示订单组件
+interface OrderListByDateProps {
+  orders: OrderWithDetails[]
+  expandedDates: Set<string>
+  setExpandedDates: (dates: Set<string>) => void
+  onStatusChange: (orderId: string, status: OrderStatus) => void
+}
+
+function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChange }: OrderListByDateProps) {
+  // 按日期分组
+  const groupedOrders = useMemo(() => {
+    const groups: Record<string, OrderWithDetails[]> = {}
+    orders.forEach(order => {
+      const date = new Date(order.createdAt).toDateString()
+      if (!groups[date]) groups[date] = []
+      groups[date].push(order)
+    })
+    // 按日期降序排列
+    return Object.entries(groups).sort((a, b) => 
+      new Date(b[0]).getTime() - new Date(a[0]).getTime()
+    )
+  }, [orders])
+
+  // 获取日期标签
+  const getDateLabel = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    if (date.toDateString() === today.toDateString()) return '今日'
+    if (date.toDateString() === yesterday.toDateString()) return '昨日'
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' })
+  }
+
+  // 切换展开状态
+  const toggleDate = (date: string) => {
+    const newSet = new Set(expandedDates)
+    if (newSet.has(date)) {
+      newSet.delete(date)
+    } else {
+      newSet.add(date)
+    }
+    setExpandedDates(newSet)
+  }
+
+  // 展开/折叠所有
+  const expandAll = () => {
+    setExpandedDates(new Set(groupedOrders.map(([date]) => date)))
+  }
+  const collapseAll = () => {
+    setExpandedDates(new Set())
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* 批量操作按钮 */}
+      <div className="flex gap-2 mb-3">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs rounded-lg border-chiikawa-peach/30"
+          onClick={expandAll}
+        >
+          展开全部
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs rounded-lg border-chiikawa-peach/30"
+          onClick={collapseAll}
+        >
+          折叠全部
+        </Button>
+      </div>
+
+      {groupedOrders.map(([date, dateOrders]) => {
+        const isExpanded = expandedDates.has(date)
+        const pendingCount = dateOrders.filter(o => o.status === 'pending').length
+
+        return (
+          <div key={date} className="space-y-2">
+            {/* 日期标题栏 */}
+            <button
+              onClick={() => toggleDate(date)}
+              className="w-full flex items-center justify-between p-3 bg-white/80 rounded-xl border border-chiikawa-peach/20 hover:bg-white transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4 text-chiikawa-brown/60" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-chiikawa-brown/60" />
+                )}
+                <span className="font-medium text-chiikawa-brown">{getDateLabel(date)}</span>
+                <Badge variant="secondary" className="text-xs bg-chiikawa-cream text-chiikawa-brown">
+                  {dateOrders.length}单
+                </Badge>
+                {pendingCount > 0 && (
+                  <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-600">
+                    {pendingCount}待完成
+                  </Badge>
+                )}
+              </div>
+              <span className="text-sm text-chiikawa-brown/50">
+                ¥{dateOrders.reduce((sum, o) => sum + (o.finalPrice || o.price || 0), 0).toLocaleString()}
+              </span>
+            </button>
+
+            {/* 订单列表 */}
+            {isExpanded && (
+              <div className="space-y-3 pl-2">
+                {dateOrders.map((order) => {
+                  const status = statusMap[order.status as OrderStatus]
+                  return (
+                    <CuteCard
+                      key={order.id}
+                      variant="cream"
+                      className="p-4"
+                    >
+                      {/* Order Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-mono text-chiikawa-brown/40">{order.orderNo}</span>
+                        <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
+                          {status.label}
+                        </Badge>
+                      </div>
+
+                      {/* Order Details */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chiikawa-blue to-chiikawa-blue-light flex items-center justify-center text-white font-bold text-xs">
+                            {order.customerName?.[0] || '?'}
+                          </div>
+                          <span className="text-sm text-chiikawa-brown/50 w-10">顾客</span>
+                          <span className="font-medium text-chiikawa-brown">{order.customerName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold text-xs">
+                            {order.girlName?.[0] || '?'}
+                          </div>
+                          <span className="text-sm text-chiikawa-brown/50 w-10">妹妹</span>
+                          <span className="font-medium text-chiikawa-brown">{order.girlName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-chiikawa-brown/50 w-12 pl-1">套餐</span>
+                          <span className="font-medium text-chiikawa-brown">
+                            {order.packageName}
+                            {order.hours && order.hours > 1 && (
+                              <span className="text-sm text-chiikawa-brown/40 ml-1">({order.hours}小时)</span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Price & Time */}
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-chiikawa-peach/20">
+                        <div className="flex items-center gap-1 text-chiikawa-brown/50">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm">
+                            {order.appointmentTime ? formatDateTime(order.appointmentTime) : '立即'}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          {(order.discount || 0) > 0 || order.discountAmount ? (
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
+                              <span className="text-sm text-chiikawa-brown/40 line-through">
+                                ¥{order.totalOriginalAmount || order.price}
+                              </span>
+                              <span className="text-lg font-bold text-chiikawa-pink">
+                                ¥{order.finalPrice || Math.max(0, (order.totalOriginalAmount || order.price) - (order.discount || 0) - (order.discountAmount || 0))}
+                              </span>
+                              {order.discountType && order.discountType !== 'none' && (
+                                <Badge variant="secondary" className={cn(
+                                  "text-xs",
+                                  order.discountType === 'memberDay'
+                                    ? "bg-chiikawa-pink-light text-chiikawa-pink"
+                                    : "bg-chiikawa-blue-light text-chiikawa-blue"
+                                )}>
+                                  {order.discountType === 'memberDay' ? '会员日' : '会员'}{order.discountPercent}折
+                                </Badge>
+                              )}
+                              {(order.discount || 0) > 0 && (
+                                <Badge variant="secondary" className="text-xs bg-chiikawa-yellow-light text-yellow-600">
+                                  优惠¥{order.discount}
+                                </Badge>
+                              )}
+                              {order.couponSource && (
+                                <Badge variant="secondary" className="text-xs bg-chiikawa-lavender text-purple-600">
+                                  来源:{order.couponSource}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-lg font-bold text-chiikawa-pink">
+                              ¥{order.price}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Commission Info */}
+                      <div className="flex items-center justify-between mt-2 text-xs">
+                        <span className="text-purple-500">
+                          妹妹收入: ¥{order.girlIncome || 0}
+                        </span>
+                        <span className="text-green-500">
+                          客服提成: ¥{order.serviceCommission || 0}
+                        </span>
+                      </div>
+
+                      {/* Actions */}
+                      {order.status === 'pending' && (
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-green-400 text-white hover:bg-green-500 rounded-xl"
+                            onClick={() => onStatusChange(order.id, 'completed')}
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            完成
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 rounded-xl border-chiikawa-peach/50 text-chiikawa-brown"
+                            onClick={() => onStatusChange(order.id, 'cancelled')}
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            取消
+                          </Button>
+                        </div>
+                      )}
+                    </CuteCard>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [orders, setOrders] = useState<OrderWithDetails[]>([])
@@ -67,6 +311,9 @@ export function OrdersPage() {
   const [packages, setPackages] = useState<Package[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  
+  // 日期分组展开状态（默认只展开今日）
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
 
   const [formData, setFormData] = useState({
     customerId: '',
@@ -145,6 +392,15 @@ export function OrdersPage() {
       setCustomers(customersData)
       setGirls(girlsData.filter((g: Girl) => g.status === 'active'))
       setPackages(packagesData)
+      
+      // 默认展开今日订单
+      const today = new Date().toDateString()
+      const hasTodayOrders = ordersWithDetails.some((o: OrderWithDetails) => 
+        new Date(o.createdAt).toDateString() === today
+      )
+      if (hasTodayOrders) {
+        setExpandedDates(new Set([today]))
+      }
     } catch (err) {
       console.error('加载数据失败:', err)
     } finally {
@@ -547,132 +803,12 @@ export function OrdersPage() {
             <EmptyOrdersState />
           )
         ) : (
-          <>
-            {filteredOrders.map((order) => {
-              const status = statusMap[order.status as OrderStatus]
-              return (
-                <CuteCard
-                key={order.id}
-                variant="cream"
-                className="p-4"
-              >
-                {/* Order Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-mono text-chiikawa-brown/40">{order.orderNo}</span>
-                  <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
-                    {status.label}
-                  </Badge>
-                </div>
-
-                {/* Order Details */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chiikawa-blue to-chiikawa-blue-light flex items-center justify-center text-white font-bold text-xs">
-                      {order.customerName?.[0] || '?'}
-                    </div>
-                    <span className="text-sm text-chiikawa-brown/50 w-10">顾客</span>
-                    <span className="font-medium text-chiikawa-brown">{order.customerName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chiikawa-pink to-chiikawa-peach flex items-center justify-center text-white font-bold text-xs">
-                      {order.girlName?.[0] || '?'}
-                    </div>
-                    <span className="text-sm text-chiikawa-brown/50 w-10">妹妹</span>
-                    <span className="font-medium text-chiikawa-brown">{order.girlName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-chiikawa-brown/50 w-12 pl-1">套餐</span>
-                    <span className="font-medium text-chiikawa-brown">
-                      {order.packageName}
-                      {order.hours && order.hours > 1 && (
-                        <span className="text-sm text-chiikawa-brown/40 ml-1">({order.hours}小时)</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Price & Time */}
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-chiikawa-peach/20">
-                  <div className="flex items-center gap-1 text-chiikawa-brown/50">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">
-                      {order.appointmentTime ? formatDateTime(order.appointmentTime) : '立即'}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    {(order.discount || 0) > 0 || order.discountAmount ? (
-                      <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <span className="text-sm text-chiikawa-brown/40 line-through">
-                          ¥{order.totalOriginalAmount || order.price}
-                        </span>
-                        <span className="text-lg font-bold text-chiikawa-pink">
-                          ¥{order.finalPrice || Math.max(0, (order.totalOriginalAmount || order.price) - (order.discount || 0) - (order.discountAmount || 0))}
-                        </span>
-                        {order.discountType && order.discountType !== 'none' && (
-                          <Badge variant="secondary" className={cn(
-                            "text-xs",
-                            order.discountType === 'memberDay' 
-                              ? "bg-chiikawa-pink-light text-chiikawa-pink" 
-                              : "bg-chiikawa-blue-light text-chiikawa-blue"
-                          )}>
-                            {order.discountType === 'memberDay' ? '会员日' : '会员'}{order.discountPercent}折
-                          </Badge>
-                        )}
-                        {(order.discount || 0) > 0 && (
-                          <Badge variant="secondary" className="text-xs bg-chiikawa-yellow-light text-yellow-600">
-                            优惠¥{order.discount}
-                          </Badge>
-                        )}
-                        {order.couponSource && (
-                          <Badge variant="secondary" className="text-xs bg-chiikawa-lavender text-purple-600">
-                            来源:{order.couponSource}
-                          </Badge>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-lg font-bold text-chiikawa-pink">
-                        ¥{order.price}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Commission Info */}
-                <div className="flex items-center justify-between mt-2 text-xs">
-                  <span className="text-purple-500">
-                    妹妹收入: ¥{order.girlIncome || 0}
-                  </span>
-                  <span className="text-green-500">
-                    客服提成: ¥{order.serviceCommission || 0}
-                  </span>
-                </div>
-
-                {/* Actions */}
-                {order.status === 'pending' && (
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-green-400 text-white hover:bg-green-500 rounded-xl"
-                      onClick={() => handleStatusChange(order.id, 'completed')}
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-1" />
-                      完成
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 rounded-xl border-chiikawa-peach/50 text-chiikawa-brown"
-                      onClick={() => handleStatusChange(order.id, 'cancelled')}
-                    >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      取消
-                    </Button>
-                  </div>
-                )}
-                </CuteCard>
-              )
-            })}
-          </>
+          <OrderListByDate 
+            orders={filteredOrders}
+            expandedDates={expandedDates}
+            setExpandedDates={setExpandedDates}
+            onStatusChange={handleStatusChange}
+          />
         )}
       </div>
 
