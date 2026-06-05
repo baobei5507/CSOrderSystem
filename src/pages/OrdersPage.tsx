@@ -163,7 +163,10 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                 )}
               </div>
               <span className="text-sm text-chiikawa-brown/50">
-                ¥{dateOrders.reduce((sum, o) => sum + (o.finalPrice || o.price || 0), 0).toLocaleString()}
+                ¥{dateOrders.reduce((sum, o) => {
+                  const price = Number(o.finalPrice) || Number(o.price) || 0
+                  return sum + price
+                }, 0).toLocaleString()}
               </span>
             </button>
 
