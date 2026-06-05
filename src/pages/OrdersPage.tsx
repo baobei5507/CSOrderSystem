@@ -1109,9 +1109,12 @@ export function OrdersPage() {
               <Label>预约时间 (可选)</Label>
               <Input
                 type="datetime-local"
+                step="1800"
                 value={formData.appointmentTime}
                 onChange={(e) => setFormData({ ...formData, appointmentTime: e.target.value })}
+                className="[&::-webkit-calendar-picker-indicator]:cursor-pointer"
               />
+              <p className="text-xs text-chiikawa-brown/50">请选择整点或整点半</p>
             </div>
           </div>
           <div className="flex justify-end gap-3">
