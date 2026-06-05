@@ -32,8 +32,8 @@ const characterImages: Record<string, string> = {
   hachiwareLineStamp: '/images/line_stamp_poinko.jpg',
 }
 
-// 吉伊卡哇角色头像组件 - 支持小八系列素材
-type HachiwareImageType = 
+// 小八系列素材类型
+export type HachiwareImageType = 
   | 'hachiwareCute1' | 'hachiwareCute2' | 'hachiwareCute3'
   | 'hachiwareDaily1' | 'hachiwareDaily2' | 'hachiwareDaily3' | 'hachiwareDaily4' | 'hachiwareDaily5' | 'hachiwareDaily6' | 'hachiwareDaily7'
   | 'hachiwareAvatar1' | 'hachiwareAvatar2'
@@ -41,8 +41,11 @@ type HachiwareImageType =
   | 'hachiwareCamera1' | 'hachiwareCamera2'
   | 'hachiwareLineStamp'
 
+// 所有角色类型
+export type CharacterType = 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko' | HachiwareImageType
+
 interface CharacterAvatarProps {
-  character: 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko' | HachiwareImageType
+  character: CharacterType
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   useImage?: boolean // 是否使用图片素材（默认 true）
@@ -203,7 +206,7 @@ export function CuteCard({ children, className, variant = 'cream', onClick }: Cu
 interface WelcomeHeaderProps {
   title: string
   subtitle?: string
-  character?: 'chiikawa' | 'hachiware' | 'usagi'
+  character?: CharacterType
 }
 
 export function WelcomeHeader({ title, subtitle, character = 'chiikawa' }: WelcomeHeaderProps) {
@@ -249,7 +252,7 @@ interface CuteStatCardProps {
   title: string
   value: string | number
   subtitle?: string
-  character?: 'chiikawa' | 'hachiware' | 'usagi' | 'kuri' | 'rakko'
+  character?: CharacterType
   trend?: string
   variant?: 'cream' | 'pink' | 'blue' | 'yellow'
 }

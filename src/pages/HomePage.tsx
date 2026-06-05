@@ -5,7 +5,7 @@ import { cn, formatMoney } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import { EmptyDataState } from '@/components/EmptyState'
-import { WelcomeHeader, CuteStatCard, ChiikawaLoading, CharacterAvatar, CuteCard } from '@/components/ChiikawaTheme'
+import { WelcomeHeader, CuteStatCard, ChiikawaLoading, CuteCard } from '@/components/ChiikawaTheme'
 
 interface DashboardData {
   todayRevenue: number
