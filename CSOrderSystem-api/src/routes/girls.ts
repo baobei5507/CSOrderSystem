@@ -40,6 +40,7 @@ app.post('/', async (c) => {
     status: body.status || 'active',
     commissionType: body.commissionType,
     commissionValue: body.commissionValue,
+    excludeFromDiscount: body.excludeFromDiscount ? 1 : 0,
     createdAt: now,
     updatedAt: now,
   })

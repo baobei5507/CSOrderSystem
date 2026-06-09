@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '@/stores/appStore'
 import { Button } from '@/components/ui/button'
@@ -69,7 +69,6 @@ function getDateString(date: Date): string {
 export function DailyReportPage() {
   const { currentStore } = useAppStore()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const dateInputRef = useRef<HTMLInputElement>(null)
 
   // 获取日报数据
   const { data: reportData, isLoading } = useQuery({
@@ -141,34 +140,30 @@ export function DailyReportPage() {
             >
               <ChevronLeft className="w-5 h-5 text-chiikawa-brown" />
             </button>
-            <button
-              onClick={() => {
-                console.log('Date button clicked, ref:', dateInputRef.current)
-                dateInputRef.current?.click()
-              }}
-              className="flex items-center gap-2 hover:bg-chiikawa-cream px-3 py-1.5 rounded-xl transition-colors"
-            >
-              <Calendar className="w-4 h-4 text-chiikawa-brown/50" />
-              <span className="font-medium text-chiikawa-brown">
-                {getDateString(selectedDate)}
-              </span>
-              <span className="text-sm text-chiikawa-brown/50">
-                {selectedDate.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
-              </span>
-            </button>
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={formatDate(selectedDate)}
-              max={formatDate(new Date())}
-              onChange={(e) => {
-                console.log('Date input changed:', e.target.value)
-                if (e.target.value) {
-                  setSelectedDate(new Date(e.target.value))
-                }
-              }}
-              className="sr-only"
-            />
+            <div className="relative">
+              <button
+                className="flex items-center gap-2 hover:bg-chiikawa-cream px-3 py-1.5 rounded-xl transition-colors pointer-events-none"
+              >
+                <Calendar className="w-4 h-4 text-chiikawa-brown/50" />
+                <span className="font-medium text-chiikawa-brown">
+                  {getDateString(selectedDate)}
+                </span>
+                <span className="text-sm text-chiikawa-brown/50">
+                  {selectedDate.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                </span>
+              </button>
+              <input
+                type="date"
+                value={formatDate(selectedDate)}
+                max={formatDate(new Date())}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setSelectedDate(new Date(e.target.value))
+                  }
+                }}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+            </div>
             <button 
               onClick={goToNextDay}
               className="p-2 rounded-full hover:bg-chiikawa-pink/20 transition-colors"

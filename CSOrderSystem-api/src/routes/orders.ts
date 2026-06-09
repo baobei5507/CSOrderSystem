@@ -126,7 +126,7 @@ app.post('/calculate', async (c) => {
     // 判断是否是会员日
     const checkDate = date ? new Date(date) : new Date()
     const day = checkDate.getDay() // 0=周日, 1=周一...
-    const memberDays = JSON.parse(config.memberDays)
+    const memberDays = config.memberDays.split(',').map(d => parseInt(d)).filter(d => !isNaN(d))
     const isMemberDay = memberDays.includes(day)
 
     // 检查今天是否已使用过会员日权益

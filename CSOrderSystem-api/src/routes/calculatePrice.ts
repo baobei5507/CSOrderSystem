@@ -8,18 +8,25 @@ import {
   stores,
   girlPackagePrices,
   storeMemberConfigs,
-  memberLevels
+  memberLevels,
+  memberDayUsage
 } from '../db/schema'
 import type { Env } from '../index'
 
 const app = new Hono<{ Bindings: Env }>()
 
-// 计算提成
-function calculateCommission(price: number, type: 'percent' | 'fixed', value: number): number {
+// 格式化日期为 YYYY-MM-DD
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
+// 计算提成（基于价格和小时数）
+function calculateCommission(price: number, type: 'percent' | 'fixed', value: number, hours: number = 1): number {
   if (type === 'percent') {
     return Math.round(price * value / 100 * 100) / 100
   }
-  return value
+  // 固定提成：每小时固定金额 × 小时数
+  return value * hours
 }
 
 // POST /api/calculate-price
@@ -66,8 +73,8 @@ app.post('/', async (c) => {
     // 如果妹妹不参与优惠，直接返回基础价格
     if (girl.excludeFromDiscount) {
       const totalPrice = basePrice * hours
-      const girlIncome = calculateCommission(totalPrice, girl.commissionType, girl.commissionValue)
-      const serviceCommission = calculateCommission(totalPrice, store.serviceCommissionType, store.serviceCommissionValue)
+      const girlIncome = calculateCommission(totalPrice, girl.commissionType, girl.commissionValue, hours)
+      const serviceCommission = calculateCommission(totalPrice, store.serviceCommissionType, store.serviceCommissionValue, hours)
       
       return c.json({
         success: true,
@@ -94,8 +101,8 @@ app.post('/', async (c) => {
     // 如果没有启用会员系统，直接返回基础价格
     if (!memberConfig || !memberConfig.enabled) {
       const totalPrice = basePrice * hours
-      const girlIncome = calculateCommission(totalPrice, girl.commissionType, girl.commissionValue)
-      const serviceCommission = calculateCommission(totalPrice, store.serviceCommissionType, store.serviceCommissionValue)
+      const girlIncome = calculateCommission(totalPrice, girl.commissionType, girl.commissionValue, hours)
+      const serviceCommission = calculateCommission(totalPrice, store.serviceCommissionType, store.serviceCommissionValue, hours)
       
       return c.json({
         success: true,
@@ -126,8 +133,8 @@ app.post('/', async (c) => {
     // 如果不是会员，直接返回基础价格
     if (!levelConfig || customerLevel === 0) {
       const totalPrice = basePrice * hours
-      const girlIncome = calculateCommission(totalPrice, girl.commissionType, girl.commissionValue)
-      const serviceCommission = calculateCommission(totalPrice, store.serviceCommissionType, store.serviceCommissionValue)
+      const girlIncome = calculateCommission(totalPrice, girl.commissionType, girl.commissionValue, hours)
+      const serviceCommission = calculateCommission(totalPrice, store.serviceCommissionType, store.serviceCommissionValue, hours)
       
       return c.json({
         success: true,
@@ -154,33 +161,74 @@ app.post('/', async (c) => {
     const memberDays = memberConfig.memberDays.split(',').map(d => parseInt(d)).filter(d => !isNaN(d))
     const isMemberDay = memberDays.includes(dayOfWeek)
     
-    // 确定折扣
-    const discountPercent = isMemberDay ? levelConfig.memberDayDiscount : levelConfig.regularDiscount
+    // 检查今天是否已使用过会员日权益
+    const today = formatDate(targetDate)
+    const usage = await db.select().from(memberDayUsage)
+      .where(and(
+        eq(memberDayUsage.customerId, customerId),
+        eq(memberDayUsage.storeId, storeId),
+        eq(memberDayUsage.date, today)
+      ))
+      .get()
+    const hasUsedMemberDay = !!usage
     
     // 应用前提价
     const priceWithMarkup = basePrice + (memberConfig.priceMarkup || 0)
     
-    // 计算折扣后价格
+    // 计算每个钟的价格明细
+    const breakdown = []
+    let totalFinalPrice = 0
+    let usedMemberDayBenefit = false
+    
+    for (let i = 0; i < hours; i++) {
+      const hour = i + 1
+      
+      // 只有首钟、是会员日、且今天未使用过会员日权益，才享受会员日特惠
+      const isFirstHourMemberDay = isMemberDay && i === 0 && !hasUsedMemberDay
+      const hourDiscountPercent = isFirstHourMemberDay 
+        ? levelConfig.memberDayDiscount 
+        : levelConfig.regularDiscount
+      const hourType = isFirstHourMemberDay ? 'memberDay' : 'regular'
+      
+      const hourFinalPrice = Math.round(priceWithMarkup * hourDiscountPercent / 100 * 100) / 100
+      
+      breakdown.push({
+        hour,
+        originalPrice: priceWithMarkup,
+        discountPercent: hourDiscountPercent,
+        finalPrice: hourFinalPrice,
+        type: hourType,
+      })
+      
+      totalFinalPrice += hourFinalPrice
+      if (isFirstHourMemberDay) usedMemberDayBenefit = true
+    }
+    
     const originalTotal = priceWithMarkup * hours
-    const discountedTotal = Math.round(originalTotal * discountPercent / 100 * 100) / 100
+    const discountAmount = Math.round((originalTotal - totalFinalPrice) * 100) / 100
+    
+    // 计算平均折扣率
+    const avgDiscountPercent = originalTotal > 0 
+      ? Math.round((totalFinalPrice / originalTotal) * 100)
+      : 100
     
     // 计算余额抵扣
     const customerBalance = (customer.balance || 0) / 100 // 转换为元
     const minBalancePercent = memberConfig.minBalancePercent || 50
-    const minRequiredBalance = discountedTotal * minBalancePercent / 100
+    const minRequiredBalance = totalFinalPrice * minBalancePercent / 100
     
     let deductedBalance = 0
-    let finalPrice = discountedTotal
+    let finalPrice = totalFinalPrice
     
     if (customerBalance >= minRequiredBalance) {
       // 可以全额使用余额抵扣
-      deductedBalance = Math.min(customerBalance, discountedTotal)
-      finalPrice = Math.max(0, discountedTotal - deductedBalance)
+      deductedBalance = Math.min(customerBalance, totalFinalPrice)
+      finalPrice = Math.max(0, totalFinalPrice - deductedBalance)
     }
 
-    // 计算提成
-    const girlIncome = calculateCommission(finalPrice, girl.commissionType, girl.commissionValue)
-    const serviceCommission = calculateCommission(finalPrice, store.serviceCommissionType, store.serviceCommissionValue)
+    // 计算提成（基于最终支付价格和小时数）
+    const girlIncome = calculateCommission(finalPrice, girl.commissionType, girl.commissionValue, hours)
+    const serviceCommission = calculateCommission(finalPrice, store.serviceCommissionType, store.serviceCommissionValue, hours)
 
     return c.json({
       success: true,
@@ -189,24 +237,18 @@ app.post('/', async (c) => {
         hours,
         totalOriginalAmount: originalTotal,
         priceMarkup: memberConfig.priceMarkup || 0,
-        discountType: isMemberDay ? 'memberDay' : 'memberRegular',
-        discountPercent,
-        discountAmount: Math.round((originalTotal - discountedTotal) * 100) / 100,
+        discountType: usedMemberDayBenefit ? 'memberDay' : 'memberRegular',
+        discountPercent: avgDiscountPercent,
+        discountAmount,
         finalPrice,
         deductedBalance: Math.round(deductedBalance * 100) / 100,
         girlIncome,
         serviceCommission,
-        usedMemberDayBenefit: isMemberDay,
-        reason: isMemberDay 
-          ? `会员日特惠 ${levelConfig.name} ${discountPercent}折`
-          : `会员折扣 ${levelConfig.name} ${discountPercent}折`,
-        breakdown: Array.from({ length: hours }, (_, i) => ({
-          hour: i + 1,
-          originalPrice: priceWithMarkup,
-          discountPercent,
-          finalPrice: Math.round(priceWithMarkup * discountPercent / 100 * 100) / 100,
-          type: isMemberDay ? 'memberDay' : 'regular',
-        })),
+        usedMemberDayBenefit,
+        reason: usedMemberDayBenefit 
+          ? `会员日特惠 ${levelConfig.name} 首钟${levelConfig.memberDayDiscount}折`
+          : `会员折扣 ${levelConfig.name} ${levelConfig.regularDiscount}折`,
+        breakdown,
       }
     })
   } catch (error: any) {
