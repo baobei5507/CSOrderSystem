@@ -84,35 +84,59 @@ app.post('/calculate', async (c) => {
       return c.json({ success: false, error: '关联数据不存在' }, 400)
     }
 
-    // 获取原价（每小时）：优先使用当日价格，其次常规价格，最后套餐基础价
-    const originalPricePerHour = girlPrice?.dailyPrice || girlPrice?.price || pkg.basePrice || 0
-    const totalOriginalAmount = originalPricePerHour * hours
+    // 获取价格：分离常规价格和当日价格
+    const regularPrice = girlPrice?.price || pkg.basePrice || 0
+    const dailyPrice = girlPrice?.dailyPrice
+    
+    // 默认无折扣结果（先不考虑当日价格，后面会比较）
+    const regularTotal = regularPrice * hours
 
     // 默认无折扣
     let result = {
-      originalPricePerHour,
+      originalPricePerHour: regularPrice,
       hours,
-      totalOriginalAmount,
+      totalOriginalAmount: regularTotal,
       discountType: 'none' as const,
       discountPercent: 100,
       discountAmount: 0,
-      finalPrice: totalOriginalAmount,
+      finalPrice: regularTotal,
       deductedBalance: 0,
       breakdown: Array.from({ length: hours }, (_, i) => ({
         hour: i + 1,
-        originalPrice: originalPricePerHour,
+        originalPrice: regularPrice,
         discountPercent: 100,
-        finalPrice: originalPricePerHour,
+        finalPrice: regularPrice,
         type: 'none' as const,
       })),
-      girlIncome: calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue, hours),
-      serviceCommission: calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue, hours),
+      girlIncome: calculateCommission(regularTotal, girl.commissionType, girl.commissionValue, hours),
+      serviceCommission: calculateCommission(regularTotal, store.serviceCommissionType, store.serviceCommissionValue, hours),
       usedMemberDayBenefit: false,
       reason: girl.excludeFromDiscount ? '该妹妹不参与优惠活动' : '非会员或无余额',
     }
 
     // 检查会员系统 或 妹妹不参与优惠
     if (girl.excludeFromDiscount || !config || !config.enabled || customer.memberLevel === 0 || customer.balance <= 0) {
+      // 比较当日价格和常规价格
+      if (dailyPrice && dailyPrice * hours < regularTotal) {
+        const dailyTotal = dailyPrice * hours
+        result = {
+          ...result,
+          originalPricePerHour: dailyPrice,
+          totalOriginalAmount: dailyTotal,
+          finalPrice: dailyTotal,
+          discountType: 'dailyPrice',
+          reason: '使用当日特惠价格',
+          breakdown: Array.from({ length: hours }, (_, i) => ({
+            hour: i + 1,
+            originalPrice: dailyPrice,
+            discountPercent: 100,
+            finalPrice: dailyPrice,
+            type: 'dailyPrice' as const,
+          })),
+          girlIncome: calculateCommission(dailyTotal, girl.commissionType, girl.commissionValue, hours),
+          serviceCommission: calculateCommission(dailyTotal, store.serviceCommissionType, store.serviceCommissionValue, hours),
+        }
+      }
       return c.json({ success: true, data: result })
     }
 
@@ -140,13 +164,13 @@ app.post('/calculate', async (c) => {
       .get()
     const hasUsedMemberDay = !!usage
 
-    // 应用前提价
-    const priceWithMarkup = originalPricePerHour + (config.priceMarkup || 0)
+    // 应用前提价到常规价格
+    const priceWithMarkup = regularPrice + (config.priceMarkup || 0)
     
-    // 计算每个钟的价格
-    const breakdown = []
+    // 计算每个钟的会员折扣价格
+    const memberBreakdown = []
     let usedMemberDayBenefit = false
-    let totalFinalPrice = 0
+    let memberTotalPrice = 0
 
     for (let i = 0; i < hours; i++) {
       const hour = i + 1
@@ -158,65 +182,84 @@ app.post('/calculate', async (c) => {
         if (customer.balance >= minBalance) {
           // 第一个钟：会员日折扣
           const finalPrice = Math.round(priceWithMarkup * levelConfig.memberDayDiscount / 100)
-          breakdown.push({
+          memberBreakdown.push({
             hour,
             originalPrice: priceWithMarkup,
             discountPercent: levelConfig.memberDayDiscount,
             finalPrice,
             type: 'memberDay' as const,
           })
-          totalFinalPrice += finalPrice
+          memberTotalPrice += finalPrice
           usedMemberDayBenefit = true
         } else {
           // 余额不足，fallback 到常规折扣
           const finalPrice = Math.round(priceWithMarkup * levelConfig.regularDiscount / 100)
-          breakdown.push({
+          memberBreakdown.push({
             hour,
             originalPrice: priceWithMarkup,
             discountPercent: levelConfig.regularDiscount,
             finalPrice,
             type: 'regular' as const,
           })
-          totalFinalPrice += finalPrice
+          memberTotalPrice += finalPrice
         }
       } else {
         // 其他钟：常规会员折扣
         const finalPrice = Math.round(priceWithMarkup * levelConfig.regularDiscount / 100)
-        breakdown.push({
+        memberBreakdown.push({
           hour,
           originalPrice: priceWithMarkup,
           discountPercent: levelConfig.regularDiscount,
           finalPrice,
           type: 'regular' as const,
         })
-        totalFinalPrice += finalPrice
+        memberTotalPrice += finalPrice
       }
     }
 
-    const discountAmount = totalOriginalAmount - totalFinalPrice
-    const avgDiscountPercent = Math.round((totalFinalPrice / totalOriginalAmount) * 100)
+    // 比较：会员折扣价 vs 当日价格
+    const dailyTotalPrice = dailyPrice ? dailyPrice * hours : Infinity
+    const useDailyPrice = dailyTotalPrice < memberTotalPrice
+    
+    // 最终使用的价格和明细
+    const finalTotalPrice = useDailyPrice ? dailyTotalPrice : memberTotalPrice
+    const finalBreakdown = useDailyPrice 
+      ? Array.from({ length: hours }, (_, i) => ({
+          hour: i + 1,
+          originalPrice: dailyPrice,
+          discountPercent: 100,
+          finalPrice: dailyPrice,
+          type: 'dailyPrice' as const,
+        }))
+      : memberBreakdown
+    
+    const finalOriginalAmount = useDailyPrice ? dailyTotalPrice : regularTotal
+    const discountAmount = useDailyPrice ? 0 : regularTotal - memberTotalPrice
+    const avgDiscountPercent = useDailyPrice ? 100 : Math.round((memberTotalPrice / regularTotal) * 100)
 
-    // 提成计算（基于原价和小时数！）
-    const girlIncome = calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue, hours)
-    const serviceCommission = calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue, hours)
+    // 提成计算（基于最终价格）
+    const girlIncome = calculateCommission(finalTotalPrice, girl.commissionType, girl.commissionValue, hours)
+    const serviceCommission = calculateCommission(finalTotalPrice, store.serviceCommissionType, store.serviceCommissionValue, hours)
 
     result = {
-      originalPricePerHour,
+      originalPricePerHour: useDailyPrice ? dailyPrice : regularPrice,
       hours,
-      totalOriginalAmount,
-      priceMarkup: config.priceMarkup || 0,
-      discountType: usedMemberDayBenefit ? 'memberDay' : 'memberRegular',
+      totalOriginalAmount: finalOriginalAmount,
+      priceMarkup: useDailyPrice ? 0 : (config.priceMarkup || 0),
+      discountType: useDailyPrice ? 'dailyPrice' : (usedMemberDayBenefit ? 'memberDay' : 'memberRegular'),
       discountPercent: avgDiscountPercent,
       discountAmount,
-      finalPrice: totalFinalPrice,
-      deductedBalance: totalFinalPrice,
-      breakdown,
+      finalPrice: finalTotalPrice,
+      deductedBalance: finalTotalPrice,
+      breakdown: finalBreakdown,
       girlIncome,
       serviceCommission,
-      usedMemberDayBenefit,
-      reason: usedMemberDayBenefit 
-        ? `会员日${levelConfig.memberDayDiscount}折(第1小时)` 
-        : `${levelConfig.name}常规${levelConfig.regularDiscount}折`,
+      usedMemberDayBenefit: useDailyPrice ? false : usedMemberDayBenefit,
+      reason: useDailyPrice 
+        ? '使用当日特惠价格'
+        : (usedMemberDayBenefit 
+          ? `会员日${levelConfig.memberDayDiscount}折(第1小时)` 
+          : `${levelConfig.name}常规${levelConfig.regularDiscount}折`),
     }
 
     return c.json({ success: true, data: result })
