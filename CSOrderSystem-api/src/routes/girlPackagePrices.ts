@@ -14,6 +14,7 @@ app.get('/', async (c) => {
 
   const prices = await db.select({
     price: girlPackagePrices.price,
+    dailyPrice: girlPackagePrices.dailyPrice,
     packageId: girlPackagePrices.packageId,
     packageName: packages.name,
     packageCode: packages.code,
@@ -30,7 +31,7 @@ app.get('/', async (c) => {
 app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
-  const { girlId, packageId, price, storeId } = body
+  const { girlId, packageId, price, dailyPrice, storeId } = body
 
   if (!girlId || !packageId || price === undefined) {
     return c.json({ success: false, error: 'Missing required fields' }, 400)
@@ -49,7 +50,7 @@ app.post('/', async (c) => {
   if (existing) {
     // 更新价格
     await db.update(girlPackagePrices)
-      .set({ price, updatedAt: now })
+      .set({ price, dailyPrice, updatedAt: now })
       .where(and(
         eq(girlPackagePrices.girlId, girlId),
         eq(girlPackagePrices.packageId, packageId)
@@ -62,6 +63,7 @@ app.post('/', async (c) => {
       girlId,
       packageId,
       price,
+      dailyPrice,
       createdAt: now,
       updatedAt: now,
     })
