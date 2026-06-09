@@ -237,7 +237,7 @@ export function useApi() {
     memberDays: number[]
     minBalancePercent: number
   }> => {
-    return fetchApi(`/member-configs?storeId=${storeId}`)
+    return fetchApi(`/member-config?storeId=${storeId}`)
   }, [])
 
   const saveMemberConfig = useCallback(async (data: {
@@ -248,7 +248,7 @@ export function useApi() {
     memberDays: number[]
     minBalancePercent: number
   }): Promise<{ id: string }> => {
-    return fetchApi('/member-configs', {
+    return fetchApi('/member-config', {
       method: 'POST',
       body: JSON.stringify(data),
     })
