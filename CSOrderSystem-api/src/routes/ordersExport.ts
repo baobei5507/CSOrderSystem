@@ -1,0 +1,119 @@
+import { Hono } from 'hono'
+import { drizzle } from 'drizzle-orm/d1'
+import { eq, and, gte, lte, desc } from 'drizzle-orm'
+import { 
+  orders, 
+  customers, 
+  girls, 
+  packages,
+  balanceTransactions
+} from '../db/schema'
+import type { Env } from '../index'
+
+const app = new Hono<{ Bindings: Env }>()
+
+// POST /api/orders/export - 导出订单数据
+app.post('/', async (c) => {
+  const db = drizzle(c.env.DB)
+  const body = await c.req.json()
+  const { storeId, startDate, endDate, status } = body
+
+  if (!storeId) {
+    return c.json({ success: false, error: 'Missing storeId' }, 400)
+  }
+
+  try {
+    // 构建查询条件
+    const conditions = [eq(orders.storeId, storeId)]
+    
+    // 日期范围筛选
+    if (startDate && endDate) {
+      const startTime = new Date(startDate).getTime()
+      const endTime = new Date(endDate).getTime() + 24 * 60 * 60 * 1000 - 1 // 包含当天
+      conditions.push(gte(orders.createdAt, startTime))
+      conditions.push(lte(orders.createdAt, endTime))
+    }
+    
+    // 状态筛选
+    if (status) {
+      conditions.push(eq(orders.status, status))
+    }
+
+    // 查询订单
+    const ordersList = await db.select().from(orders)
+      .where(and(...conditions))
+      .orderBy(desc(orders.createdAt))
+      .all()
+
+    // 获取关联数据
+    const customerIds = [...new Set(ordersList.map(o => o.customerId))]
+    const girlIds = [...new Set(ordersList.map(o => o.girlId))]
+    const packageIds = [...new Set(ordersList.map(o => o.packageId))]
+    const orderIds = ordersList.map(o => o.id)
+
+    const [customersList, girlsList, packagesList, transactionsList] = await Promise.all([
+      db.select().from(customers).where(eq(customers.storeId, storeId)).all(),
+      db.select().from(girls).where(eq(girls.storeId, storeId)).all(),
+      db.select().from(packages).where(eq(packages.storeId, storeId)).all(),
+      db.select().from(balanceTransactions)
+        .where(and(
+          eq(balanceTransactions.type, 'consume'),
+          // 使用 IN 查询而不是数组参数
+        ))
+        .all()
+    ])
+
+    // 过滤出订单相关的交易记录
+    const orderTransactions = transactionsList.filter(t => 
+      t.orderId && orderIds.includes(t.orderId)
+    )
+
+    // 构建查找表
+    const customerMap = new Map(customersList.map(c => [c.id, c]))
+    const girlMap = new Map(girlsList.map(g => [g.id, g]))
+    const packageMap = new Map(packagesList.map(p => [p.id, p]))
+    
+    // 构建订单到交易的映射（获取下单时的余额）
+    const orderBalanceMap = new Map<string, number>()
+    for (const order of ordersList) {
+      const transaction = orderTransactions.find(t => t.orderId === order.id)
+      if (transaction) {
+        // 下单时的余额 = 交易后的余额 + 交易金额（交易金额是负数）
+        orderBalanceMap.set(order.id, transaction.balanceAfter || 0)
+      }
+    }
+
+    // 组装导出数据
+    const exportData = ordersList.map(order => {
+      const customer = customerMap.get(order.customerId)
+      const girl = girlMap.get(order.girlId)
+      const pkg = packageMap.get(order.packageId)
+
+      return {
+        orderNo: order.orderNo,
+        createdAt: order.createdAt,
+        girlName: girl?.name || '-',
+        serviceStaffName: order.serviceStaffName,
+        customerName: customer?.nickname || '-',
+        customerMemberLevel: customer?.memberLevel || 0,
+        appointmentTime: order.appointmentTime,
+        hours: order.hours,
+        packageName: pkg?.name || '-',
+        originalPrice: order.originalPrice,
+        couponSource: order.couponSource,
+        discountAmount: order.discountAmount,
+        finalPrice: order.finalPrice,
+        balanceAtOrder: orderBalanceMap.get(order.id) || customer?.balance || 0,
+        status: order.status,
+        remark: order.remark,
+      }
+    })
+
+    return c.json({ success: true, data: exportData })
+  } catch (err) {
+    console.error('Export orders error:', err)
+    return c.json({ success: false, error: 'Export failed' }, 500)
+  }
+})
+
+export default app

@@ -9,6 +9,7 @@ import { OrdersPage } from './pages/OrdersPage'
 import { GirlsPage } from './pages/GirlsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TagsPage } from './pages/TagsPage'
+import { ExportPage } from './pages/ExportPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ function App() {
         {activeTab === 'girls' && <GirlsPage />}
         {activeTab === 'settings' && <SettingsPage />}
         {activeTab === 'tags' && <TagsPage />}
+        {activeTab === 'export' && <ExportPage />}
         <BottomNav />
       </div>
     </QueryClientProvider>
