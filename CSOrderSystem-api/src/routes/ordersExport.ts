@@ -6,7 +6,8 @@ import {
   customers, 
   girls, 
   packages,
-  balanceTransactions
+  balanceTransactions,
+  memberLevels
 } from '../db/schema'
 import type { Env } from '../index'
 
@@ -83,11 +84,19 @@ app.post('/', async (c) => {
       }
     }
 
+    // 获取会员等级名称映射
+    const memberLevelsList = await db.select().from(memberLevels)
+      .where(eq(memberLevels.storeId, storeId))
+      .all()
+    const levelNameMap = new Map(memberLevelsList.map(l => [l.level, l.name]))
+
     // 组装导出数据
     const exportData = ordersList.map(order => {
       const customer = customerMap.get(order.customerId)
       const girl = girlMap.get(order.girlId)
       const pkg = packageMap.get(order.packageId)
+      const memberLevel = customer?.memberLevel || 0
+      const memberLevelName = memberLevel > 0 ? (levelNameMap.get(memberLevel) || `LV${memberLevel}`) : '-'
 
       return {
         orderNo: order.orderNo,
@@ -95,15 +104,16 @@ app.post('/', async (c) => {
         girlName: girl?.name || '-',
         serviceStaffName: order.serviceStaffName,
         customerName: customer?.nickname || '-',
-        customerMemberLevel: customer?.memberLevel || 0,
+        customerMemberLevel: memberLevel,
+        memberLevelName, // 会员等级名称，如"3K会员"
         appointmentTime: order.appointmentTime,
         hours: order.hours,
         packageName: pkg?.name || '-',
-        originalPrice: order.originalPrice,
+        originalPrice: order.originalPrice, // 分，前端转换
         couponSource: order.couponSource,
-        discountAmount: order.discountAmount,
-        finalPrice: order.finalPrice,
-        balanceAtOrder: orderBalanceMap.get(order.id) || customer?.balance || 0,
+        discountAmount: order.discountAmount, // 分，前端转换
+        finalPrice: order.finalPrice, // 元，直接显示
+        balanceAtOrder: orderBalanceMap.get(order.id) || customer?.balance || 0, // 分，前端转换
         status: order.status,
         remark: order.remark,
       }

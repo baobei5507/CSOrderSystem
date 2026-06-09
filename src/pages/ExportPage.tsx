@@ -58,7 +58,7 @@ export function ExportPage() {
         return
       }
 
-      // 准备 Excel 数据
+        // 准备 Excel 数据
       const excelData = orders.map((order: any, index: number) => {
         // 计算结束时间
         let endTime = '-'
@@ -78,9 +78,8 @@ export function ExportPage() {
           ? format(new Date(order.createdAt), 'yyyyMMdd')
           : '-'
 
-        // 会员等级显示
-        const memberLevel = order.customerMemberLevel
-        const memberLevelStr = memberLevel && memberLevel > 0 ? `LV${memberLevel}` : '-'
+        // 会员等级显示：使用等级名称（如"3K会员"）
+        const memberLevelStr = order.memberLevelName || '-'
 
         return {
           '序号': index + 1,
@@ -97,7 +96,7 @@ export function ExportPage() {
           '单价': order.originalPrice ? (order.originalPrice / 100).toFixed(2) : '0.00',
           '优惠券来源': order.couponSource || '-',
           '优惠总计': order.discountAmount ? (order.discountAmount / 100).toFixed(2) : '0.00',
-          '实收': order.finalPrice ? (order.finalPrice / 100).toFixed(2) : '0.00',
+          '实收': order.finalPrice ? order.finalPrice.toFixed(2) : '0.00', // finalPrice 是元，不需要 /100
           '会员余额(下单时)': order.balanceAtOrder ? (order.balanceAtOrder / 100).toFixed(2) : '0.00',
           '状态': statusMap[order.status]?.label || order.status,
           '备注': order.remark || '-',
