@@ -140,11 +140,23 @@ export const orderSnapshots = sqliteTable('order_snapshots', {
 export const storeMemberConfigs = sqliteTable('member_configs', {
   id: text('id').primaryKey(),
   storeId: text('store_id').notNull().references(() => stores.id).unique(),
-  levels: text('levels').notNull(), // JSON: 会员等级数组
-  memberDays: text('member_days').notNull(), // JSON: 会员日 [1, 2]
+  memberDays: text('member_days').notNull().default('1,2'), // 会员日，逗号分隔
   minBalancePercent: integer('min_balance_percent').notNull().default(50),
   priceMarkup: real('price_markup').notNull().default(0), // 会员优惠前提价
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+})
+
+// 会员等级表
+export const memberLevels = sqliteTable('member_levels', {
+  id: text('id').primaryKey(),
+  storeId: text('store_id').notNull().references(() => stores.id),
+  level: integer('level').notNull(), // 等级 1-5
+  name: text('name').notNull(), // 等级名称
+  minRecharge: integer('min_recharge').notNull(), // 最低充值金额（分）
+  regularDiscount: integer('regular_discount').notNull(), // 常规折扣
+  memberDayDiscount: integer('member_day_discount').notNull(), // 会员日折扣
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 })

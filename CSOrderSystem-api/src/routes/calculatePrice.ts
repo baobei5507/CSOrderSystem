@@ -7,7 +7,8 @@ import {
   packages as packagesTable,
   stores,
   girlPackagePrices,
-  storeMemberConfigs
+  storeMemberConfigs,
+  memberLevels
 } from '../db/schema'
 import type { Env } from '../index'
 
@@ -115,14 +116,8 @@ app.post('/', async (c) => {
       })
     }
 
-    // 解析会员等级配置
-    const levels = JSON.parse(memberConfig.levels || '[]') as Array<{
-      level: number
-      name: string
-      minRecharge: number
-      regularDiscount: number
-      memberDayDiscount: number
-    }>
+    // 获取会员等级
+    const levels = await db.select().from(memberLevels).where(eq(memberLevels.storeId, storeId)).all()
     
     // 确定顾客会员等级
     const customerLevel = customer.memberLevel || 0

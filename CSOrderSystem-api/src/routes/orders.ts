@@ -13,6 +13,7 @@ import {
   balanceTransactions,
   memberDayUsage,
   girlPackagePrices,
+  memberLevels,
 } from '../db/schema'
 import type { Env } from '../index'
 
@@ -115,9 +116,9 @@ app.post('/calculate', async (c) => {
       return c.json({ success: true, data: result })
     }
 
-    // 解析会员等级配置
-    const levels = JSON.parse(config.levels)
-    const levelConfig = levels.find((l: any) => l.level === customer.memberLevel)
+    // 获取会员等级
+    const levels = await db.select().from(memberLevels).where(eq(memberLevels.storeId, storeId)).all()
+    const levelConfig = levels.find(l => l.level === customer.memberLevel)
     if (!levelConfig) {
       return c.json({ success: true, data: result })
     }
