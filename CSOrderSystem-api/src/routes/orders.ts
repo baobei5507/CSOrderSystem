@@ -139,6 +139,9 @@ app.post('/calculate', async (c) => {
       .get()
     const hasUsedMemberDay = !!usage
 
+    // 应用前提价
+    const priceWithMarkup = originalPricePerHour + (config.priceMarkup || 0)
+    
     // 计算每个钟的价格
     const breakdown = []
     let usedMemberDayBenefit = false
@@ -153,10 +156,10 @@ app.post('/calculate', async (c) => {
         
         if (customer.balance >= minBalance) {
           // 第一个钟：会员日折扣
-          const finalPrice = Math.round(originalPricePerHour * levelConfig.memberDayDiscount / 100)
+          const finalPrice = Math.round(priceWithMarkup * levelConfig.memberDayDiscount / 100)
           breakdown.push({
             hour,
-            originalPrice: originalPricePerHour,
+            originalPrice: priceWithMarkup,
             discountPercent: levelConfig.memberDayDiscount,
             finalPrice,
             type: 'memberDay' as const,
@@ -165,25 +168,25 @@ app.post('/calculate', async (c) => {
           usedMemberDayBenefit = true
         } else {
           // 余额不足，fallback 到常规折扣
-          const finalPrice = Math.round(originalPricePerHour * levelConfig.regularDiscount / 100)
+          const finalPrice = Math.round(priceWithMarkup * levelConfig.regularDiscount / 100)
           breakdown.push({
             hour,
-            originalPrice: originalPricePerHour,
+            originalPrice: priceWithMarkup,
             discountPercent: levelConfig.regularDiscount,
             finalPrice,
-            type: 'memberRegular' as const,
+            type: 'regular' as const,
           })
           totalFinalPrice += finalPrice
         }
       } else {
         // 其他钟：常规会员折扣
-        const finalPrice = Math.round(originalPricePerHour * levelConfig.regularDiscount / 100)
+        const finalPrice = Math.round(priceWithMarkup * levelConfig.regularDiscount / 100)
         breakdown.push({
           hour,
-          originalPrice: originalPricePerHour,
+          originalPrice: priceWithMarkup,
           discountPercent: levelConfig.regularDiscount,
           finalPrice,
-          type: 'memberRegular' as const,
+          type: 'regular' as const,
         })
         totalFinalPrice += finalPrice
       }
@@ -200,6 +203,7 @@ app.post('/calculate', async (c) => {
       originalPricePerHour,
       hours,
       totalOriginalAmount,
+      priceMarkup: config.priceMarkup || 0,
       discountType: usedMemberDayBenefit ? 'memberDay' : 'memberRegular',
       discountPercent: avgDiscountPercent,
       discountAmount,

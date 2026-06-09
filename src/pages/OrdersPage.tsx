@@ -436,7 +436,8 @@ export function OrdersPage() {
         // 获取妹妹套餐价格
         const prices = await getGirlPackagePrices(selectedGirl.id)
         const girlPrice = prices.find(p => p.packageId === selectedPackage.id)
-        const basePrice = girlPrice?.price || selectedPackage.basePrice
+        // 优先使用当日价格，其次常规价格，最后套餐基础价
+        const basePrice = girlPrice?.dailyPrice || girlPrice?.price || selectedPackage.basePrice
         setCalculatedPrice(basePrice)
 
         // 如果有顾客且会员系统启用，调用计算接口

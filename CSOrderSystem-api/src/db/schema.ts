@@ -136,8 +136,8 @@ export const orderSnapshots = sqliteTable('order_snapshots', {
   createdAt: integer('created_at').notNull(),
 })
 
-// 店铺会员配置
-export const storeMemberConfigs = sqliteTable('store_member_configs', {
+// 店铺会员配置 (与迁移脚本保持一致，使用 member_configs 表名)
+export const storeMemberConfigs = sqliteTable('member_configs', {
   id: text('id').primaryKey(),
   storeId: text('store_id').notNull().references(() => stores.id).unique(),
   levels: text('levels').notNull(), // JSON: 会员等级数组
