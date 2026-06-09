@@ -35,6 +35,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           status: 'active' | 'rest' | 'left'
           commissionType: 'percent' | 'fixed'
           commissionValue: number
+          excludeFromDiscount?: boolean
         }
         
         // 检查同店同名
@@ -56,6 +57,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           status: body.status || 'active',
           commissionType: body.commissionType,
           commissionValue: body.commissionValue,
+          excludeFromDiscount: body.excludeFromDiscount || false,
           createdAt: timestamp,
           updatedAt: timestamp,
         })
@@ -72,6 +74,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           status?: 'active' | 'rest' | 'left'
           commissionType?: 'percent' | 'fixed'
           commissionValue?: number
+          excludeFromDiscount?: boolean
         }
 
         await db.update(girls)

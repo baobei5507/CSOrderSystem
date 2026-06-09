@@ -212,28 +212,43 @@ export function useApi() {
   }, [])
 
   // Girl Package Prices
-  const getGirlPackagePrices = useCallback(async (girlId: string): Promise<{ packageId: string; price: number; packageName: string; packageCode: string }[]> => {
+  const getGirlPackagePrices = useCallback(async (girlId: string): Promise<{ packageId: string; price: number; dailyPrice?: number | null; packageName: string; packageCode: string }[]> => {
     return fetchApi(`/girl-package-prices?girlId=${girlId}`)
+  }, [])
+
+  const saveGirlPackagePrice = useCallback(async (data: {
+    storeId: string
+    girlId: string
+    packageId: string
+    price: number
+    dailyPrice?: number | null
+  }): Promise<{ id: string }> => {
+    return fetchApi('/girl-package-prices', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   }, [])
 
   // Member Config
   const getMemberConfig = useCallback(async (storeId: string): Promise<{
     enabled: boolean
+    priceMarkup: number
     levels: { level: number; name: string; minRecharge: number; regularDiscount: number; memberDayDiscount: number }[]
     memberDays: number[]
     minBalancePercent: number
   }> => {
-    return fetchApi(`/member-config?storeId=${storeId}`)
+    return fetchApi(`/member-configs?storeId=${storeId}`)
   }, [])
 
   const saveMemberConfig = useCallback(async (data: {
     storeId: string
     enabled: boolean
+    priceMarkup: number
     levels: { level: number; name: string; minRecharge: number; regularDiscount: number; memberDayDiscount: number }[]
     memberDays: number[]
     minBalancePercent: number
   }): Promise<{ id: string }> => {
-    return fetchApi('/member-config', {
+    return fetchApi('/member-configs', {
       method: 'POST',
       body: JSON.stringify(data),
     })
@@ -277,21 +292,22 @@ export function useApi() {
     hours?: number
     date?: string
   }): Promise<{
-    originalPricePerHour: number
+    basePrice: number
     hours: number
     totalOriginalAmount: number
+    priceMarkup?: number
     discountType: 'memberDay' | 'memberRegular' | 'none'
     discountPercent: number
     discountAmount: number
     finalPrice: number
     deductedBalance: number
-    breakdown: { hour: number; originalPrice: number; discountPercent: number; finalPrice: number; type: string }[]
+    breakdown?: { hour: number; originalPrice: number; discountPercent: number; finalPrice: number; type: string }[]
     girlIncome: number
     serviceCommission: number
     usedMemberDayBenefit: boolean
     reason: string
   }> => {
-    return fetchApi('/orders/calculate', {
+    return fetchApi('/calculate-price', {
       method: 'POST',
       body: JSON.stringify(data),
     })
@@ -333,6 +349,7 @@ export function useApi() {
     getDashboard,
     // Girl Package Prices
     getGirlPackagePrices,
+    saveGirlPackagePrice,
     // Member Config
     getMemberConfig,
     saveMemberConfig,

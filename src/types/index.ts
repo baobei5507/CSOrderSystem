@@ -16,6 +16,7 @@ export interface Girl {
   status: 'active' | 'rest' | 'left'
   commissionType: 'percent' | 'fixed'
   commissionValue: number
+  excludeFromDiscount?: boolean // 不参与任何优惠
   createdAt: number
   updatedAt: number
 }
@@ -39,6 +40,7 @@ export interface GirlPackagePrice {
   girlId: string
   packageId: string
   price: number
+  dailyPrice?: number | null // 当日特价（可选，优先使用）
   createdAt: number
   updatedAt: number
 }
@@ -155,6 +157,32 @@ export interface DashboardStats {
   monthAmount: number
   monthServiceCommission: number
   monthGirlIncome: number
+}
+
+// 会员等级
+export interface MemberLevel {
+  id?: string
+  storeId?: string
+  level: number
+  name: string
+  minRecharge: number // 分
+  regularDiscount: number // 如95表示95折
+  memberDayDiscount: number
+  createdAt?: number
+  updatedAt?: number
+}
+
+// 会员配置
+export interface MemberConfig {
+  id?: string
+  storeId?: string
+  enabled: boolean
+  priceMarkup: number // 会员优惠前提价（元）
+  minBalancePercent: number
+  memberDays: number[]
+  levels: MemberLevel[]
+  createdAt?: number
+  updatedAt?: number
 }
 
 // 排行数据

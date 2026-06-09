@@ -29,6 +29,7 @@ interface GirlPackagePrice {
   packageName: string
   packageCode: string
   price: number
+  dailyPrice?: number | null
 }
 
 type GirlStatus = 'active' | 'rest' | 'left'
@@ -57,6 +58,7 @@ export function GirlsPage() {
     status: 'active' as GirlStatus,
     commissionType: 'percent' as CommissionType,
     commissionValue: 70,
+    excludeFromDiscount: false,
   })
 
   const { currentStore } = useAppStore()
@@ -90,10 +92,13 @@ export function GirlsPage() {
     }
   }
 
+  const [dailyPriceFormData, setDailyPriceFormData] = useState<Record<string, string>>({})
+
   const handleOpenPriceDialog = async (girl: Girl) => {
     setSelectedGirl(girl)
     setPriceDialogOpen(true)
     setPriceFormData({})
+    setDailyPriceFormData({})
     // 加载该妹妹的套餐价格
     try {
       const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
@@ -102,10 +107,13 @@ export function GirlsPage() {
       if (result.success) {
         // 初始化表单数据
         const initialData: Record<string, string> = {}
+        const initialDailyData: Record<string, string> = {}
         result.data.forEach((p: GirlPackagePrice) => {
           initialData[p.packageId] = p.price?.toString() || ''
+          initialDailyData[p.packageId] = p.dailyPrice?.toString() || ''
         })
         setPriceFormData(initialData)
+        setDailyPriceFormData(initialDailyData)
       }
     } catch (err) {
       console.error('加载套餐价格失败:', err)
@@ -117,9 +125,12 @@ export function GirlsPage() {
     setIsSavingPrices(true)
     try {
       const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
-      // 批量保存所有价格
+      // 批量保存所有价格（常规价格 + 当日价格）
       const savePromises = Object.entries(priceFormData).map(([packageId, price]) => {
         const priceValue = price === '' ? 0 : parseFloat(price)
+        const dailyPriceValue = dailyPriceFormData[packageId] === '' || dailyPriceFormData[packageId] === undefined 
+          ? null 
+          : parseFloat(dailyPriceFormData[packageId])
         return fetch(`${API_BASE}/girl-package-prices`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -127,6 +138,7 @@ export function GirlsPage() {
             girlId: selectedGirl.id,
             packageId,
             price: priceValue,
+            dailyPrice: dailyPriceValue,
             storeId: currentStore.id,
           }),
         })
@@ -157,6 +169,7 @@ export function GirlsPage() {
         status: girl.status as GirlStatus,
         commissionType: girl.commissionType as CommissionType,
         commissionValue: girl.commissionValue,
+        excludeFromDiscount: girl.excludeFromDiscount || false,
       })
     } else {
       setEditingGirl(null)
@@ -165,6 +178,7 @@ export function GirlsPage() {
         status: 'active',
         commissionType: 'percent',
         commissionValue: 70,
+        excludeFromDiscount: false,
       })
     }
     setDialogOpen(true)
@@ -297,6 +311,11 @@ export function GirlsPage() {
                     <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
                       {status.label}
                     </Badge>
+                    {girl.excludeFromDiscount && (
+                      <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-600">
+                        无优惠
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-chiikawa-brown/60 mt-1">
                     提成: {girl.commissionType === 'percent' ? `${girl.commissionValue}%` : `¥${girl.commissionValue}`}
@@ -396,6 +415,26 @@ export function GirlsPage() {
                 onChange={(e) => setFormData({ ...formData, commissionValue: Number(e.target.value) })}
               />
             </div>
+            <div className="flex items-center justify-between p-3 bg-chiikawa-cream rounded-xl border border-chiikawa-peach/20">
+              <div>
+                <Label className="text-sm font-medium text-chiikawa-brown">不参与优惠活动</Label>
+                <p className="text-xs text-chiikawa-brown/60">开启后该妹妹不享受会员折扣等优惠</p>
+              </div>
+              <button
+                onClick={() => setFormData(prev => ({ ...prev, excludeFromDiscount: !prev.excludeFromDiscount }))}
+                className={cn(
+                  "w-12 h-6 rounded-full transition-colors relative",
+                  formData.excludeFromDiscount ? "bg-chiikawa-pink" : "bg-chiikawa-peach/50"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
+                    formData.excludeFromDiscount ? "left-7" : "left-1"
+                  )}
+                />
+              </button>
+            </div>
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
@@ -426,23 +465,44 @@ export function GirlsPage() {
               </div>
             ) : (
               packages.map((pkg) => (
-                <CuteCard key={pkg.id} variant="cream" className="flex items-center gap-3 p-3">
-                  <div className="flex-1">
-                    <div className="font-medium text-chiikawa-brown">{pkg.name}</div>
-                    <div className="text-xs text-chiikawa-brown/60">基础价: ¥{pkg.basePrice}</div>
+                <CuteCard key={pkg.id} variant="cream" className="p-3">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-chiikawa-brown">{pkg.name}</div>
+                      <div className="text-xs text-chiikawa-brown/60">基础价: ¥{pkg.basePrice}</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-sm whitespace-nowrap text-chiikawa-brown/70">定价:</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      placeholder={pkg.basePrice.toString()}
-                      className="w-24 h-9"
-                      value={priceFormData[pkg.id] || ''}
-                      onChange={(e) => handlePriceChange(pkg.id, e.target.value)}
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs whitespace-nowrap text-chiikawa-brown/70">常规价:</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        placeholder={pkg.basePrice.toString()}
+                        className="w-full h-9"
+                        value={priceFormData[pkg.id] || ''}
+                        onChange={(e) => handlePriceChange(pkg.id, e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs whitespace-nowrap text-chiikawa-pink">当日价:</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        placeholder="可选"
+                        className="w-full h-9 border-chiikawa-pink/30 focus:border-chiikawa-pink"
+                        value={dailyPriceFormData[pkg.id] || ''}
+                        onChange={(e) => setDailyPriceFormData(prev => ({ ...prev, [pkg.id]: e.target.value }))}
+                      />
+                    </div>
                   </div>
+                  {dailyPriceFormData[pkg.id] && (
+                    <p className="text-xs text-chiikawa-pink mt-2">
+                      当日价格已设置，将优先使用此价格
+                    </p>
+                  )}
                 </CuteCard>
               ))
             )}

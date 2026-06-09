@@ -292,6 +292,7 @@ function MemberSettings() {
   
   const [config, setConfig] = useState({
     enabled: false,
+    priceMarkup: 0, // 会员优惠前提价（元）
     levels: [
       { level: 1, name: '3K会员', minRecharge: 3000, regularDiscount: 95, memberDayDiscount: 85 },
       { level: 2, name: '5K会员', minRecharge: 5000, regularDiscount: 90, memberDayDiscount: 80 },
@@ -314,6 +315,7 @@ function MemberSettings() {
       if (data) {
         setConfig({
           enabled: data.enabled || false,
+          priceMarkup: data.priceMarkup || 0,
           levels: data.levels || config.levels,
           memberDays: data.memberDays || [1, 2],
           minBalancePercent: data.minBalancePercent || 50,
@@ -440,6 +442,18 @@ function MemberSettings() {
                 className="mt-1 w-32"
               />
               <p className="text-xs text-chiikawa-brown/50 mt-1">余额需达到充值额度的此比例才可享受会员日折扣</p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-chiikawa-peach/20">
+              <Label className="text-sm text-chiikawa-brown/70">会员优惠前提价 (¥)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={config.priceMarkup}
+                onChange={(e) => setConfig(prev => ({ ...prev, priceMarkup: parseFloat(e.target.value) || 0 }))}
+                className="mt-1 w-32"
+              />
+              <p className="text-xs text-chiikawa-brown/50 mt-1">计算会员折扣前先加上此金额，例如：原价100元，前提价20元，则按120元计算折扣</p>
             </div>
           </CuteCard>
 

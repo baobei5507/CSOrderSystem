@@ -339,15 +339,16 @@ export function OrdersPage() {
   // 会员系统相关
   const [memberConfig, setMemberConfig] = useState<MemberConfig | null>(null)
   const [priceCalculation, setPriceCalculation] = useState<{
-    originalPricePerHour: number
+    basePrice: number
     hours: number
     totalOriginalAmount: number
+    priceMarkup?: number
     discountType: 'memberDay' | 'memberRegular' | 'none'
     discountPercent: number
     discountAmount: number
     finalPrice: number
     deductedBalance: number
-    breakdown: { hour: number; originalPrice: number; discountPercent: number; finalPrice: number; type: string }[]
+    breakdown?: { hour: number; originalPrice: number; discountPercent: number; finalPrice: number; type: string }[]
     girlIncome: number
     serviceCommission: number
     usedMemberDayBenefit: boolean
@@ -606,7 +607,7 @@ export function OrdersPage() {
       
       // 添加会员折扣相关信息
       if (priceCalculation) {
-        orderData.originalPrice = priceCalculation.originalPricePerHour
+        orderData.originalPrice = priceCalculation.basePrice
         orderData.totalOriginalAmount = priceCalculation.totalOriginalAmount
         orderData.discountType = priceCalculation.discountType
         orderData.discountPercent = priceCalculation.discountPercent
@@ -1137,24 +1138,34 @@ export function OrdersPage() {
                       </Badge>
                       <span className="text-xs text-apple-400">{priceCalculation.reason}</span>
                     </div>
+
+                    {/* 前提价提示 */}
+                    {priceCalculation.priceMarkup && priceCalculation.priceMarkup > 0 && (
+                      <div className="flex justify-between items-center py-1 px-2 bg-amber-50 rounded text-xs">
+                        <span className="text-amber-600">优惠前提价</span>
+                        <span className="text-amber-700">+¥{priceCalculation.priceMarkup}</span>
+                      </div>
+                    )}
                     
                     {/* 每小时明细 */}
-                    <div className="space-y-1 text-xs">
-                      {priceCalculation.breakdown.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center py-1 px-2 bg-white rounded">
-                          <span className="text-apple-500">
-                            第{item.hour}小时
-                            {item.type === 'memberDay' && <span className="text-pink-500 ml-1">(会员日)</span>}
-                            {item.type === 'regular' && <span className="text-blue-500 ml-1">(常规)</span>}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-apple-400 line-through">¥{item.originalPrice}</span>
-                            <span className="text-apple-400">{item.discountPercent}折</span>
-                            <span className="font-medium text-apple-700">¥{item.finalPrice}</span>
+                    {priceCalculation.breakdown && priceCalculation.breakdown.length > 0 && (
+                      <div className="space-y-1 text-xs">
+                        {priceCalculation.breakdown.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center py-1 px-2 bg-white rounded">
+                            <span className="text-apple-500">
+                              第{item.hour}小时
+                              {item.type === 'memberDay' && <span className="text-pink-500 ml-1">(会员日)</span>}
+                              {item.type === 'regular' && <span className="text-blue-500 ml-1">(常规)</span>}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-apple-400 line-through">¥{item.originalPrice}</span>
+                              <span className="text-apple-400">{item.discountPercent}折</span>
+                              <span className="font-medium text-apple-700">¥{item.finalPrice}</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* 折扣总计 */}
                     <div className="flex justify-between items-center pt-2 border-t border-apple-100">
