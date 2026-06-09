@@ -1,18 +1,28 @@
 import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { storeMemberConfigs, memberLevels } from '../db/schema'
 
 const app = new Hono<{ Bindings: { DB: D1Database } }>()
 
-// 默认会员等级
+// 默认会员等级（元为单位，前端显示用）
 const defaultLevels = [
-  { level: 1, name: '3K会员', minRecharge: 300000, regularDiscount: 95, memberDayDiscount: 85 },
-  { level: 2, name: '5K会员', minRecharge: 500000, regularDiscount: 90, memberDayDiscount: 80 },
-  { level: 3, name: '7K会员', minRecharge: 700000, regularDiscount: 88, memberDayDiscount: 75 },
-  { level: 4, name: '1w会员', minRecharge: 1000000, regularDiscount: 85, memberDayDiscount: 70 },
-  { level: 5, name: '2w会员', minRecharge: 2000000, regularDiscount: 83, memberDayDiscount: 65 },
+  { level: 1, name: '3K会员', minRecharge: 3000, regularDiscount: 95, memberDayDiscount: 85 },
+  { level: 2, name: '5K会员', minRecharge: 5000, regularDiscount: 90, memberDayDiscount: 80 },
+  { level: 3, name: '7K会员', minRecharge: 7000, regularDiscount: 88, memberDayDiscount: 75 },
+  { level: 4, name: '1w会员', minRecharge: 10000, regularDiscount: 85, memberDayDiscount: 70 },
+  { level: 5, name: '2w会员', minRecharge: 20000, regularDiscount: 83, memberDayDiscount: 65 },
 ]
+
+// 分转元
+function fenToYuan(fen: number): number {
+  return Math.round(fen / 100)
+}
+
+// 元转分
+function yuanToFen(yuan: number): number {
+  return Math.round(yuan * 100)
+}
 
 // GET /api/member-config?storeId=xxx
 app.get('/', async (c) => {
@@ -33,13 +43,21 @@ app.get('/', async (c) => {
       .where(eq(memberLevels.storeId, storeId))
       .all()
     
+    // 转换等级数据：分->元
+    const convertLevels = (levelsData: any[]) => {
+      return levelsData.map(l => ({
+        ...l,
+        minRecharge: fenToYuan(l.minRecharge)
+      }))
+    }
+
     if (!config) {
       // 返回默认配置
       return c.json({
         success: true,
         data: {
           enabled: false,
-          levels: levels.length > 0 ? levels : defaultLevels,
+          levels: levels.length > 0 ? convertLevels(levels) : defaultLevels,
           memberDays: [1, 2], // 周一、周二
           minBalancePercent: 50,
           priceMarkup: 0,
@@ -51,7 +69,7 @@ app.get('/', async (c) => {
       success: true,
       data: {
         ...config,
-        levels: levels.length > 0 ? levels : defaultLevels,
+        levels: levels.length > 0 ? convertLevels(levels) : defaultLevels,
         memberDays: config.memberDays ? config.memberDays.split(',').map(d => parseInt(d)).filter(d => !isNaN(d)) : [1, 2],
         priceMarkup: config.priceMarkup || 0,
       }
@@ -106,14 +124,14 @@ app.post('/', async (c) => {
       await db.delete(memberLevels)
         .where(eq(memberLevels.storeId, body.storeId))
       
-      // 插入新等级
+      // 插入新等级（元->分）
       for (const level of body.levels) {
         await db.insert(memberLevels).values({
           id: crypto.randomUUID(),
           storeId: body.storeId,
           level: level.level,
           name: level.name,
-          minRecharge: level.minRecharge,
+          minRecharge: yuanToFen(level.minRecharge),
           regularDiscount: level.regularDiscount,
           memberDayDiscount: level.memberDayDiscount,
           createdAt: now,
