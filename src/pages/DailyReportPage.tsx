@@ -140,18 +140,14 @@ export function DailyReportPage() {
             >
               <ChevronLeft className="w-5 h-5 text-chiikawa-brown" />
             </button>
-            <div className="relative">
-              <button
-                className="flex items-center gap-2 hover:bg-chiikawa-cream px-3 py-1.5 rounded-xl transition-colors pointer-events-none"
-              >
-                <Calendar className="w-4 h-4 text-chiikawa-brown/50" />
-                <span className="font-medium text-chiikawa-brown">
-                  {getDateString(selectedDate)}
-                </span>
-                <span className="text-sm text-chiikawa-brown/50">
-                  {selectedDate.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
-                </span>
-              </button>
+            <label className="relative flex items-center gap-2 hover:bg-chiikawa-cream px-3 py-1.5 rounded-xl transition-colors cursor-pointer">
+              <Calendar className="w-4 h-4 text-chiikawa-brown/50 pointer-events-none" />
+              <span className="font-medium text-chiikawa-brown pointer-events-none">
+                {getDateString(selectedDate)}
+              </span>
+              <span className="text-sm text-chiikawa-brown/50 pointer-events-none">
+                {selectedDate.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+              </span>
               <input
                 type="date"
                 value={formatDate(selectedDate)}
@@ -161,9 +157,9 @@ export function DailyReportPage() {
                     setSelectedDate(new Date(e.target.value))
                   }
                 }}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
               />
-            </div>
+            </label>
             <button 
               onClick={goToNextDay}
               className="p-2 rounded-full hover:bg-chiikawa-pink/20 transition-colors"
