@@ -1160,7 +1160,9 @@ export function OrdersPage() {
                             </span>
                             <div className="flex items-center gap-2">
                               <span className="text-apple-400 line-through">¥{item.originalPrice}</span>
-                              <span className="text-apple-400">{item.discountPercent}折</span>
+                              {item.discountPercent < 100 && (
+                                <span className="text-apple-400">{item.discountPercent}折</span>
+                              )}
                               <span className="font-medium text-apple-700">¥{item.finalPrice}</span>
                             </div>
                           </div>
@@ -1173,9 +1175,11 @@ export function OrdersPage() {
                       <span className="text-sm text-apple-600">会员优惠</span>
                       <span className="text-sm font-semibold text-orange-600">
                         -¥{priceCalculation.discountAmount}
-                        <span className="text-xs text-apple-400 ml-1">
-                          ({priceCalculation.discountPercent}折)
-                        </span>
+                        {priceCalculation.discountPercent < 100 && (
+                          <span className="text-xs text-apple-400 ml-1">
+                            ({priceCalculation.discountPercent}折)
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>
