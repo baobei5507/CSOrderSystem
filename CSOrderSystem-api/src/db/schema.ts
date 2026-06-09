@@ -19,6 +19,7 @@ export const girls = sqliteTable('girls', {
   status: text('status', { enum: ['active', 'rest', 'left'] }).notNull(),
   commissionType: text('commission_type', { enum: ['percent', 'fixed'] }).notNull(),
   commissionValue: real('commission_value').notNull(),
+  excludeFromDiscount: integer('exclude_from_discount', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 })
