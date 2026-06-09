@@ -42,6 +42,7 @@ export const girlPackagePrices = sqliteTable('girl_package_prices', {
   girlId: text('girl_id').notNull().references(() => girls.id),
   packageId: text('package_id').notNull().references(() => packages.id),
   price: real('price').notNull(),
+  dailyPrice: real('daily_price'), // 当日特价
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 })
