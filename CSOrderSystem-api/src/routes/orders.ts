@@ -12,6 +12,7 @@ import {
   storeMemberConfigs,
   balanceTransactions,
   memberDayUsage,
+  girlPackagePrices,
 } from '../db/schema'
 import type { Env } from '../index'
 
@@ -67,20 +68,23 @@ app.post('/calculate', async (c) => {
 
   try {
     // 获取关联数据
-    const [customer, girl, pkg, store, config] = await Promise.all([
+    const [customer, girl, pkg, store, config, girlPrice] = await Promise.all([
       db.select().from(customers).where(eq(customers.id, customerId)).get(),
       db.select().from(girls).where(eq(girls.id, girlId)).get(),
       db.select().from(packages).where(eq(packages.id, packageId)).get(),
       db.select().from(stores).where(eq(stores.id, storeId)).get(),
       db.select().from(storeMemberConfigs).where(eq(storeMemberConfigs.storeId, storeId)).get(),
+      db.select().from(girlPackagePrices).where(
+        and(eq(girlPackagePrices.girlId, girlId), eq(girlPackagePrices.packageId, packageId))
+      ).get(),
     ])
 
     if (!customer || !girl || !pkg || !store) {
       return c.json({ success: false, error: '关联数据不存在' }, 400)
     }
 
-    // 获取原价（每小时）
-    const originalPricePerHour = pkg.basePrice || 0
+    // 获取原价（每小时）：优先使用当日价格，其次常规价格，最后套餐基础价
+    const originalPricePerHour = girlPrice?.dailyPrice || girlPrice?.price || pkg.basePrice || 0
     const totalOriginalAmount = originalPricePerHour * hours
 
     // 默认无折扣
@@ -103,11 +107,11 @@ app.post('/calculate', async (c) => {
       girlIncome: calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue, hours),
       serviceCommission: calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue, hours),
       usedMemberDayBenefit: false,
-      reason: '非会员或无余额',
+      reason: girl.excludeFromDiscount ? '该妹妹不参与优惠活动' : '非会员或无余额',
     }
 
-    // 检查会员系统
-    if (!config || !config.enabled || customer.memberLevel === 0 || customer.balance <= 0) {
+    // 检查会员系统 或 妹妹不参与优惠
+    if (girl.excludeFromDiscount || !config || !config.enabled || customer.memberLevel === 0 || customer.balance <= 0) {
       return c.json({ success: true, data: result })
     }
 

@@ -143,6 +143,7 @@ export const storeMemberConfigs = sqliteTable('store_member_configs', {
   levels: text('levels').notNull(), // JSON: 会员等级数组
   memberDays: text('member_days').notNull(), // JSON: 会员日 [1, 2]
   minBalancePercent: integer('min_balance_percent').notNull().default(50),
+  priceMarkup: real('price_markup').notNull().default(0), // 会员优惠前提价
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),

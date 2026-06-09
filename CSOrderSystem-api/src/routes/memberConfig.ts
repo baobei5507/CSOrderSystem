@@ -34,6 +34,7 @@ app.get('/', async (c) => {
           ],
           memberDays: [1, 2], // 周一、周二
           minBalancePercent: 50,
+          priceMarkup: 0,
         }
       })
     }
@@ -44,6 +45,7 @@ app.get('/', async (c) => {
         ...config,
         levels: JSON.parse(config.levels),
         memberDays: JSON.parse(config.memberDays),
+        priceMarkup: config.priceMarkup || 0,
       }
     })
   } catch (err) {
@@ -72,6 +74,7 @@ app.post('/', async (c) => {
           levels: JSON.stringify(body.levels),
           memberDays: JSON.stringify(body.memberDays),
           minBalancePercent: body.minBalancePercent || 50,
+          priceMarkup: body.priceMarkup !== undefined ? body.priceMarkup : (existing.priceMarkup || 0),
           enabled: body.enabled ? 1 : 0,
           updatedAt: now,
         })
@@ -84,6 +87,7 @@ app.post('/', async (c) => {
         levels: JSON.stringify(body.levels),
         memberDays: JSON.stringify(body.memberDays),
         minBalancePercent: body.minBalancePercent || 50,
+        priceMarkup: body.priceMarkup !== undefined ? body.priceMarkup : 0,
         enabled: body.enabled ? 1 : 0,
         createdAt: now,
         updatedAt: now,
