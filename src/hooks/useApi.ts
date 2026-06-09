@@ -191,6 +191,18 @@ export function useApi() {
     return fetchApi(`/orders?id=${id}`, { method: 'DELETE' })
   }, [])
 
+  const exportOrders = useCallback(async (data: {
+    storeId: string
+    startDate: string
+    endDate: string
+    status?: string
+  }): Promise<any[]> => {
+    return fetchApi('/orders/export', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }, [])
+
   // Dashboard
   const getDashboard = useCallback(async (storeId: string): Promise<{
     todayRevenue: number
@@ -345,6 +357,7 @@ export function useApi() {
     createOrder,
     updateOrder,
     deleteOrder,
+    exportOrders,
     // Dashboard
     getDashboard,
     // Girl Package Prices

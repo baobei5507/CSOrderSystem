@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Download, FileSpreadsheet, Calendar, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +16,6 @@ import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
 import * as XLSX from 'xlsx'
 import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 
 type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'all'
 
@@ -29,7 +28,7 @@ const statusMap: Record<string, { label: string }> = {
 
 export function ExportPage() {
   const { currentStore } = useAppStore()
-  const { api } = useApi()
+  const { exportOrders } = useApi()
   
   // 日期范围
   const today = new Date()
@@ -47,18 +46,12 @@ export function ExportPage() {
 
     setIsExporting(true)
     try {
-      const response = await api.post('/orders/export', {
+      const orders = await exportOrders({
         storeId: currentStore.id,
         startDate,
         endDate,
         status: status === 'all' ? undefined : status,
       })
-
-      if (!response.success) {
-        throw new Error(response.error || '导出失败')
-      }
-
-      const orders = response.data
       
       if (orders.length === 0) {
         alert('没有找到符合条件的订单')
