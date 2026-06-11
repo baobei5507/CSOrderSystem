@@ -109,11 +109,11 @@ app.post('/', async (c) => {
         appointmentTime: order.appointmentTime,
         hours: order.hours,
         packageName: pkg?.name || '-',
-        originalPrice: order.originalPrice, // 分，前端转换
+        originalPrice: order.originalPrice, // 分，前端除以100
         couponSource: order.couponSource,
-        discountAmount: order.discountAmount, // 分，前端转换
-        finalPrice: order.finalPrice, // 元，直接显示
-        balanceAtOrder: orderBalanceMap.get(order.id) || customer?.balance || 0, // 分，前端转换
+        discountAmount: order.discountAmount, // 分，前端除以100
+        finalPrice: order.finalPrice, // 元，real类型，前端直接显示
+        balanceAtOrder: orderBalanceMap.get(order.id) || customer?.balance || 0, // 分，前端除以100
         status: order.status,
         remark: order.remark,
       }

@@ -93,11 +93,11 @@ export function ExportPage() {
           '结束时间': endTime,
           '课程': order.packageName || '-',
           '课时': order.hours || 1,
-          '单价': order.originalPrice ? (order.originalPrice / 100).toFixed(2) : '0.00',
+          '单价': order.originalPrice ? (Number(order.originalPrice) / 100).toFixed(2) : '0.00',
           '优惠券来源': order.couponSource || '-',
-          '优惠总计': order.discountAmount ? (order.discountAmount / 100).toFixed(2) : '0.00',
-          '实收': order.finalPrice ? order.finalPrice.toFixed(2) : '0.00', // finalPrice 是元，不需要 /100
-          '会员余额(下单时)': order.balanceAtOrder ? (order.balanceAtOrder / 100).toFixed(2) : '0.00',
+          '优惠总计': order.discountAmount ? (Number(order.discountAmount) / 100).toFixed(2) : '0.00',
+          '实收': order.finalPrice ? Number(order.finalPrice).toFixed(2) : '0.00', // finalPrice是元，不除100
+          '会员余额(下单时)': order.balanceAtOrder ? (Number(order.balanceAtOrder) / 100).toFixed(2) : '0.00',
           '状态': statusMap[order.status]?.label || order.status,
           '备注': order.remark || '-',
         }

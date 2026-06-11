@@ -301,18 +301,26 @@ app.post('/', async (c) => {
   const orderId = crypto.randomUUID()
   const orderNo = generateOrderNo()
 
-  // 计算价格和折扣
+  // 计算价格和折扣（前端传来的是元）
   const hours = body.hours || 1
-  const originalPricePerHour = body.originalPricePerHour || pkg.basePrice || 0
-  const totalOriginalAmount = body.totalOriginalAmount || (originalPricePerHour * hours)
-  const finalPrice = body.finalPrice || totalOriginalAmount
-  const discountAmount = body.discountAmount || (totalOriginalAmount - finalPrice)
-  const discountPercent = body.discountPercent || Math.round((finalPrice / totalOriginalAmount) * 100)
+  const originalPricePerHourYuan = body.originalPricePerHour || pkg.basePrice || 0
+  const totalOriginalAmountYuan = body.totalOriginalAmount || (originalPricePerHourYuan * hours)
+  const finalPriceYuan = body.finalPrice || totalOriginalAmountYuan
+  const discountAmountYuan = body.discountAmount || (totalOriginalAmountYuan - finalPriceYuan)
+  const discountPercent = body.discountPercent || Math.round((finalPriceYuan / totalOriginalAmountYuan) * 100)
+  
+  // 转换为数据库存储单位：
+  // - integer 字段存分（originalPrice, totalOriginalAmount, discountAmount）
+  // - real 字段存元（finalPrice）
+  const originalPricePerHour = Math.round(originalPricePerHourYuan * 100)
+  const totalOriginalAmount = Math.round(totalOriginalAmountYuan * 100)
+  const finalPrice = finalPriceYuan // real 类型，存元
+  const discountAmount = Math.round(discountAmountYuan * 100)
 
   // 提成计算（基于原价和小时数！）
-  const girlIncome = calculateCommission(totalOriginalAmount, girl.commissionType, girl.commissionValue, hours)
-  const serviceCommission = calculateCommission(totalOriginalAmount, store.serviceCommissionType, store.serviceCommissionValue, hours)
-  const storeProfit = finalPrice - girlIncome - serviceCommission
+  const girlIncome = calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
+  const serviceCommission = calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
+  const storeProfit = finalPriceYuan - girlIncome - serviceCommission
 
   // 创建订单
   await db.insert(orders).values({

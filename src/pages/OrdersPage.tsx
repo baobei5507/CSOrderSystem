@@ -1219,8 +1219,8 @@ export function OrdersPage() {
                       onChange={(e) => {
                         const discount = parseFloat(e.target.value) || 0
                         setFormData(prev => ({ ...prev, discount }))
-                        // 重新计算最终价格
-                        const baseFinal = priceCalculation?.finalPrice || calculatedPrice * formData.hours
+                        // 重新计算最终价格，优先使用 priceCalculation.finalPrice
+                        const baseFinal = priceCalculation?.finalPrice || finalPricePreview || calculatedPrice * formData.hours
                         setFinalPricePreview(Math.max(0, baseFinal - discount))
                       }}
                     />
@@ -1245,7 +1245,7 @@ export function OrdersPage() {
                 <div className="flex justify-between items-center pt-2 border-t border-apple-100">
                   <span className="text-sm text-apple-600">实付金额</span>
                   <span className="text-lg font-bold text-orange-600">
-                    ¥{finalPricePreview > 0 ? finalPricePreview : (priceCalculation?.finalPrice || calculatedPrice * formData.hours - formData.discount)}
+                    ¥{priceCalculation?.finalPrice || finalPricePreview || calculatedPrice * formData.hours - formData.discount}
                   </span>
                 </div>
 

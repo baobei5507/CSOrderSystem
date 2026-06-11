@@ -1,6 +1,9 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { drizzle } from 'drizzle-orm/d1'
+import { sql } from 'drizzle-orm'
+import type { ExportedHandler, ExecutionContext } from '@cloudflare/workers-types'
 import storesRoute from './routes/stores'
 import girlsRoute from './routes/girls'
 import packagesRoute from './routes/packages'
@@ -17,6 +20,7 @@ import memberConfigRoute from './routes/memberConfig'
 import rechargeRoute from './routes/recharge'
 import calculatePriceRoute from './routes/calculatePrice'
 import ordersExportRoute from './routes/ordersExport'
+import { girlPackagePrices } from './db/schema'
 
 // 环境变量类型
 export interface Env {
@@ -68,4 +72,28 @@ app.onError((err, c) => {
 // 404
 app.notFound((c) => c.json({ success: false, error: 'Not found' }, 404))
 
-export default app
+// 默认导出：同时支持 HTTP 请求和 Cron 触发器
+export default {
+  // HTTP 请求处理
+  fetch: app.fetch,
+
+  // Cron Trigger：每天凌晨自动清空当日价格
+  scheduled: async (event: ScheduledEvent, env: Env, ctx: ExecutionContext) => {
+    ctx.waitUntil(
+      (async () => {
+        console.log('Running daily price reset cron job at:', new Date().toISOString())
+        try {
+          const db = drizzle(env.DB)
+          // 清空所有 daily_price
+          const result = await db.update(girlPackagePrices)
+            .set({ dailyPrice: null, updatedAt: Date.now() })
+            .where(sql`daily_price IS NOT NULL`)
+            .returning()
+          console.log('Daily price reset completed, affected rows:', result.length)
+        } catch (err) {
+          console.error('Daily price reset failed:', err)
+        }
+      })()
+    )
+  }
+} satisfies ExportedHandler<Env>
