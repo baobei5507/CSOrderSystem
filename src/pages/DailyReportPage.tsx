@@ -331,7 +331,9 @@ export function DailyReportPage() {
                             {order.status === 'completed' ? '已完成' : order.status === 'cancelled' ? '已取消' : '待完成'}
                           </Badge>
                         </div>
-                        <span className="font-semibold text-chiikawa-brown">¥{order.price}</span>
+                        <span className={cn("font-semibold text-chiikawa-brown", order.price === 0 && "text-chiikawa-pink")}>
+                          {order.price === 0 ? '免单' : `¥${order.price}`}
+                        </span>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-chiikawa-brown/60">
                         <span>顾客: {order.customerName}</span>

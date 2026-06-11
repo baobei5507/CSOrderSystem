@@ -37,13 +37,15 @@ app.get('/', async (c) => {
 
     // 只统计已完成的订单用于收入计算
     const completedOrders = dayOrders.filter(o => o.status === 'completed')
+    // 免单订单(finalPrice=0)不计入收入和提成
+    const paidOrders = completedOrders.filter(o => (o.finalPrice || 0) > 0)
 
     // 计算汇总数据
     const summary = {
-      totalRevenue: completedOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
+      totalRevenue: paidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
       totalOrders: completedOrders.length,
-      totalGirlIncome: completedOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0),
-      totalServiceCommission: completedOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0),
+      totalGirlIncome: paidOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0),
+      totalServiceCommission: paidOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0),
     }
 
     // 计算每个妹妹的当日统计
@@ -66,7 +68,10 @@ app.get('/', async (c) => {
       }
 
       stats.orderCount += 1
-      stats.income += order.girlIncome || 0
+      // 免单订单不计入妹妹收入
+      if ((order.finalPrice || 0) > 0) {
+        stats.income += order.girlIncome || 0
+      }
       girlStatsMap.set(order.girlId, stats)
     }
 

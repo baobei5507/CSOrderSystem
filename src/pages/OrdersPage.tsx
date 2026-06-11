@@ -225,27 +225,57 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                           </span>
                         </div>
                         <div className="text-right">
-                          {(order.discount || 0) > 0 || order.discountAmount ? (
+                          {order.finalPrice !== undefined && order.finalPrice !== null && order.finalPrice === 0 ? (
+                            // 免单订单
                             <div className="flex items-center gap-2 flex-wrap justify-end">
                               <span className="text-sm text-chiikawa-brown/40 line-through">
                                 ¥{order.totalOriginalAmount ? (order.totalOriginalAmount / 100).toFixed(0) : order.price}
                               </span>
                               <span className="text-lg font-bold text-chiikawa-pink">
-                                ¥{order.finalPrice ? order.finalPrice.toFixed(2) : Math.max(0, (order.price || 0) - ((order.discount || 0) + ((order.discountAmount || 0) / 100)))}
+                                免单
                               </span>
                               {order.discountType && order.discountType !== 'none' && (
                                 <Badge variant="secondary" className={cn(
                                   "text-xs",
                                   order.discountType === 'memberDay'
                                     ? "bg-chiikawa-pink-light text-chiikawa-pink"
-                                    : "bg-chiikawa-blue-light text-chiikawa-blue"
+                                    : order.discountType === 'memberRegular'
+                                    ? "bg-chiikawa-blue-light text-chiikawa-blue"
+                                    : "bg-chiikawa-yellow-light text-yellow-600"
                                 )}>
-                                  {order.discountType === 'memberDay' ? '会员日' : '会员'}{order.discountPercent}折
+                                  {order.discountType === 'memberDay' ? '会员日' : order.discountType === 'memberRegular' ? '会员' : '优惠'}{order.discountPercent}折
                                 </Badge>
                               )}
-                              {(order.discount || 0) > 0 && (
+                              {order.couponSource && (
+                                <Badge variant="secondary" className="text-xs bg-chiikawa-lavender text-purple-600">
+                                  来源:{order.couponSource}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (order.discountAmount && order.discountAmount > 0) || (order.discountType && order.discountType !== 'none') ? (
+                            // 有折扣的订单
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
+                              <span className="text-sm text-chiikawa-brown/40 line-through">
+                                ¥{order.totalOriginalAmount ? (order.totalOriginalAmount / 100).toFixed(0) : order.price}
+                              </span>
+                              <span className="text-lg font-bold text-chiikawa-pink">
+                                ¥{(order.finalPrice ?? order.price)?.toFixed(2)}
+                              </span>
+                              {order.discountType && order.discountType !== 'none' && (
+                                <Badge variant="secondary" className={cn(
+                                  "text-xs",
+                                  order.discountType === 'memberDay'
+                                    ? "bg-chiikawa-pink-light text-chiikawa-pink"
+                                    : order.discountType === 'memberRegular'
+                                    ? "bg-chiikawa-blue-light text-chiikawa-blue"
+                                    : "bg-chiikawa-yellow-light text-yellow-600"
+                                )}>
+                                  {order.discountType === 'memberDay' ? '会员日' : order.discountType === 'memberRegular' ? '会员' : '优惠'}{order.discountPercent}折
+                                </Badge>
+                              )}
+                              {order.discountAmount && order.discountAmount > 0 && (
                                 <Badge variant="secondary" className="text-xs bg-chiikawa-yellow-light text-yellow-600">
-                                  优惠¥{order.discount}
+                                  优惠¥{(order.discountAmount / 100).toFixed(0)}
                                 </Badge>
                               )}
                               {order.couponSource && (

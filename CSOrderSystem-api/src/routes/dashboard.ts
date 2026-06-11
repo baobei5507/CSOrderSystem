@@ -24,7 +24,9 @@ app.get('/', async (c) => {
       .all()
 
     const todayCompletedList = todayOrdersList.filter(o => o.status === 'completed')
-    const todayRevenue = todayCompletedList.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
+    // 免单订单(finalPrice=0)不计入收入
+    const todayPaidList = todayCompletedList.filter(o => (o.finalPrice || 0) > 0)
+    const todayRevenue = todayPaidList.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
     const todayCompleted = todayCompletedList.length
     const todayCancelled = todayOrdersList.filter(o => o.status === 'cancelled').length
 
@@ -34,10 +36,12 @@ app.get('/', async (c) => {
       .all()
 
     const monthCompletedList = monthOrdersList.filter(o => o.status === 'completed')
-    const monthRevenue = monthCompletedList.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
+    // 免单订单(finalPrice=0)不计入收入
+    const monthPaidList = monthCompletedList.filter(o => (o.finalPrice || 0) > 0)
+    const monthRevenue = monthPaidList.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
     const monthCompleted = monthCompletedList.length
     const monthCancelled = monthOrdersList.filter(o => o.status === 'cancelled').length
-    const monthServiceCommission = monthCompletedList.reduce((sum, o) => sum + (o.serviceCommission || 0), 0)
+    const monthServiceCommission = monthPaidList.reduce((sum, o) => sum + (o.serviceCommission || 0), 0)
 
     // 本月新增顾客数
     const newCustomersResult = await db.select({ count: sql<number>`COUNT(*)` })
@@ -64,8 +68,10 @@ app.get('/', async (c) => {
         ))
         .all()
       
-      const revenue = girlOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
-      const girlIncome = girlOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0)
+      // 排除免单订单
+      const paidOrders = girlOrders.filter(o => (o.finalPrice || 0) > 0)
+      const revenue = paidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
+      const girlIncome = paidOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0)
       
       if (girlOrders.length > 0) {
         girlRanking.push({
@@ -92,7 +98,9 @@ app.get('/', async (c) => {
         ))
         .all()
       
-      const revenue = customerOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
+      // 排除免单订单
+      const paidOrders = customerOrders.filter(o => (o.finalPrice || 0) > 0)
+      const revenue = paidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
       
       if (customerOrders.length > 0) {
         customerRanking.push({
