@@ -1213,6 +1213,7 @@ export function OrdersPage() {
                       type="number"
                       min={0}
                       max={priceCalculation?.finalPrice || calculatedPrice * formData.hours}
+                      step="any"
                       placeholder="0"
                       className="h-8 text-sm"
                       value={formData.discount || ''}
