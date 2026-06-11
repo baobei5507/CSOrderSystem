@@ -652,8 +652,6 @@ export function OrdersPage() {
           orderData.finalPrice = 0
           orderData.deductedBalance = 0
           orderData.usedMemberDayBenefit = 0
-          orderData.girlIncome = 0
-          orderData.serviceCommission = 0
         } else {
           // 优惠券减去后实际应扣余额和最终价格
           orderData.finalPrice = finalPricePreview
@@ -681,8 +679,6 @@ export function OrdersPage() {
         orderData.finalPrice = 0
         orderData.deductedBalance = 0
         orderData.usedMemberDayBenefit = 0
-        orderData.girlIncome = 0
-        orderData.serviceCommission = 0
         // 非会员场景的 discountAmount
         if (!priceCalculation) {
           orderData.totalOriginalAmount = calculatedPrice * formData.hours
@@ -1360,9 +1356,7 @@ export function OrdersPage() {
                       })
                     </span>
                   </div>
-                  <span className="text-lg font-semibold text-green-600">
-                    {isFreeOrder ? '¥0.00' : `¥${(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}`}
-                  </span>
+                  <span className="text-lg font-semibold text-green-600">¥{(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}</span>
                 </div>
 
                 {/* 妹妹提成预览 */}
@@ -1376,9 +1370,7 @@ export function OrdersPage() {
                       })
                     </span>
                   </div>
-                  <span className="text-lg font-semibold text-purple-600">
-                    {isFreeOrder ? '¥0.00' : `¥${(priceCalculation?.girlIncome || girlIncomePreview).toFixed(2)}`}
-                  </span>
+                  <span className="text-lg font-semibold text-purple-600">¥{(priceCalculation?.girlIncome || girlIncomePreview).toFixed(2)}</span>
                 </div>
 
               </div>

@@ -317,10 +317,10 @@ app.post('/', async (c) => {
   const finalPrice = finalPriceYuan // real 类型，存元
   const discountAmount = Math.round(discountAmountYuan * 100)
 
-  // 提成计算（免单订单提成归零，否则基于原价和小时数）
+  // 提成计算（基于原价和小时数，免单也照常计算提成）
+  const girlIncome = calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
+  const serviceCommission = calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
   const isFreeOrder = finalPriceYuan === 0
-  const girlIncome = isFreeOrder ? 0 : calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
-  const serviceCommission = isFreeOrder ? 0 : calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
   const storeProfit = isFreeOrder ? 0 : finalPriceYuan - girlIncome - serviceCommission
 
   // 创建订单
