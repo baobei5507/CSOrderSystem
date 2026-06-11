@@ -341,7 +341,7 @@ app.post('/', async (c) => {
     discountType: body.discountType || 'none',
     discountPercent,
     discountAmount,
-    deductedBalance: body.deductedBalance || finalPrice,
+    deductedBalance: body.deductedBalance ?? finalPrice,
     usedMemberDayBenefit: body.usedMemberDayBenefit ? 1 : 0,
     girlIncome,
     serviceCommission,
