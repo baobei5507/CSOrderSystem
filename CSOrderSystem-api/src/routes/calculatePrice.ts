@@ -266,17 +266,15 @@ app.post('/', async (c) => {
     const minRequiredBalance = finalTotalPrice * minBalancePercent / 100
     
     let deductedBalance = 0
-    let finalPrice = finalTotalPrice
     
     if (customerBalance >= minRequiredBalance) {
       // 可以全额使用余额抵扣
       deductedBalance = Math.min(customerBalance, finalTotalPrice)
-      finalPrice = Math.max(0, finalTotalPrice - deductedBalance)
     }
 
-    // 计算提成（基于最终支付价格和小时数）
-    const girlIncome = calculateCommission(finalPrice, girl.commissionType, girl.commissionValue, hours)
-    const serviceCommission = calculateCommission(finalPrice, store.serviceCommissionType, store.serviceCommissionValue, hours)
+    // 计算提成（基于折扣后总价和小时数）
+    const girlIncome = calculateCommission(finalTotalPrice, girl.commissionType, girl.commissionValue, hours)
+    const serviceCommission = calculateCommission(finalTotalPrice, store.serviceCommissionType, store.serviceCommissionValue, hours)
 
     return c.json({
       success: true,
@@ -288,7 +286,7 @@ app.post('/', async (c) => {
         discountType: useDailyPrice ? 'dailyPrice' : (usedMemberDayBenefit ? 'memberDay' : 'memberRegular'),
         discountPercent: avgDiscountPercent,
         discountAmount,
-        finalPrice,
+        finalPrice: finalTotalPrice,
         deductedBalance: Math.round(deductedBalance * 100) / 100,
         girlIncome,
         serviceCommission,

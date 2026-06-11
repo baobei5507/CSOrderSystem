@@ -1245,7 +1245,7 @@ export function OrdersPage() {
                 <div className="flex justify-between items-center pt-2 border-t border-apple-100">
                   <span className="text-sm text-apple-600">实付金额</span>
                   <span className="text-lg font-bold text-orange-600">
-                    ¥{priceCalculation?.finalPrice || finalPricePreview || calculatedPrice * formData.hours - formData.discount}
+                    ¥{priceCalculation ? priceCalculation.finalPrice : (finalPricePreview || calculatedPrice * formData.hours - formData.discount)}
                   </span>
                 </div>
 
