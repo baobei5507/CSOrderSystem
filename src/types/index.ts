@@ -109,7 +109,7 @@ export interface Order {
   price: number
   discount?: number
   finalPrice?: number
-  discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'none'
+  discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'freeOrder' | 'none'
   discountPercent?: number // 实际折扣率
   discountAmount?: number // 优惠金额
   deductedBalance?: number // 实际扣除余额

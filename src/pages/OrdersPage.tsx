@@ -373,7 +373,7 @@ export function OrdersPage() {
     hours: number
     totalOriginalAmount: number
     priceMarkup?: number
-    discountType: 'memberDay' | 'memberRegular' | 'none'
+    discountType: 'memberDay' | 'memberRegular' | 'freeOrder' | 'none'
     discountPercent: number
     discountAmount: number
     finalPrice: number

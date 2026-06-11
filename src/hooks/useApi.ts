@@ -168,7 +168,7 @@ export function useApi() {
     hours?: number
     originalPrice?: number
     totalOriginalAmount?: number
-    discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'none'
+    discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'freeOrder' | 'none'
     discountPercent?: number
     discountAmount?: number
     deductedBalance?: number
