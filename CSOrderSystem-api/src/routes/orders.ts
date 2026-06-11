@@ -305,8 +305,8 @@ app.post('/', async (c) => {
   const hours = body.hours || 1
   const originalPricePerHourYuan = body.originalPricePerHour || pkg.basePrice || 0
   const totalOriginalAmountYuan = body.totalOriginalAmount || (originalPricePerHourYuan * hours)
-  const finalPriceYuan = body.finalPrice || totalOriginalAmountYuan
-  const discountAmountYuan = body.discountAmount || (totalOriginalAmountYuan - finalPriceYuan)
+  const finalPriceYuan = body.finalPrice ?? totalOriginalAmountYuan
+  const discountAmountYuan = body.discountAmount ?? (totalOriginalAmountYuan - finalPriceYuan)
   const discountPercent = body.discountPercent || Math.round((finalPriceYuan / totalOriginalAmountYuan) * 100)
   
   // 转换为数据库存储单位：

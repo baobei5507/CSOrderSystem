@@ -613,7 +613,8 @@ export function OrdersPage() {
         orderData.discountType = priceCalculation.discountType
         orderData.discountPercent = priceCalculation.discountPercent
         orderData.discountAmount = priceCalculation.discountAmount
-        // 优惠券减去后实际应扣余额
+        // 优惠券减去后实际应扣余额和最终价格
+        orderData.finalPrice = finalPricePreview
         orderData.deductedBalance = Math.max(0, priceCalculation.deductedBalance - (formData.discount || 0))
         orderData.usedMemberDayBenefit = priceCalculation.usedMemberDayBenefit ? 1 : 0
       }
