@@ -317,10 +317,11 @@ app.post('/', async (c) => {
   const finalPrice = finalPriceYuan // real 类型，存元
   const discountAmount = Math.round(discountAmountYuan * 100)
 
-  // 提成计算（基于原价和小时数！）
-  const girlIncome = calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
-  const serviceCommission = calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
-  const storeProfit = finalPriceYuan - girlIncome - serviceCommission
+  // 提成计算（免单订单提成归零，否则基于原价和小时数）
+  const isFreeOrder = finalPriceYuan === 0
+  const girlIncome = isFreeOrder ? 0 : calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
+  const serviceCommission = isFreeOrder ? 0 : calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
+  const storeProfit = isFreeOrder ? 0 : finalPriceYuan - girlIncome - serviceCommission
 
   // 创建订单
   await db.insert(orders).values({
@@ -354,8 +355,8 @@ app.post('/', async (c) => {
     updatedAt: nowTime,
   })
 
-  // 扣除余额（deductedBalance是元单位，转为分）
-  if (body.deductedBalance && body.deductedBalance > 0) {
+  // 扣除余额（免单订单不扣余额，不消耗会员日权益）
+  if (!isFreeOrder && body.deductedBalance && body.deductedBalance > 0) {
     const deductedBalanceFen = Math.round(body.deductedBalance * 100) // 元转分
     const beforeBalance = customer.balance || 0
     const afterBalance = beforeBalance - deductedBalanceFen

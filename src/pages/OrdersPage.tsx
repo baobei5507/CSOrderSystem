@@ -234,7 +234,7 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                               <span className="text-lg font-bold text-chiikawa-pink">
                                 免单
                               </span>
-                              {order.discountType && order.discountType !== 'none' && (
+                              {order.discountType && order.discountType !== 'none' && order.discountType !== 'freeOrder' && (
                                 <Badge variant="secondary" className={cn(
                                   "text-xs",
                                   order.discountType === 'memberDay'
@@ -389,6 +389,9 @@ export function OrdersPage() {
   const [serviceCommissionPreview, setServiceCommissionPreview] = useState(0)
   const [girlIncomePreview, setGirlIncomePreview] = useState(0)
   const [finalPricePreview, setFinalPricePreview] = useState(0)
+
+  // 免单开关
+  const [isFreeOrder, setIsFreeOrder] = useState(false)
 
   // 顾客搜索和创建
   const [customerSearch, setCustomerSearch] = useState('')
@@ -565,6 +568,7 @@ export function OrdersPage() {
     setCustomerSearch('')
     setIsCreatingCustomer(false)
     setNewCustomerAccounts([])
+    setIsFreeOrder(false)
     setDialogOpen(true)
   }
 
@@ -643,10 +647,19 @@ export function OrdersPage() {
         orderData.discountType = priceCalculation.discountType
         orderData.discountPercent = priceCalculation.discountPercent
         orderData.discountAmount = priceCalculation.discountAmount
-        // 优惠券减去后实际应扣余额和最终价格
-        orderData.finalPrice = finalPricePreview
-        orderData.deductedBalance = Math.max(0, priceCalculation.deductedBalance - (formData.discount || 0))
-        orderData.usedMemberDayBenefit = priceCalculation.usedMemberDayBenefit ? 1 : 0
+        // 免单：finalPrice=0，不扣余额，不消耗会员日权益
+        if (isFreeOrder) {
+          orderData.finalPrice = 0
+          orderData.deductedBalance = 0
+          orderData.usedMemberDayBenefit = 0
+          orderData.girlIncome = 0
+          orderData.serviceCommission = 0
+        } else {
+          // 优惠券减去后实际应扣余额和最终价格
+          orderData.finalPrice = finalPricePreview
+          orderData.deductedBalance = Math.max(0, priceCalculation.deductedBalance - (formData.discount || 0))
+          orderData.usedMemberDayBenefit = priceCalculation.usedMemberDayBenefit ? 1 : 0
+        }
       }
       
       // 使用新建顾客的账号ID或已选择的账号ID
@@ -662,6 +675,20 @@ export function OrdersPage() {
       // 优惠券来源
       if (formData.couponSource) {
         orderData.couponSource = formData.couponSource
+      }
+      // 免单标记（非会员场景也需处理）
+      if (isFreeOrder) {
+        orderData.finalPrice = 0
+        orderData.deductedBalance = 0
+        orderData.usedMemberDayBenefit = 0
+        orderData.girlIncome = 0
+        orderData.serviceCommission = 0
+        // 非会员场景的 discountAmount
+        if (!priceCalculation) {
+          orderData.totalOriginalAmount = calculatedPrice * formData.hours
+          orderData.discountAmount = calculatedPrice * formData.hours
+          orderData.discountType = 'freeOrder'
+        }
       }
 
       await createOrder(orderData)
@@ -1239,6 +1266,39 @@ export function OrdersPage() {
                 {/* 优惠券 */}
                 <div className="grid gap-2">
                   <Label className="text-sm text-apple-500">额外优惠券抵扣</Label>
+                  {/* 免单勾选 */}
+                  <div 
+                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-50 to-red-50 rounded-xl cursor-pointer border border-pink-200"
+                    onClick={() => {
+                      const newIsFree = !isFreeOrder
+                      setIsFreeOrder(newIsFree)
+                      if (newIsFree) {
+                        // 免单：自动填入最高值
+                        const maxDiscount = priceCalculation?.finalPrice ?? calculatedPrice * formData.hours
+                        setFormData(prev => ({ ...prev, discount: maxDiscount }))
+                        setFinalPricePreview(0)
+                      } else {
+                        // 取消免单：恢复
+                        setFormData(prev => ({ ...prev, discount: 0 }))
+                        const baseFinal = priceCalculation?.finalPrice ?? calculatedPrice * formData.hours
+                        setFinalPricePreview(baseFinal)
+                      }
+                    }}
+                  >
+                    <div className={cn(
+                      "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                      isFreeOrder ? "bg-chiikawa-pink border-chiikawa-pink" : "border-apple-300"
+                    )}>
+                      {isFreeOrder && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-pink-700">免单</p>
+                      <p className="text-xs text-pink-400">勾选后自动抵扣全部金额，此单免费</p>
+                    </div>
+                    {isFreeOrder && (
+                      <Badge className="text-xs bg-chiikawa-pink text-white">免单</Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-apple-400">-¥</span>
                     <Input
@@ -1248,7 +1308,8 @@ export function OrdersPage() {
                       step="any"
                       placeholder="0"
                       className="h-8 text-sm"
-                      value={formData.discount || ''}
+                      value={isFreeOrder ? (priceCalculation?.finalPrice ?? calculatedPrice * formData.hours) : (formData.discount || '')}
+                      disabled={isFreeOrder}
                       onChange={(e) => {
                         const inputValue = e.target.value
                         const discount = inputValue === '' ? 0 : parseFloat(inputValue)
@@ -1263,27 +1324,29 @@ export function OrdersPage() {
                 </div>
 
                 {/* 优惠券来源 */}
-                {formData.discount > 0 && (
+                {(formData.discount > 0 || isFreeOrder) && (
                   <div className="grid gap-2">
-                    <Label className="text-sm text-apple-500">优惠券来源</Label>
+                    <Label className="text-sm text-apple-500">优惠券/免单来源</Label>
                     <Input
                       placeholder="如：Telegram群组名称"
                       className="h-8 text-sm"
                       value={formData.couponSource}
                       onChange={(e) => setFormData(prev => ({ ...prev, couponSource: e.target.value }))}
                     />
-                    <p className="text-xs text-apple-400">记录是哪个群组/渠道发放的优惠券</p>
+                    <p className="text-xs text-apple-400">记录是哪个群组/渠道发放的优惠券或免单原因</p>
                   </div>
                 )}
 
                 {/* 优惠后金额 */}
                 <div className="flex justify-between items-center pt-2 border-t border-apple-100">
                   <span className="text-sm text-apple-600">实付金额</span>
-                  <span className="text-lg font-bold text-orange-600">
-                    ¥{finalPricePreview > 0 || formData.discount > 0 
-                      ? Number(finalPricePreview).toFixed(2) 
-                      : Number(priceCalculation?.finalPrice || calculatedPrice * formData.hours - formData.discount).toFixed(2)}
-                  </span>
+                  {isFreeOrder || finalPricePreview === 0 ? (
+                    <span className="text-lg font-bold text-chiikawa-pink">免单</span>
+                  ) : (
+                    <span className="text-lg font-bold text-orange-600">
+                      ¥{Number(finalPricePreview).toFixed(2)}
+                    </span>
+                  )}
                 </div>
 
                 {/* 客服提成预览 */}
@@ -1297,7 +1360,9 @@ export function OrdersPage() {
                       })
                     </span>
                   </div>
-                  <span className="text-lg font-semibold text-green-600">¥{(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-green-600">
+                    {isFreeOrder ? '¥0.00' : `¥${(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}`}
+                  </span>
                 </div>
 
                 {/* 妹妹提成预览 */}
@@ -1311,7 +1376,9 @@ export function OrdersPage() {
                       })
                     </span>
                   </div>
-                  <span className="text-lg font-semibold text-purple-600">¥{(priceCalculation?.girlIncome || girlIncomePreview).toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-purple-600">
+                    {isFreeOrder ? '¥0.00' : `¥${(priceCalculation?.girlIncome || girlIncomePreview).toFixed(2)}`}
+                  </span>
                 </div>
 
               </div>
