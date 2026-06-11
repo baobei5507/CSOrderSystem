@@ -228,10 +228,10 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                           {(order.discount || 0) > 0 || order.discountAmount ? (
                             <div className="flex items-center gap-2 flex-wrap justify-end">
                               <span className="text-sm text-chiikawa-brown/40 line-through">
-                                ¥{order.totalOriginalAmount || order.price}
+                                ¥{order.totalOriginalAmount ? (order.totalOriginalAmount / 100).toFixed(0) : order.price}
                               </span>
                               <span className="text-lg font-bold text-chiikawa-pink">
-                                ¥{order.finalPrice || Math.max(0, (order.totalOriginalAmount || order.price) - (order.discount || 0) - (order.discountAmount || 0))}
+                                ¥{order.finalPrice ? order.finalPrice.toFixed(2) : Math.max(0, (order.price || 0) - ((order.discount || 0) + ((order.discountAmount || 0) / 100)))}
                               </span>
                               {order.discountType && order.discountType !== 'none' && (
                                 <Badge variant="secondary" className={cn(
