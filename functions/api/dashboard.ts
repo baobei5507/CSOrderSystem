@@ -37,7 +37,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const todayStats = {
       orders: todayOrders.length,
-      amount: todayOrders.reduce((sum, o) => sum + o.price, 0),
+      amount: todayOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
       serviceCommission: todayOrders.reduce((sum, o) => sum + o.serviceCommission, 0),
       girlIncome: todayOrders.reduce((sum, o) => sum + o.girlIncome, 0),
     }
@@ -49,7 +49,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const monthStats = {
       orders: monthOrders.length,
-      amount: monthOrders.reduce((sum, o) => sum + o.price, 0),
+      amount: monthOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
       serviceCommission: monthOrders.reduce((sum, o) => sum + o.serviceCommission, 0),
       girlIncome: monthOrders.reduce((sum, o) => sum + o.girlIncome, 0),
     }
@@ -59,7 +59,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       SELECT 
         os.girl_name_snapshot as name,
         COUNT(*) as orderCount,
-        SUM(o.price) as revenue,
+        SUM(o.final_price) as revenue,
         SUM(o.girl_income) as serviceCommission
       FROM order_snapshots os
       JOIN orders o ON os.order_id = o.id
@@ -76,7 +76,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       SELECT 
         os.customer_name_snapshot as nickname,
         COUNT(*) as orderCount,
-        SUM(o.price) as totalAmount
+        SUM(o.final_price) as totalAmount
       FROM order_snapshots os
       JOIN orders o ON os.order_id = o.id
       WHERE o.store_id = ${storeId}
