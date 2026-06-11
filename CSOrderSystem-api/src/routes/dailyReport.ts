@@ -40,7 +40,7 @@ app.get('/', async (c) => {
 
     // 计算汇总数据
     const summary = {
-      totalRevenue: completedOrders.reduce((sum, o) => sum + (o.price || 0), 0),
+      totalRevenue: completedOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
       totalOrders: completedOrders.length,
       totalGirlIncome: completedOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0),
       totalServiceCommission: completedOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0),
@@ -91,7 +91,7 @@ app.get('/', async (c) => {
         customerName: customer?.nickname || '未命名',
         girlName: girl?.name || '未知',
         packageName: pkg?.name || '未知套餐',
-        price: order.price,
+        price: order.finalPrice,
         girlIncome: order.girlIncome,
         serviceCommission: order.serviceCommission,
         status: order.status,

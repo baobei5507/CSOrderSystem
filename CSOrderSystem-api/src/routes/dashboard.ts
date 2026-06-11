@@ -24,7 +24,7 @@ app.get('/', async (c) => {
       .all()
 
     const todayCompletedList = todayOrdersList.filter(o => o.status === 'completed')
-    const todayRevenue = todayCompletedList.reduce((sum, o) => sum + (o.price || 0), 0)
+    const todayRevenue = todayCompletedList.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
     const todayCompleted = todayCompletedList.length
     const todayCancelled = todayOrdersList.filter(o => o.status === 'cancelled').length
 
@@ -34,7 +34,7 @@ app.get('/', async (c) => {
       .all()
 
     const monthCompletedList = monthOrdersList.filter(o => o.status === 'completed')
-    const monthRevenue = monthCompletedList.reduce((sum, o) => sum + (o.price || 0), 0)
+    const monthRevenue = monthCompletedList.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
     const monthCompleted = monthCompletedList.length
     const monthCancelled = monthOrdersList.filter(o => o.status === 'cancelled').length
     const monthServiceCommission = monthCompletedList.reduce((sum, o) => sum + (o.serviceCommission || 0), 0)
@@ -64,7 +64,7 @@ app.get('/', async (c) => {
         ))
         .all()
       
-      const revenue = girlOrders.reduce((sum, o) => sum + (o.price || 0), 0)
+      const revenue = girlOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
       const girlIncome = girlOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0)
       
       if (girlOrders.length > 0) {
@@ -92,7 +92,7 @@ app.get('/', async (c) => {
         ))
         .all()
       
-      const revenue = customerOrders.reduce((sum, o) => sum + (o.price || 0), 0)
+      const revenue = customerOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0)
       
       if (customerOrders.length > 0) {
         customerRanking.push({
