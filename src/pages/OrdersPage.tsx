@@ -766,6 +766,11 @@ export function OrdersPage() {
   const [addAsTag, setAddAsTag] = useState(false)
   const [cancelTags, setCancelTags] = useState<Tag[]>([])
 
+  // 完成订单相关状态
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
+  const [completingOrder, setCompletingOrder] = useState<OrderWithDetails | null>(null)
+  const [actualMinutes, setActualMinutes] = useState<number | null>(null) // null = 全部完成
+
   // 编辑订单相关状态
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<OrderWithDetails | null>(null)
@@ -794,6 +799,14 @@ export function OrdersPage() {
         setCancelTags(tagsData)
         setCancelDialogOpen(true)
       }
+    } else if (newStatus === 'completed') {
+      // 显示完成弹窗，可选实际服务时长
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        setCompletingOrder(order)
+        setActualMinutes(null) // 默认全部完成
+        setCompleteDialogOpen(true)
+      }
     } else {
       try {
         await updateOrder(orderId, { status: newStatus })
@@ -801,6 +814,56 @@ export function OrdersPage() {
       } catch (err) {
         console.error('更新状态失败:', err)
       }
+    }
+  }
+
+  // 计算按实际时长调整后的金额
+  const getAdjustedAmounts = (order: OrderWithDetails, minutes: number | null) => {
+    if (minutes === null) {
+      // 全部完成，不调整
+      return {
+        finalPrice: Number(order.finalPrice ?? order.price) || 0,
+        girlIncome: order.girlIncome || 0,
+        serviceCommission: order.serviceCommission || 0,
+        discountAmount: (order.discountAmount || 0) / 100,
+      }
+    }
+    const totalMinutes = (order.hours || 1) * 60
+    const ratio = Math.min(minutes / totalMinutes, 1)
+    return {
+      finalPrice: Math.round(((Number(order.finalPrice ?? order.price) || 0) * ratio) * 100) / 100,
+      girlIncome: Math.round(((order.girlIncome || 0) * ratio) * 100) / 100,
+      serviceCommission: Math.round(((order.serviceCommission || 0) * ratio) * 100) / 100,
+      discountAmount: Math.round((((order.discountAmount || 0) / 100) * ratio) * 100) / 100,
+    }
+  }
+
+  // 确认完成订单
+  const handleConfirmComplete = async () => {
+    if (!completingOrder) return
+    try {
+      const adjusted = getAdjustedAmounts(completingOrder, actualMinutes)
+      const updateData: any = {
+        status: 'completed',
+        finalPrice: adjusted.finalPrice,
+        girlIncome: adjusted.girlIncome,
+        serviceCommission: adjusted.serviceCommission,
+        discountAmount: Math.round(adjusted.discountAmount * 100),
+      }
+      // 如果不是全部完成，在备注中记录实际时长
+      if (actualMinutes !== null) {
+        const existingRemark = completingOrder.remark || ''
+        updateData.remark = existingRemark
+          ? `${existingRemark} 实际${actualMinutes}分钟`
+          : `实际${actualMinutes}分钟`
+      }
+      await updateOrder(completingOrder.id, updateData)
+      setCompleteDialogOpen(false)
+      setCompletingOrder(null)
+      setActualMinutes(null)
+      loadData()
+    } catch (err) {
+      console.error('完成订单失败:', err)
     }
   }
 
@@ -1185,6 +1248,128 @@ export function OrdersPage() {
               className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
             >
               保存
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Order Dialog */}
+      <Dialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>完成订单</DialogTitle>
+          </DialogHeader>
+          {completingOrder && (
+            <div className="py-4 space-y-4">
+              {/* 订单摘要 */}
+              <div className="p-3 bg-chiikawa-cream/50 rounded-xl text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">订单号</span>
+                  <span className="font-mono text-chiikawa-brown">{completingOrder.orderNo}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">预约时长</span>
+                  <span className="text-chiikawa-brown">{completingOrder.hours || 1}小时</span>
+                </div>
+              </div>
+
+              {/* 实际服务时长选择 */}
+              <div className="space-y-2">
+                <Label>实际服务时长</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    className={cn(
+                      "p-3 rounded-xl border-2 text-center transition-colors",
+                      actualMinutes === null
+                        ? "border-chiikawa-pink bg-chiikawa-pink/10 text-chiikawa-pink font-medium"
+                        : "border-chiikawa-peach/30 text-chiikawa-brown/70 hover:border-chiikawa-pink/50"
+                    )}
+                    onClick={() => setActualMinutes(null)}
+                  >
+                    <p className="text-sm">全部完成</p>
+                    <p className="text-xs mt-0.5">{completingOrder.hours || 1}小时</p>
+                  </button>
+                  <button
+                    className={cn(
+                      "p-3 rounded-xl border-2 text-center transition-colors",
+                      actualMinutes === 30
+                        ? "border-chiikawa-pink bg-chiikawa-pink/10 text-chiikawa-pink font-medium"
+                        : "border-chiikawa-peach/30 text-chiikawa-brown/70 hover:border-chiikawa-pink/50"
+                    )}
+                    onClick={() => setActualMinutes(30)}
+                  >
+                    <p className="text-sm">半小时</p>
+                    <p className="text-xs mt-0.5">30分钟</p>
+                  </button>
+                  <button
+                    className={cn(
+                      "p-3 rounded-xl border-2 text-center transition-colors",
+                      actualMinutes !== null && actualMinutes !== 30
+                        ? "border-chiikawa-pink bg-chiikawa-pink/10 text-chiikawa-pink font-medium"
+                        : "border-chiikawa-peach/30 text-chiikawa-brown/70 hover:border-chiikawa-pink/50"
+                    )}
+                    onClick={() => setActualMinutes(prev => prev === null || prev === 30 ? 20 : prev)}
+                  >
+                    <p className="text-sm">自定义</p>
+                    <p className="text-xs mt-0.5">分钟</p>
+                  </button>
+                </div>
+
+                {/* 自定义分钟输入 */}
+                {actualMinutes !== null && actualMinutes !== 30 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={(completingOrder.hours || 1) * 60}
+                      value={actualMinutes}
+                      onChange={(e) => setActualMinutes(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-24"
+                    />
+                    <span className="text-sm text-chiikawa-brown/50">分钟</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 调整后金额预览 */}
+              <div className="p-3 bg-white rounded-xl border border-chiikawa-peach/20 space-y-2">
+                <p className="text-xs text-chiikawa-brown/50 mb-1">
+                  {actualMinutes === null 
+                    ? '全部完成，金额不变' 
+                    : `按 ${actualMinutes} 分钟折算（${(actualMinutes / ((completingOrder.hours || 1) * 60) * 100).toFixed(0)}%）`}
+                </p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-chiikawa-brown/50">实付金额</span>
+                  <span className={cn("font-medium", actualMinutes !== null ? "text-orange-600" : "text-chiikawa-brown")}>
+                    ¥{getAdjustedAmounts(completingOrder, actualMinutes).finalPrice.toFixed(2)}
+                    {actualMinutes !== null && <span className="text-xs line-through ml-1 text-chiikawa-brown/30">¥{(Number(completingOrder.finalPrice ?? completingOrder.price) || 0).toFixed(2)}</span>}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-chiikawa-brown/50">妹妹收入</span>
+                  <span className={cn("font-medium", actualMinutes !== null ? "text-purple-600" : "text-purple-500")}>
+                    ¥{getAdjustedAmounts(completingOrder, actualMinutes).girlIncome.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-chiikawa-brown/50">客服提成</span>
+                  <span className={cn("font-medium", actualMinutes !== null ? "text-green-600" : "text-green-500")}>
+                    ¥{getAdjustedAmounts(completingOrder, actualMinutes).serviceCommission.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setCompleteDialogOpen(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleConfirmComplete}
+              className="bg-green-500 text-white hover:bg-green-600"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1" />
+              确认完成
             </Button>
           </div>
         </DialogContent>
