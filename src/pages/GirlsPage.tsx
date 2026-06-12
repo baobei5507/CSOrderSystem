@@ -191,16 +191,15 @@ export function GirlsPage() {
     if (!formData.name.trim() || !currentStore) return
 
     try {
+      const girlData = {
+        ...formData,
+        storeId: currentStore.id,
+        trialPrice: formData.trialPrice ? parseFloat(formData.trialPrice as string) : null,
+      }
       if (editingGirl) {
-        await updateGirl(editingGirl.id, {
-          ...formData,
-          storeId: currentStore.id,
-        })
+        await updateGirl(editingGirl.id, girlData)
       } else {
-        await createGirl({
-          ...formData,
-          storeId: currentStore.id,
-        })
+        await createGirl(girlData)
       }
       setDialogOpen(false)
       loadGirls()
