@@ -74,16 +74,16 @@ app.post('/', async (c) => {
     const girlMap = new Map(girlsList.map(g => [g.id, g]))
     const packageMap = new Map(packagesList.map(p => [p.id, p]))
     
-    // 构建订单到交易的映射（获取下单时的余额）
-    // 找该订单最早的 consume 交易，取 balanceBefore（下单前的余额）
+    // 构建订单到交易的映射（获取订单处理完后的最终余额）
+    // 找该订单最后一条流水（consume/refund都算），取 balanceAfter
     const orderBalanceMap = new Map<string, number>()
     for (const order of ordersList) {
-      const consumeTransactions = orderTransactions
-        .filter(t => t.orderId === order.id && t.type === 'consume')
+      const orderTxns = orderTransactions
+        .filter(t => t.orderId === order.id)
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
-      const transaction = consumeTransactions[0]
-      if (transaction) {
-        orderBalanceMap.set(order.id, transaction.balanceBefore || 0)
+      const lastTxn = orderTxns[orderTxns.length - 1]
+      if (lastTxn) {
+        orderBalanceMap.set(order.id, lastTxn.balanceAfter || 0)
       }
     }
 

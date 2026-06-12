@@ -117,7 +117,7 @@ export function ExportPage() {
           '实收': order.finalPrice ? Number(order.finalPrice).toFixed(2) : '0.00',
           '妹妹收入': girlIncomeDisplay,
           '客服提成': serviceCommissionDisplay,
-          '会员余额(下单时)': order.balanceAtOrder ? (Number(order.balanceAtOrder) / 100).toFixed(2) : '0.00',
+          '会员余额(处理后)': order.balanceAtOrder ? (Number(order.balanceAtOrder) / 100).toFixed(2) : '0.00',
           '状态': statusMap[order.status]?.label || order.status,
           '备注': order.remark || '-',
         }
