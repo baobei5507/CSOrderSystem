@@ -440,17 +440,110 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
-  const updateData = { ...body }
+  const updateData: any = { ...body }
+  const now = Date.now()
   
-  // 移除可能传入的 Date 对象，改用时间戳
+  // 移除不可修改的字段
   if (body.updatedAt) delete updateData.updatedAt
   if (body.createdAt) delete updateData.createdAt
-  if (body.appointmentTime && typeof body.appointmentTime === 'object') {
-    updateData.appointmentTime = new Date(body.appointmentTime).getTime()
+  if (body.id) delete updateData.id
+  if (body.orderNo) delete updateData.orderNo
+  if (body.storeId) delete updateData.storeId
+  if (body.customerId) delete updateData.customerId
+  if (body.girlId) delete updateData.girlId
+  if (body.packageId) delete updateData.packageId
+
+  // 处理预约时间
+  if (body.appointmentTime !== undefined) {
+    if (body.appointmentTime && typeof body.appointmentTime === 'object') {
+      updateData.appointmentTime = new Date(body.appointmentTime).getTime()
+    } else if (typeof body.appointmentTime === 'string' && body.appointmentTime) {
+      updateData.appointmentTime = new Date(body.appointmentTime).getTime()
+    } else {
+      updateData.appointmentTime = null
+    }
   }
-  
+
+  // 获取原订单数据，用于计算余额变动
+  const oldOrder = await db.select().from(orders).where(eq(orders.id, id)).get()
+  if (!oldOrder) return c.json({ success: false, error: 'Order not found' }, 404)
+
+  // 处理余额变动
+  const oldFinalPrice = oldOrder.finalPrice // 元
+  const oldDeductedBalance = oldOrder.deductedBalance || 0 // 存储值（与创建时单位一致）
+  const newFinalPrice = body.finalPrice !== undefined ? body.finalPrice : oldFinalPrice
+
+  // 场景1: finalPrice 变化 → 按比例退还/扣除余额差额
+  if (body.finalPrice !== undefined && body.finalPrice !== oldFinalPrice && oldDeductedBalance > 0) {
+    const ratio = Math.min(newFinalPrice / oldFinalPrice, 1) // 不超过1，避免多扣
+    const newDeductedBalance = Math.round(oldDeductedBalance * ratio)
+    const balanceDiffYuan = oldDeductedBalance - newDeductedBalance // 正数=应退还
+
+    if (balanceDiffYuan > 0) {
+      // 退还余额（元→分）
+      const refundFen = Math.round(balanceDiffYuan * 100)
+      const customer = await db.select().from(customers).where(eq(customers.id, oldOrder.customerId)).get()
+      if (customer) {
+        const beforeBalance = customer.balance || 0
+        const afterBalance = beforeBalance + refundFen
+
+        await db.update(customers)
+          .set({ balance: afterBalance, updatedAt: now })
+          .where(eq(customers.id, oldOrder.customerId))
+
+        // 记录余额流水
+        await db.insert(balanceTransactions).values({
+          id: crypto.randomUUID(),
+          customerId: oldOrder.customerId,
+          orderId: id,
+          type: 'refund',
+          amount: refundFen,
+          balanceBefore: beforeBalance,
+          balanceAfter: afterBalance,
+          remark: `订单调整退款 ${oldOrder.orderNo} (¥${oldFinalPrice}→¥${newFinalPrice})`,
+          createdAt: now,
+        })
+
+        // 更新订单的 deductedBalance
+        updateData.deductedBalance = newDeductedBalance
+      }
+    }
+  }
+
+  // 场景2: 订单取消 → 退还全部已扣余额
+  if (body.status === 'cancelled' && oldOrder.status !== 'cancelled' && oldDeductedBalance > 0) {
+    const refundFen = Math.round(oldDeductedBalance * 100)
+    const customer = await db.select().from(customers).where(eq(customers.id, oldOrder.customerId)).get()
+    if (customer) {
+      const beforeBalance = customer.balance || 0
+      const afterBalance = beforeBalance + refundFen
+
+      await db.update(customers)
+        .set({ balance: afterBalance, updatedAt: now })
+        .where(eq(customers.id, oldOrder.customerId))
+
+      // 记录余额流水
+      await db.insert(balanceTransactions).values({
+        id: crypto.randomUUID(),
+        customerId: oldOrder.customerId,
+        orderId: id,
+        type: 'refund',
+        amount: refundFen,
+        balanceBefore: beforeBalance,
+        balanceAfter: afterBalance,
+        remark: `订单取消退款 ${oldOrder.orderNo}`,
+        createdAt: now,
+      })
+
+      // 取消订单，deductedBalance 清零
+      updateData.deductedBalance = 0
+    }
+  }
+
+  updateData.updatedAt = now
+
   await db.update(orders)
-    .set({ ...updateData, updatedAt: Date.now() })
+    .set(updateData)
     .where(eq(orders.id, id))
 
   return c.json({ success: true })
