@@ -112,7 +112,7 @@ export const orders = sqliteTable('orders', {
   discountType: text('discount_type', { enum: ['memberDay', 'memberRegular', 'coupon', 'freeOrder', 'trial', 'none'] }), // 折扣类型
   discountPercent: integer('discount_percent'), // 实际折扣率
   discountAmount: integer('discount_amount'), // 优惠金额（分）
-  deductedBalance: integer('deducted_balance'), // 实际扣除余额（分）
+  deductedBalance: integer('deducted_balance'), // 实际扣除余额（元，注意与其他integer字段存分不同）
   usedMemberDayBenefit: integer('used_member_day_benefit', { mode: 'boolean' }).notNull().default(false), // 是否使用了会员日权益
   storeProfit: integer('store_profit'), // 店家利润（分）
   actualMinutes: integer('actual_minutes'), // 实际服务时长（分钟），null表示按预约时长完成

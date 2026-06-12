@@ -1,17 +1,33 @@
 import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
 import { eq, and, desc } from 'drizzle-orm'
-import { customers, balanceTransactions, rechargeRecords, memberDayUsage } from '../db/schema'
+import { customers, balanceTransactions, rechargeRecords, memberDayUsage, memberLevels } from '../db/schema'
 
 const app = new Hono<{ Bindings: { DB: D1Database } }>()
 
-// 计算会员等级
-function calculateMemberLevel(totalRecharge: number): number {
-  if (totalRecharge >= 2000000) return 5 // 2w = ¥20000
-  if (totalRecharge >= 1000000) return 4 // 1w = ¥10000
-  if (totalRecharge >= 700000) return 3  // 7k = ¥7000
-  if (totalRecharge >= 500000) return 2  // 5k = ¥5000
-  if (totalRecharge >= 300000) return 1  // 3k = ¥3000
+// 根据数据库配置的会员等级计算等级
+async function calculateMemberLevel(db: any, storeId: string, totalRecharge: number): Promise<number> {
+  const levels = await db.select().from(memberLevels)
+    .where(eq(memberLevels.storeId, storeId))
+    .all()
+  
+  if (levels.length === 0) {
+    // 没有配置等级时，使用默认阈值（分）
+    if (totalRecharge >= 2000000) return 5
+    if (totalRecharge >= 1000000) return 4
+    if (totalRecharge >= 700000) return 3
+    if (totalRecharge >= 500000) return 2
+    if (totalRecharge >= 300000) return 1
+    return 0
+  }
+
+  // 按 level 降序排列，找到第一个满足条件的
+  const sortedLevels = levels.sort((a: any, b: any) => b.level - a.level)
+  for (const lvl of sortedLevels) {
+    if (totalRecharge >= lvl.minRecharge) {
+      return lvl.level
+    }
+  }
   return 0
 }
 
@@ -43,7 +59,7 @@ app.post('/', async (c) => {
     
     // 计算新等级
     const newTotalRecharge = beforeTotalRecharge + amount
-    const afterLevel = calculateMemberLevel(newTotalRecharge)
+    const afterLevel = await calculateMemberLevel(db, body.storeId, newTotalRecharge)
     
     // 计算新余额
     const totalAdd = amount + giftAmount

@@ -440,18 +440,20 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
-  const updateData: any = { ...body }
   const now = Date.now()
-  
-  // 移除不可修改的字段
-  if (body.updatedAt) delete updateData.updatedAt
-  if (body.createdAt) delete updateData.createdAt
-  if (body.id) delete updateData.id
-  if (body.orderNo) delete updateData.orderNo
-  if (body.storeId) delete updateData.storeId
-  if (body.customerId) delete updateData.customerId
-  if (body.girlId) delete updateData.girlId
-  if (body.packageId) delete updateData.packageId
+
+  // 字段白名单：只允许修改这些字段
+  const allowedFields = [
+    'status', 'finalPrice', 'girlIncome', 'serviceCommission',
+    'discountAmount', 'deductedBalance', 'remark', 'appointmentTime',
+    'actualMinutes', 'discountType', 'discountPercent', 'storeProfit',
+  ]
+  const updateData: Record<string, any> = {}
+  for (const field of allowedFields) {
+    if (body[field] !== undefined) {
+      updateData[field] = body[field]
+    }
+  }
 
   // 处理预约时间
   if (body.appointmentTime !== undefined) {
@@ -469,50 +471,16 @@ app.put('/', async (c) => {
   if (!oldOrder) return c.json({ success: false, error: 'Order not found' }, 404)
 
   // 处理余额变动
+  // deductedBalance 在 DB 中存的是元（与创建时一致）
   const oldFinalPrice = oldOrder.finalPrice // 元
-  const oldDeductedBalance = oldOrder.deductedBalance || 0 // 存储值（与创建时单位一致）
-  const newFinalPrice = body.finalPrice !== undefined ? body.finalPrice : oldFinalPrice
+  const oldDeductedBalance = oldOrder.deductedBalance || 0 // 元
+  const isCancelling = body.status === 'cancelled' && oldOrder.status !== 'cancelled'
+  const isPriceAdjusting = body.finalPrice !== undefined && body.finalPrice !== oldFinalPrice && oldDeductedBalance > 0
 
-  // 场景1: finalPrice 变化 → 按比例退还/扣除余额差额
-  if (body.finalPrice !== undefined && body.finalPrice !== oldFinalPrice && oldDeductedBalance > 0) {
-    const ratio = Math.min(newFinalPrice / oldFinalPrice, 1) // 不超过1，避免多扣
-    const newDeductedBalance = Math.round(oldDeductedBalance * ratio)
-    const balanceDiffYuan = oldDeductedBalance - newDeductedBalance // 正数=应退还
-
-    if (balanceDiffYuan > 0) {
-      // 退还余额（元→分）
-      const refundFen = Math.round(balanceDiffYuan * 100)
-      const customer = await db.select().from(customers).where(eq(customers.id, oldOrder.customerId)).get()
-      if (customer) {
-        const beforeBalance = customer.balance || 0
-        const afterBalance = beforeBalance + refundFen
-
-        await db.update(customers)
-          .set({ balance: afterBalance, updatedAt: now })
-          .where(eq(customers.id, oldOrder.customerId))
-
-        // 记录余额流水
-        await db.insert(balanceTransactions).values({
-          id: crypto.randomUUID(),
-          customerId: oldOrder.customerId,
-          orderId: id,
-          type: 'refund',
-          amount: refundFen,
-          balanceBefore: beforeBalance,
-          balanceAfter: afterBalance,
-          remark: `订单调整退款 ${oldOrder.orderNo} (¥${oldFinalPrice}→¥${newFinalPrice})`,
-          createdAt: now,
-        })
-
-        // 更新订单的 deductedBalance
-        updateData.deductedBalance = newDeductedBalance
-      }
-    }
-  }
-
-  // 场景2: 订单取消 → 退还全部已扣余额
-  if (body.status === 'cancelled' && oldOrder.status !== 'cancelled' && oldDeductedBalance > 0) {
-    const refundFen = Math.round(oldDeductedBalance * 100)
+  // 互斥逻辑：取消订单和价格调整不能同时触发退款
+  if (isCancelling && oldDeductedBalance > 0) {
+    // 场景1: 订单取消 → 退还全部已扣余额
+    const refundFen = Math.round(oldDeductedBalance * 100) // 元转分
     const customer = await db.select().from(customers).where(eq(customers.id, oldOrder.customerId)).get()
     if (customer) {
       const beforeBalance = customer.balance || 0
@@ -522,7 +490,6 @@ app.put('/', async (c) => {
         .set({ balance: afterBalance, updatedAt: now })
         .where(eq(customers.id, oldOrder.customerId))
 
-      // 记录余额流水
       await db.insert(balanceTransactions).values({
         id: crypto.randomUUID(),
         customerId: oldOrder.customerId,
@@ -535,8 +502,40 @@ app.put('/', async (c) => {
         createdAt: now,
       })
 
-      // 取消订单，deductedBalance 清零
       updateData.deductedBalance = 0
+    }
+  } else if (isPriceAdjusting) {
+    // 场景2: finalPrice 变化 → 按比例退还余额差额
+    const newFinalPrice = body.finalPrice!
+    const ratio = Math.min(newFinalPrice / oldFinalPrice, 1)
+    const newDeductedBalance = Math.round(oldDeductedBalance * ratio)
+    const balanceDiffYuan = oldDeductedBalance - newDeductedBalance
+
+    if (balanceDiffYuan > 0) {
+      const refundFen = Math.round(balanceDiffYuan * 100) // 元转分
+      const customer = await db.select().from(customers).where(eq(customers.id, oldOrder.customerId)).get()
+      if (customer) {
+        const beforeBalance = customer.balance || 0
+        const afterBalance = beforeBalance + refundFen
+
+        await db.update(customers)
+          .set({ balance: afterBalance, updatedAt: now })
+          .where(eq(customers.id, oldOrder.customerId))
+
+        await db.insert(balanceTransactions).values({
+          id: crypto.randomUUID(),
+          customerId: oldOrder.customerId,
+          orderId: id,
+          type: 'refund',
+          amount: refundFen,
+          balanceBefore: beforeBalance,
+          balanceAfter: afterBalance,
+          remark: `订单调整退款 ${oldOrder.orderNo} (¥${oldFinalPrice}→¥${newFinalPrice})`,
+          createdAt: now,
+        })
+
+        updateData.deductedBalance = newDeductedBalance
+      }
     }
   }
 

@@ -105,21 +105,23 @@ export interface Order {
   packageId: string
   appointmentTime: number | null
   hours?: number // 预约小时数
-  originalPrice?: number // 每小时原价
-  totalOriginalAmount?: number // 原价总计
+  originalPrice?: number // 每小时原价（分）
+  totalOriginalAmount?: number // 原价总计（分）
   price: number
   discount?: number
   finalPrice?: number
-  discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'freeOrder' | 'trial' | 'none'
+  discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'freeOrder' | 'trial' | 'dailyPrice' | 'none'
   discountPercent?: number // 实际折扣率
-  discountAmount?: number // 优惠金额
-  deductedBalance?: number // 实际扣除余额
+  discountAmount?: number // 优惠金额（分）
+  deductedBalance?: number // 实际扣除余额（元）
   usedMemberDayBenefit?: number // 是否使用了会员日权益
   girlIncome: number
   serviceCommission: number
-  storeProfit?: number // 店家利润
+  storeProfit?: number // 店家利润（分）
+  actualMinutes?: number | null // 实际服务时长（分钟），null表示按预约时长完成
   couponSource?: string | null // 优惠券来源（如TG群组）
   status: 'pending' | 'completed' | 'cancelled'
+  serviceStaffName?: string // 跟单客服
   remark: string | null
   createdAt: number
   updatedAt: number

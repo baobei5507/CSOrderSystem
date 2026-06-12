@@ -33,3 +33,6 @@
 - discountType 类型需在 types/index.ts、useApi.ts、OrdersPage.tsx 三处同步
 - 数据库 schema 变更后需同步更新迁移文件
 - 妹妹的 girls 表字段变更需检查 insert 和 update 两处路由代码
+- **前端只需推送代码**，不需要手动构建部署（用户明确要求过）
+- Excel 导出余额：需查所有流水类型（consume+refund+recharge），取订单最后一条流水的 balanceAfter，才是订单处理完后的最终余额
+- 订单有 actualMinutes 字段记录实际服务时长，导出时需按比例折算单价和课时
