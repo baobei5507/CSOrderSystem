@@ -308,7 +308,7 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
 
                       {/* Actions */}
                       {order.status === 'pending' && (
-                        <div className="flex gap-2 mt-3">
+                        <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
                           <Button
                             size="sm"
                             className="flex-1 bg-green-400 text-white hover:bg-green-500 rounded-xl"
