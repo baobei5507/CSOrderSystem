@@ -20,6 +20,7 @@ import memberConfigRoute from './routes/memberConfig'
 import rechargeRoute from './routes/recharge'
 import calculatePriceRoute from './routes/calculatePrice'
 import ordersExportRoute from './routes/ordersExport'
+import authRoute, { authMiddleware } from './routes/auth'
 import { girlPackagePrices } from './db/schema'
 
 // 环境变量类型
@@ -27,6 +28,7 @@ export interface Env {
   DB: D1Database
   DEFAULT_SERVICE_STAFF: string
   CORS_ORIGIN?: string
+  JWT_SECRET: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -45,7 +47,12 @@ app.use('*', cors({
 // 健康检查
 app.get('/', (c) => c.json({ success: true, message: 'CS Order API is running' }))
 
-// API 路由
+// API 路由（auth 不需要鉴权）
+app.route('/api/auth', authRoute)
+
+// 所有其他 API 路由需要鉴权
+app.use('/api/*', authMiddleware)
+
 app.route('/api/stores', storesRoute)
 app.route('/api/girls', girlsRoute)
 app.route('/api/packages', packagesRoute)

@@ -10,6 +10,7 @@ import { GirlsPage } from './pages/GirlsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TagsPage } from './pages/TagsPage'
 import { ExportPage } from './pages/ExportPage'
+import { LoginPage } from './pages/LoginPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,7 +22,16 @@ const queryClient = new QueryClient({
 })
 
 function App() {
-  const { activeTab } = useAppStore()
+  const { activeTab, isLoggedIn } = useAppStore()
+
+  // 未登录 → 显示登录页
+  if (!isLoggedIn) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <LoginPage />
+      </QueryClientProvider>
+    )
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

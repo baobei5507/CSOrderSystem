@@ -627,6 +627,22 @@ export function SettingsPage() {
           </CuteCard>
         ))}
       </div>
+
+      {/* 退出登录 */}
+      <div className="px-4 mt-6">
+        <button
+          onClick={() => {
+            const store = useAppStore.getState()
+            store.clearAuth()
+          }}
+          className="w-full py-2.5 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-100 transition-colors"
+        >
+          退出登录
+        </button>
+        <p className="text-center text-xs text-chiikawa-brown/40 mt-2">
+          当前登录: {useAppStore.getState().authUser?.username || '-'}
+        </p>
+      </div>
     </div>
   )
 }

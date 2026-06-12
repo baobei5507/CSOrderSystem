@@ -18,6 +18,7 @@ database_id = "e03be497-4138-4135-aca3-bd4367ba092e"
 [vars]
 DEFAULT_SERVICE_STAFF = "客服"
 CORS_ORIGIN = "*"
+JWT_SECRET = "cs-order-jwt-secret-2026-prod"
 
 # Cron Trigger：每天凌晨 0:00 自动清空当日价格
 [triggers]

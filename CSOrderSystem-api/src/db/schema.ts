@@ -200,3 +200,15 @@ export const rechargeRecords = sqliteTable('recharge_records', {
   remark: text('remark'),
   createdAt: integer('created_at').notNull(),
 })
+
+// 用户表（登录认证）
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  salt: text('salt').notNull(),
+  storeId: text('store_id').references(() => stores.id),
+  role: text('role', { enum: ['admin', 'staff'] }).notNull().default('admin'),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+})

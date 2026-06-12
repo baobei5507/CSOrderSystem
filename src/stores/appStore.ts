@@ -2,7 +2,21 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Store } from '@/types'
 
+interface AuthUser {
+  id: string
+  username: string
+  storeId: string | null
+  role: string
+}
+
 interface AppState {
+  // 登录认证
+  token: string | null
+  authUser: AuthUser | null
+  isLoggedIn: boolean
+  setAuth: (token: string, user: AuthUser) => void
+  clearAuth: () => void
+
   // 当前店家
   currentStore: Store | null
   setCurrentStore: (store: Store | null) => void
@@ -20,6 +34,12 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      token: null,
+      authUser: null,
+      isLoggedIn: false,
+      setAuth: (token, user) => set({ token, authUser: user, isLoggedIn: true }),
+      clearAuth: () => set({ token: null, authUser: null, isLoggedIn: false }),
+
       currentStore: null,
       setCurrentStore: (store) => set({ currentStore: store }),
       updateStore: (store) => set((state) => ({

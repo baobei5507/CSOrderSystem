@@ -1,14 +1,38 @@
 import { useState, useCallback } from 'react'
 import type { Store, Girl, Package, Customer, Tag, Order, CustomerAccount } from '@/types'
+import { useAppStore } from '@/stores/appStore'
 
 const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
 
-// 通用fetch函数
+// 通用fetch函数（带认证）
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  // 从 localStorage 获取 token
+  const storageData = localStorage.getItem('app-storage')
+  let token: string | null = null
+  if (storageData) {
+    try {
+      const parsed = JSON.parse(storageData)
+      token = parsed?.state?.token || null
+    } catch {}
+  }
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     ...options,
   })
+
+  // 401 时清除登录状态
+  if (response.status === 401) {
+    const store = useAppStore.getState()
+    store.clearAuth()
+    throw new Error('登录已过期，请重新登录')
+  }
+
   const data = await response.json()
   if (!data.success) {
     throw new Error(data.error || 'API Error')
