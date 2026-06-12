@@ -20,6 +20,7 @@ export const girls = sqliteTable('girls', {
   commissionType: text('commission_type', { enum: ['percent', 'fixed'] }).notNull(),
   commissionValue: real('commission_value').notNull(),
   excludeFromDiscount: integer('exclude_from_discount', { mode: 'boolean' }).notNull().default(false),
+  trialPrice: real('trial_price'), // 试钟价格（一口价，不参与优惠）
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 })
@@ -108,7 +109,7 @@ export const orders = sqliteTable('orders', {
   // 会员折扣相关字段
   originalPrice: integer('original_price'), // 每小时原价（分）
   totalOriginalAmount: integer('total_original_amount'), // 原价总计（分）
-  discountType: text('discount_type', { enum: ['memberDay', 'memberRegular', 'coupon', 'none'] }), // 折扣类型
+  discountType: text('discount_type', { enum: ['memberDay', 'memberRegular', 'coupon', 'freeOrder', 'trial', 'none'] }), // 折扣类型
   discountPercent: integer('discount_percent'), // 实际折扣率
   discountAmount: integer('discount_amount'), // 优惠金额（分）
   deductedBalance: integer('deducted_balance'), // 实际扣除余额（分）

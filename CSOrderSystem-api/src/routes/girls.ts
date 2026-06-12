@@ -41,6 +41,7 @@ app.post('/', async (c) => {
     commissionType: body.commissionType,
     commissionValue: body.commissionValue,
     excludeFromDiscount: body.excludeFromDiscount ? 1 : 0,
+    trialPrice: body.trialPrice || null,
     createdAt: now,
     updatedAt: now,
   })
@@ -55,11 +56,23 @@ app.put('/', async (c) => {
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
   const body = await c.req.json()
-  const updateData = { ...body }
-  if (body.createdAt) delete updateData.createdAt
-  if (body.updatedAt) delete updateData.updatedAt
+  const updateData: Record<string, any> = {}
+  // 白名单字段，防止注入无关字段
+  const allowedFields = ['name', 'status', 'commissionType', 'commissionValue', 'excludeFromDiscount', 'trialPrice', 'storeId']
+  for (const key of allowedFields) {
+    if (body[key] !== undefined) {
+      if (key === 'excludeFromDiscount') {
+        updateData[key] = body[key] ? 1 : 0
+      } else if (key === 'trialPrice') {
+        updateData[key] = body[key] || null
+      } else {
+        updateData[key] = body[key]
+      }
+    }
+  }
+  updateData.updatedAt = Date.now()
   await db.update(girls)
-    .set({ ...updateData, updatedAt: Date.now() })
+    .set(updateData)
     .where(eq(girls.id, id))
 
   return c.json({ success: true })

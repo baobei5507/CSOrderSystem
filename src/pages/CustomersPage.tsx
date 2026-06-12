@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3, Wallet, Crown, History } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, UserPlus, X, BarChart3, Wallet, Crown, History, Download } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -269,6 +270,72 @@ export function CustomersPage() {
     setRechargeDialogOpen(true)
   }
 
+  // 导出顾客标签数据
+  const handleExportCustomers = () => {
+    if (!customers.length) {
+      alert('暂无顾客数据可导出')
+      return
+    }
+
+    const excelData = customers.map((customer, index) => {
+      // 标签名（逗号分隔）
+      const tagNames = (customer.tagIds || [])
+        .map(tagId => {
+          const tag = tags.find(t => t.id === tagId)
+          return tag?.name || ''
+        })
+        .filter(Boolean)
+        .join('、')
+
+      // 账号信息
+      const wechatAccounts = (customer.accounts || [])
+        .filter(a => a.platform === 'wechat')
+        .map(a => a.accountId)
+        .join('、')
+      const telegramAccounts = (customer.accounts || [])
+        .filter(a => a.platform === 'telegram')
+        .map(a => a.accountId)
+        .join('、')
+
+      return {
+        '序号': index + 1,
+        '顾客姓名': customer.name || '-',
+        '微信账号': wechatAccounts || '-',
+        'Telegram账号': telegramAccounts || '-',
+        '标签': tagNames || '-',
+        '会员等级': MEMBER_LEVEL_NAMES[customer.memberLevel || 0] || '普通用户',
+        '余额(元)': ((customer.balance || 0) / 100).toFixed(2),
+        '累计充值(元)': ((customer.totalRecharge || 0) / 100).toFixed(2),
+        '创建时间': customer.createdAt
+          ? new Date(customer.createdAt).toLocaleDateString('zh-CN')
+          : '-',
+      }
+    })
+
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(excelData)
+
+    ws['!cols'] = [
+      { wch: 6 },   // 序号
+      { wch: 12 },  // 顾客姓名
+      { wch: 20 },  // 微信账号
+      { wch: 20 },  // Telegram账号
+      { wch: 25 },  // 标签
+      { wch: 10 },  // 会员等级
+      { wch: 12 },  // 余额
+      { wch: 12 },  // 累计充值
+      { wch: 12 },  // 创建时间
+    ]
+
+    XLSX.utils.book_append_sheet(wb, ws, '顾客标签数据')
+
+    const today = new Date()
+    const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`
+    XLSX.writeFile(wb, `顾客标签导出_${dateStr}.xlsx`)
+
+    alert(`成功导出 ${customers.length} 条顾客数据`)
+  }
+
   // 处理充值
   const handleRecharge = async () => {
     if (!rechargingCustomer || !currentStore) return
@@ -467,6 +534,15 @@ export function CustomersPage() {
           >
             <Plus className="w-4 h-4 mr-1" />
             新增顾客
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportCustomers}
+            disabled={!customers.length}
+            className="rounded-full px-4 h-10 border-chiikawa-peach/30 text-chiikawa-brown hover:bg-chiikawa-peach/10"
+          >
+            <Download className="w-4 h-4 mr-1" />
+            导出
           </Button>
         </div>
 

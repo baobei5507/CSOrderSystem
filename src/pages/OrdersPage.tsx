@@ -65,9 +65,10 @@ interface OrderListByDateProps {
   expandedDates: Set<string>
   setExpandedDates: (dates: Set<string>) => void
   onStatusChange: (orderId: string, status: OrderStatus) => void
+  onOrderClick: (order: OrderWithDetails) => void
 }
 
-function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChange }: OrderListByDateProps) {
+function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChange, onOrderClick }: OrderListByDateProps) {
   // 按日期分组
   const groupedOrders = useMemo(() => {
     const groups: Record<string, OrderWithDetails[]> = {}
@@ -179,7 +180,8 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                     <CuteCard
                       key={order.id}
                       variant="cream"
-                      className="p-4"
+                      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => onOrderClick(order)}
                     >
                       {/* Order Header */}
                       <div className="flex items-center justify-between mb-3">
@@ -253,7 +255,7 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                               )}
                             </div>
                           ) : (order.discountAmount && order.discountAmount > 0) || (order.discountType && order.discountType !== 'none') ? (
-                            // 有折扣的订单
+                            // 有折扣的订单（含试钟）
                             <div className="flex items-center gap-2 flex-wrap justify-end">
                               <span className="text-sm text-chiikawa-brown/40 line-through">
                                 ¥{order.totalOriginalAmount ? (order.totalOriginalAmount / 100).toFixed(0) : order.price}
@@ -268,9 +270,11 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                                     ? "bg-chiikawa-pink-light text-chiikawa-pink"
                                     : order.discountType === 'memberRegular'
                                     ? "bg-chiikawa-blue-light text-chiikawa-blue"
+                                    : order.discountType === 'trial'
+                                    ? "bg-blue-100 text-blue-700"
                                     : "bg-chiikawa-yellow-light text-yellow-600"
                                 )}>
-                                  {order.discountType === 'memberDay' ? '会员日' : order.discountType === 'memberRegular' ? '会员' : '优惠'}{order.discountPercent}折
+                                  {order.discountType === 'memberDay' ? '会员日' : order.discountType === 'memberRegular' ? '会员' : order.discountType === 'trial' ? '试钟' : '优惠'}{order.discountType !== 'trial' && order.discountPercent ? `${order.discountPercent}折` : ''}
                                 </Badge>
                               )}
                               {order.discountAmount && order.discountAmount > 0 && (
@@ -373,7 +377,7 @@ export function OrdersPage() {
     hours: number
     totalOriginalAmount: number
     priceMarkup?: number
-    discountType: 'memberDay' | 'memberRegular' | 'freeOrder' | 'none'
+    discountType: 'memberDay' | 'memberRegular' | 'freeOrder' | 'trial' | 'none'
     discountPercent: number
     discountAmount: number
     finalPrice: number
@@ -392,6 +396,9 @@ export function OrdersPage() {
 
   // 免单开关
   const [isFreeOrder, setIsFreeOrder] = useState(false)
+
+  // 试钟开关
+  const [isTrialOrder, setIsTrialOrder] = useState(false)
 
   // 顾客搜索和创建
   const [customerSearch, setCustomerSearch] = useState('')
@@ -465,6 +472,30 @@ export function OrdersPage() {
         return
       }
 
+      // 试钟模式：使用一口价，不参与任何优惠
+      if (isTrialOrder && selectedGirl.trialPrice) {
+        const trialPrice = selectedGirl.trialPrice
+        setCalculatedPrice(trialPrice)
+        setFinalPricePreview(trialPrice)
+        // 试钟提成基于 trialPrice
+        calculateCommissions(trialPrice)
+        setPriceCalculation({
+          basePrice: trialPrice,
+          hours: 1,
+          totalOriginalAmount: trialPrice,
+          discountType: 'trial',
+          discountPercent: 100,
+          discountAmount: 0,
+          finalPrice: trialPrice,
+          deductedBalance: trialPrice,
+          girlIncome: calculateCommissionValue(trialPrice, selectedGirl.commissionType, selectedGirl.commissionValue, 1),
+          serviceCommission: calculateCommissionValue(trialPrice, currentStore.serviceCommissionType, currentStore.serviceCommissionValue, 1),
+          usedMemberDayBenefit: false,
+          reason: '试钟一口价，不参与任何优惠',
+        })
+        return
+      }
+
       try {
         // 获取妹妹套餐价格
         const prices = await getGirlPackagePrices(selectedGirl.id)
@@ -510,7 +541,15 @@ export function OrdersPage() {
     }
 
     calculatePrice()
-  }, [selectedGirl, selectedPackage, formData.customerId, formData.hours, formData.appointmentDate, formData.appointmentTime, memberConfig])
+  }, [selectedGirl, selectedPackage, formData.customerId, formData.hours, formData.appointmentDate, formData.appointmentTime, memberConfig, isTrialOrder])
+
+  // 提成计算辅助函数
+  const calculateCommissionValue = (price: number, type: 'percent' | 'fixed', value: number, hours: number) => {
+    if (type === 'percent') {
+      return Math.round(price * value / 100 * 100) / 100
+    }
+    return value * hours
+  }
 
   // 计算提成预览
   const calculateCommissions = (price: number) => {
@@ -569,6 +608,7 @@ export function OrdersPage() {
     setIsCreatingCustomer(false)
     setNewCustomerAccounts([])
     setIsFreeOrder(false)
+    setIsTrialOrder(false)
     setDialogOpen(true)
   }
 
@@ -641,7 +681,19 @@ export function OrdersPage() {
       }
       
       // 添加会员折扣相关信息
-      if (priceCalculation) {
+      if (isTrialOrder && selectedGirl?.trialPrice) {
+        // 试钟订单：一口价，不参与任何优惠
+        const trialPrice = selectedGirl.trialPrice
+        orderData.originalPrice = trialPrice
+        orderData.totalOriginalAmount = trialPrice
+        orderData.discountType = 'trial'
+        orderData.discountPercent = 100
+        orderData.discountAmount = 0
+        orderData.finalPrice = trialPrice
+        orderData.deductedBalance = trialPrice
+        orderData.usedMemberDayBenefit = 0
+        orderData.hours = 1 // 试钟固定1小时
+      } else if (priceCalculation) {
         orderData.originalPrice = priceCalculation.basePrice
         orderData.totalOriginalAmount = priceCalculation.totalOriginalAmount
         orderData.discountType = priceCalculation.discountType
@@ -687,6 +739,17 @@ export function OrdersPage() {
         }
       }
 
+      // 自动为免单和试钟订单添加备注标记，方便导出时识别来源
+      const autoRemark: string[] = []
+      if (isFreeOrder) autoRemark.push('免单')
+      if (isTrialOrder) autoRemark.push('试钟')
+      if (autoRemark.length > 0) {
+        const existingRemark = orderData.remark || ''
+        orderData.remark = existingRemark
+          ? `${existingRemark} ${autoRemark.join(' ')}`
+          : autoRemark.join(' ')
+      }
+
       await createOrder(orderData)
       setDialogOpen(false)
       loadData()
@@ -702,6 +765,21 @@ export function OrdersPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [addAsTag, setAddAsTag] = useState(false)
   const [cancelTags, setCancelTags] = useState<Tag[]>([])
+
+  // 编辑订单相关状态
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<OrderWithDetails | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    status: 'pending' as OrderStatus,
+    remark: '',
+    appointmentDate: '',
+    appointmentTime: '',
+    couponSource: '',
+    finalPrice: 0,
+    discountAmount: 0,
+    girlIncome: 0,
+    serviceCommission: 0,
+  })
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     if (newStatus === 'cancelled') {
@@ -723,6 +801,60 @@ export function OrdersPage() {
       } catch (err) {
         console.error('更新状态失败:', err)
       }
+    }
+  }
+
+  // 点击订单打开编辑弹窗
+  const handleOrderClick = (order: OrderWithDetails) => {
+    setEditingOrder(order)
+    // 解析预约时间
+    let appointmentDate = ''
+    let appointmentTime = ''
+    if (order.appointmentTime) {
+      const d = new Date(order.appointmentTime)
+      appointmentDate = d.toISOString().split('T')[0]
+      appointmentTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    }
+    setEditFormData({
+      status: order.status as OrderStatus,
+      remark: order.remark || '',
+      appointmentDate,
+      appointmentTime,
+      couponSource: order.couponSource || '',
+      finalPrice: Number(order.finalPrice ?? order.price) || 0,
+      discountAmount: (order.discountAmount || 0) / 100, // 分转元
+      girlIncome: order.girlIncome || 0,
+      serviceCommission: order.serviceCommission || 0,
+    })
+    setEditDialogOpen(true)
+  }
+
+  // 保存订单编辑
+  const handleSaveEdit = async () => {
+    if (!editingOrder || !currentStore) return
+    try {
+      const updateData: any = {
+        status: editFormData.status,
+        remark: editFormData.remark || null,
+        couponSource: editFormData.couponSource || null,
+        finalPrice: editFormData.finalPrice,
+        discountAmount: Math.round(editFormData.discountAmount * 100), // 元转分
+        girlIncome: editFormData.girlIncome,
+        serviceCommission: editFormData.serviceCommission,
+      }
+      // 预约时间
+      if (editFormData.appointmentDate && editFormData.appointmentTime) {
+        updateData.appointmentTime = new Date(`${editFormData.appointmentDate}T${editFormData.appointmentTime}`).getTime()
+      } else {
+        updateData.appointmentTime = null
+      }
+      await updateOrder(editingOrder.id, updateData)
+      setEditDialogOpen(false)
+      setEditingOrder(null)
+      loadData()
+    } catch (err: any) {
+      console.error('更新订单失败:', err)
+      alert('更新订单失败: ' + (err.message || '未知错误'))
     }
   }
 
@@ -868,9 +1000,195 @@ export function OrdersPage() {
             expandedDates={expandedDates}
             setExpandedDates={setExpandedDates}
             onStatusChange={handleStatusChange}
+            onOrderClick={handleOrderClick}
           />
         )}
       </div>
+
+      {/* Edit Order Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>订单详情</DialogTitle>
+          </DialogHeader>
+          {editingOrder && (
+            <div className="py-4 space-y-4">
+              {/* 只读信息 */}
+              <div className="p-3 bg-chiikawa-cream/50 rounded-xl space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">订单号</span>
+                  <span className="font-mono text-chiikawa-brown">{editingOrder.orderNo}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">顾客</span>
+                  <span className="font-medium text-chiikawa-brown">{editingOrder.customerName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">妹妹</span>
+                  <span className="font-medium text-chiikawa-brown">{editingOrder.girlName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">套餐</span>
+                  <span className="font-medium text-chiikawa-brown">
+                    {editingOrder.packageName}
+                    {editingOrder.hours && editingOrder.hours > 1 && ` (${editingOrder.hours}小时)`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">原价</span>
+                  <span className="text-chiikawa-brown">
+                    ¥{editingOrder.totalOriginalAmount ? (editingOrder.totalOriginalAmount / 100).toFixed(0) : editingOrder.price}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-chiikawa-brown/50">创建时间</span>
+                  <span className="text-chiikawa-brown">{formatDateTime(editingOrder.createdAt)}</span>
+                </div>
+                {editingOrder.discountType && editingOrder.discountType !== 'none' && (
+                  <div className="flex justify-between">
+                    <span className="text-chiikawa-brown/50">折扣类型</span>
+                    <Badge variant="secondary" className={cn(
+                      "text-xs",
+                      editingOrder.discountType === 'memberDay'
+                        ? "bg-chiikawa-pink-light text-chiikawa-pink"
+                        : editingOrder.discountType === 'memberRegular'
+                        ? "bg-chiikawa-blue-light text-chiikawa-blue"
+                        : editingOrder.discountType === 'trial'
+                        ? "bg-blue-100 text-blue-700"
+                        : editingOrder.discountType === 'freeOrder'
+                        ? "bg-pink-100 text-pink-700"
+                        : "bg-chiikawa-yellow-light text-yellow-600"
+                    )}>
+                      {editingOrder.discountType === 'memberDay' ? '会员日' 
+                        : editingOrder.discountType === 'memberRegular' ? '会员折扣' 
+                        : editingOrder.discountType === 'trial' ? '试钟' 
+                        : editingOrder.discountType === 'freeOrder' ? '免单' 
+                        : '优惠'}
+                      {editingOrder.discountPercent && editingOrder.discountType !== 'trial' && editingOrder.discountType !== 'freeOrder' && ` ${editingOrder.discountPercent}折`}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* 可编辑字段 */}
+              <div className="space-y-3">
+                <div className="grid gap-2">
+                  <Label>订单状态</Label>
+                  <Select value={editFormData.status} onValueChange={(v) => setEditFormData(prev => ({ ...prev, status: v as OrderStatus }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">待完成</SelectItem>
+                      <SelectItem value="completed">已完成</SelectItem>
+                      <SelectItem value="cancelled">已取消</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>预约时间</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="date"
+                      value={editFormData.appointmentDate}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, appointmentDate: e.target.value }))}
+                    />
+                    <Select
+                      value={editFormData.appointmentTime}
+                      onValueChange={(value) => setEditFormData(prev => ({ ...prev, appointmentTime: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="选择时间" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[240px] overflow-y-auto">
+                        {Array.from({ length: 24 }, (_, i) => i).flatMap(hour => [
+                          <SelectItem key={`${hour}:00`} value={`${String(hour).padStart(2, '0')}:00`}>
+                            {String(hour).padStart(2, '0')}:00
+                          </SelectItem>,
+                          <SelectItem key={`${hour}:30`} value={`${String(hour).padStart(2, '0')}:30`}>
+                            {String(hour).padStart(2, '0')}:30
+                          </SelectItem>,
+                        ])}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>实付金额 (元)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={editFormData.finalPrice}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, finalPrice: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>优惠金额 (元)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    min={0}
+                    value={editFormData.discountAmount}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>妹妹收入 (元)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={editFormData.girlIncome}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, girlIncome: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>客服提成 (元)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={editFormData.serviceCommission}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, serviceCommission: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>优惠券/免单来源</Label>
+                  <Input
+                    placeholder="如：Telegram群组名称"
+                    value={editFormData.couponSource}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, couponSource: e.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>备注</Label>
+                  <Input
+                    placeholder="订单备注..."
+                    value={editFormData.remark}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, remark: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
+            >
+              保存
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Cancel Order Dialog */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
@@ -1104,6 +1422,39 @@ export function OrdersPage() {
               </Select>
             </div>
 
+            {/* Trial Order Toggle - 只有选了有 trialPrice 的妹妹才显示 */}
+            {selectedGirl && selectedGirl.trialPrice && (
+              <div 
+                className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl cursor-pointer border border-blue-200"
+                onClick={() => {
+                  const newIsTrial = !isTrialOrder
+                  setIsTrialOrder(newIsTrial)
+                  if (newIsTrial) {
+                    // 试钟开启：关闭免单
+                    setIsFreeOrder(false)
+                    setFormData(prev => ({ ...prev, discount: 0, hours: 1 }))
+                  } else {
+                    // 试钟关闭：恢复
+                    setFormData(prev => ({ ...prev, hours: 1 }))
+                  }
+                }}
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                  isTrialOrder ? "bg-chiikawa-blue border-chiikawa-blue" : "border-apple-300"
+                )}>
+                  {isTrialOrder && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-700">试钟</p>
+                  <p className="text-xs text-blue-400">一口价 ¥{selectedGirl.trialPrice}，不参与任何优惠</p>
+                </div>
+                {isTrialOrder && (
+                  <Badge className="text-xs bg-chiikawa-blue text-white">试钟</Badge>
+                )}
+              </div>
+            )}
+
             {/* Package Selection */}
             <div className="grid gap-2">
               <Label>选择套餐</Label>
@@ -1121,8 +1472,8 @@ export function OrdersPage() {
               </Select>
             </div>
 
-            {/* Hours Selection */}
-            {selectedPackage && (
+            {/* Hours Selection - 试钟时隐藏 */}
+            {selectedPackage && !isTrialOrder && (
               <div className="grid gap-2">
                 <Label>预约小时数</Label>
                 <div className="flex items-center gap-3">
@@ -1173,10 +1524,13 @@ export function OrdersPage() {
                 {/* 原价总计 */}
                 <div className="flex justify-between items-center border-b border-apple-100 pb-2">
                   <span className="text-sm text-apple-600">
-                    订单金额 ({formData.hours}小时 × ¥{calculatedPrice})
+                    {isTrialOrder 
+                      ? '试钟一口价' 
+                      : `订单金额 (${formData.hours}小时 × ¥${calculatedPrice})`
+                    }
                   </span>
                   <span className="text-xl font-bold text-apple-blue">
-                    ¥{priceCalculation?.totalOriginalAmount || calculatedPrice * formData.hours}
+                    ¥{isTrialOrder ? selectedGirl?.trialPrice : (priceCalculation?.totalOriginalAmount || calculatedPrice * formData.hours)}
                   </span>
                 </div>
 
@@ -1188,9 +1542,13 @@ export function OrdersPage() {
                         "text-xs",
                         priceCalculation.discountType === 'memberDay' 
                           ? "bg-pink-100 text-pink-700" 
+                          : priceCalculation.discountType === 'trial'
+                          ? "bg-blue-100 text-blue-700"
                           : "bg-blue-100 text-blue-700"
                       )}>
-                        {priceCalculation.discountType === 'memberDay' ? '会员日特惠' : '会员折扣'}
+                        {priceCalculation.discountType === 'memberDay' ? '会员日特惠' 
+                          : priceCalculation.discountType === 'trial' ? '试钟' 
+                          : '会员折扣'}
                       </Badge>
                       <span className="text-xs text-apple-400">{priceCalculation.reason}</span>
                     </div>
@@ -1259,7 +1617,8 @@ export function OrdersPage() {
                   </div>
                 )}
 
-                {/* 优惠券 */}
+                {/* 优惠券 - 试钟时不显示 */}
+                {!isTrialOrder && (<>
                 <div className="grid gap-2">
                   <Label className="text-sm text-apple-500">额外优惠券抵扣</Label>
                   {/* 免单勾选 */}
@@ -1333,11 +1692,18 @@ export function OrdersPage() {
                   </div>
                 )}
 
+                </>)}
+
                 {/* 优惠后金额 */}
                 <div className="flex justify-between items-center pt-2 border-t border-apple-100">
                   <span className="text-sm text-apple-600">实付金额</span>
                   {isFreeOrder || finalPricePreview === 0 ? (
                     <span className="text-lg font-bold text-chiikawa-pink">免单</span>
+                  ) : isTrialOrder ? (
+                    <span className="text-lg font-bold text-chiikawa-blue">
+                      ¥{Number(finalPricePreview).toFixed(2)}
+                      <span className="text-xs ml-1 text-chiikawa-blue/60">试钟</span>
+                    </span>
                   ) : (
                     <span className="text-lg font-bold text-orange-600">
                       ¥{Number(finalPricePreview).toFixed(2)}

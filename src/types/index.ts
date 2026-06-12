@@ -17,6 +17,7 @@ export interface Girl {
   commissionType: 'percent' | 'fixed'
   commissionValue: number
   excludeFromDiscount?: boolean // 不参与任何优惠
+  trialPrice?: number | null // 试钟价格（一口价）
   createdAt: number
   updatedAt: number
 }
@@ -109,7 +110,7 @@ export interface Order {
   price: number
   discount?: number
   finalPrice?: number
-  discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'freeOrder' | 'none'
+  discountType?: 'memberDay' | 'memberRegular' | 'coupon' | 'freeOrder' | 'trial' | 'none'
   discountPercent?: number // 实际折扣率
   discountAmount?: number // 优惠金额
   deductedBalance?: number // 实际扣除余额

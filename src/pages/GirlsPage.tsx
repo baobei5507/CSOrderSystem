@@ -59,6 +59,7 @@ export function GirlsPage() {
     commissionType: 'percent' as CommissionType,
     commissionValue: 70,
     excludeFromDiscount: false,
+    trialPrice: '' as string,
   })
 
   const { currentStore } = useAppStore()
@@ -170,6 +171,7 @@ export function GirlsPage() {
         commissionType: girl.commissionType as CommissionType,
         commissionValue: girl.commissionValue,
         excludeFromDiscount: girl.excludeFromDiscount || false,
+        trialPrice: girl.trialPrice?.toString() || '',
       })
     } else {
       setEditingGirl(null)
@@ -179,6 +181,7 @@ export function GirlsPage() {
         commissionType: 'percent',
         commissionValue: 70,
         excludeFromDiscount: false,
+        trialPrice: '',
       })
     }
     setDialogOpen(true)
@@ -319,6 +322,7 @@ export function GirlsPage() {
                   </div>
                   <p className="text-sm text-chiikawa-brown/60 mt-1">
                     提成: {girl.commissionType === 'percent' ? `${girl.commissionValue}%` : `¥${girl.commissionValue}`}
+                    {girl.trialPrice ? <span className="ml-2 text-chiikawa-blue">试钟: ¥{girl.trialPrice}</span> : null}
                   </p>
                 </div>
 
@@ -434,6 +438,19 @@ export function GirlsPage() {
                   )}
                 />
               </button>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="trialPrice">试钟价格（一口价）</Label>
+              <Input
+                id="trialPrice"
+                type="number"
+                min={0}
+                step={0.01}
+                placeholder="可选，如：200"
+                value={formData.trialPrice}
+                onChange={(e) => setFormData({ ...formData, trialPrice: e.target.value })}
+              />
+              <p className="text-xs text-chiikawa-brown/50">试钟为一口价，不参与任何优惠</p>
             </div>
           </div>
           <div className="flex justify-end gap-3">

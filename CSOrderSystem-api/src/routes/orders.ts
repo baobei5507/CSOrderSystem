@@ -301,13 +301,39 @@ app.post('/', async (c) => {
   const orderId = crypto.randomUUID()
   const orderNo = generateOrderNo()
 
+  // 判断是否是试钟订单
+  const isTrialOrder = body.discountType === 'trial' && girl.trialPrice
+
   // 计算价格和折扣（前端传来的是元）
-  const hours = body.hours || 1
-  const originalPricePerHourYuan = body.originalPricePerHour || pkg.basePrice || 0
-  const totalOriginalAmountYuan = body.totalOriginalAmount || (originalPricePerHourYuan * hours)
-  const finalPriceYuan = body.finalPrice ?? totalOriginalAmountYuan
-  const discountAmountYuan = body.discountAmount ?? (totalOriginalAmountYuan - finalPriceYuan)
-  const discountPercent = body.discountPercent || Math.round((finalPriceYuan / totalOriginalAmountYuan) * 100)
+  let hours, originalPricePerHourYuan, totalOriginalAmountYuan, finalPriceYuan, discountAmountYuan, discountPercent, girlIncome, serviceCommission, isFreeOrder, storeProfit
+
+  if (isTrialOrder) {
+    // 试钟订单：一口价，不按小时计费，不参与任何优惠
+    hours = 1
+    originalPricePerHourYuan = girl.trialPrice
+    totalOriginalAmountYuan = girl.trialPrice
+    finalPriceYuan = girl.trialPrice
+    discountAmountYuan = 0
+    discountPercent = 100
+    // 提成基于 trialPrice
+    girlIncome = calculateCommission(girl.trialPrice, girl.commissionType, girl.commissionValue, 1)
+    serviceCommission = calculateCommission(girl.trialPrice, store.serviceCommissionType, store.serviceCommissionValue, 1)
+    isFreeOrder = false
+    storeProfit = girl.trialPrice - girlIncome - serviceCommission
+  } else {
+    // 常规订单
+    hours = body.hours || 1
+    originalPricePerHourYuan = body.originalPricePerHour || pkg.basePrice || 0
+    totalOriginalAmountYuan = body.totalOriginalAmount || (originalPricePerHourYuan * hours)
+    finalPriceYuan = body.finalPrice ?? totalOriginalAmountYuan
+    discountAmountYuan = body.discountAmount ?? (totalOriginalAmountYuan - finalPriceYuan)
+    discountPercent = body.discountPercent || Math.round((finalPriceYuan / totalOriginalAmountYuan) * 100)
+    // 提成计算（基于原价和小时数，免单也照常计算提成）
+    girlIncome = calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
+    serviceCommission = calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
+    isFreeOrder = finalPriceYuan === 0
+    storeProfit = isFreeOrder ? 0 : finalPriceYuan - girlIncome - serviceCommission
+  }
   
   // 转换为数据库存储单位：
   // - integer 字段存分（originalPrice, totalOriginalAmount, discountAmount）
@@ -316,12 +342,6 @@ app.post('/', async (c) => {
   const totalOriginalAmount = Math.round(totalOriginalAmountYuan * 100)
   const finalPrice = finalPriceYuan // real 类型，存元
   const discountAmount = Math.round(discountAmountYuan * 100)
-
-  // 提成计算（基于原价和小时数，免单也照常计算提成）
-  const girlIncome = calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
-  const serviceCommission = calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
-  const isFreeOrder = finalPriceYuan === 0
-  const storeProfit = isFreeOrder ? 0 : finalPriceYuan - girlIncome - serviceCommission
 
   // 创建订单
   await db.insert(orders).values({
