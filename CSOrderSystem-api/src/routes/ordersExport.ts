@@ -75,12 +75,15 @@ app.post('/', async (c) => {
     const packageMap = new Map(packagesList.map(p => [p.id, p]))
     
     // 构建订单到交易的映射（获取下单时的余额）
+    // 找该订单最早的 consume 交易，取 balanceBefore（下单前的余额）
     const orderBalanceMap = new Map<string, number>()
     for (const order of ordersList) {
-      const transaction = orderTransactions.find(t => t.orderId === order.id)
+      const consumeTransactions = orderTransactions
+        .filter(t => t.orderId === order.id && t.type === 'consume')
+        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+      const transaction = consumeTransactions[0]
       if (transaction) {
-        // 下单时的余额 = 交易后的余额 + 交易金额（交易金额是负数）
-        orderBalanceMap.set(order.id, transaction.balanceAfter || 0)
+        orderBalanceMap.set(order.id, transaction.balanceBefore || 0)
       }
     }
 
