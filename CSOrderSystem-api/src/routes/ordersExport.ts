@@ -98,6 +98,19 @@ app.post('/', async (c) => {
       const memberLevel = customer?.memberLevel || 0
       const memberLevelName = memberLevel > 0 ? (levelNameMap.get(memberLevel) || `LV${memberLevel}`) : '-'
 
+      // 计算实际时长相关的调整数据
+      const bookedMinutes = (order.hours || 1) * 60
+      const isAdjusted = order.actualMinutes !== null && order.actualMinutes !== undefined
+      const ratio = isAdjusted ? (order.actualMinutes! / bookedMinutes) : 1
+
+      // 调整后的原价总计（分）和调整后的单价（分/小时）
+      const adjustedTotalOriginal = order.totalOriginalAmount 
+        ? Math.round(order.totalOriginalAmount * ratio) 
+        : (order.originalPrice ? Math.round(order.originalPrice * ratio) : 0)
+      const adjustedUnitPrice = order.originalPrice 
+        ? Math.round(order.originalPrice * ratio) 
+        : 0
+
       return {
         orderNo: order.orderNo,
         createdAt: order.createdAt,
@@ -108,11 +121,15 @@ app.post('/', async (c) => {
         memberLevelName, // 会员等级名称，如"3K会员"
         appointmentTime: order.appointmentTime,
         hours: order.hours,
+        actualMinutes: order.actualMinutes, // null=按预约时长完成
+        isAdjusted, // 是否有实际时长调整
         packageName: pkg?.name || '-',
-        originalPrice: order.originalPrice, // 分，前端除以100
+        originalPrice: adjustedUnitPrice, // 调整后的单价（分），前端除以100
         couponSource: order.couponSource,
-        discountAmount: order.discountAmount, // 分，前端除以100
-        finalPrice: order.finalPrice, // 元，real类型，前端直接显示
+        discountAmount: order.discountAmount, // 分，前端除以100（已在完成时调整）
+        finalPrice: order.finalPrice, // 元，real类型（已在完成时调整）
+        girlIncome: order.girlIncome, // 妹妹收入（元）
+        serviceCommission: order.serviceCommission, // 客服提成（元）
         balanceAtOrder: orderBalanceMap.get(order.id) || customer?.balance || 0, // 分，前端除以100
         status: order.status,
         remark: order.remark,

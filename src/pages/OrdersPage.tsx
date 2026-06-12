@@ -849,6 +849,7 @@ export function OrdersPage() {
         girlIncome: adjusted.girlIncome,
         serviceCommission: adjusted.serviceCommission,
         discountAmount: Math.round(adjusted.discountAmount * 100),
+        actualMinutes: actualMinutes, // null=按预约时长, 否则记录实际分钟数
       }
       // 如果不是全部完成，在备注中记录实际时长
       if (actualMinutes !== null) {

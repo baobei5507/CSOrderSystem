@@ -115,6 +115,7 @@ export const orders = sqliteTable('orders', {
   deductedBalance: integer('deducted_balance'), // 实际扣除余额（分）
   usedMemberDayBenefit: integer('used_member_day_benefit', { mode: 'boolean' }).notNull().default(false), // 是否使用了会员日权益
   storeProfit: integer('store_profit'), // 店家利润（分）
+  actualMinutes: integer('actual_minutes'), // 实际服务时长（分钟），null表示按预约时长完成
   couponSource: text('coupon_source'), // 优惠券来源（如TG群组）
   remark: text('remark'),
   createdAt: integer('created_at').notNull(),

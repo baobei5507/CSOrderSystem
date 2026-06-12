@@ -60,11 +60,15 @@ export function ExportPage() {
 
         // 准备 Excel 数据
       const excelData = orders.map((order: any, index: number) => {
-        // 计算结束时间
+        const bookedMinutes = (order.hours || 1) * 60
+        const isAdjusted = order.isAdjusted || (order.actualMinutes !== null && order.actualMinutes !== undefined)
+
+        // 计算结束时间：如果有实际时长，用实际时长算
         let endTime = '-'
-        if (order.appointmentTime && order.hours) {
+        const effectiveMinutes = isAdjusted ? order.actualMinutes : bookedMinutes
+        if (order.appointmentTime && effectiveMinutes) {
           const start = new Date(order.appointmentTime)
-          const end = new Date(start.getTime() + order.hours * 60 * 60 * 1000)
+          const end = new Date(start.getTime() + effectiveMinutes * 60 * 1000)
           endTime = format(end, 'HH:mm')
         }
 
@@ -81,6 +85,20 @@ export function ExportPage() {
         // 会员等级显示：使用等级名称（如"3K会员"）
         const memberLevelStr = order.memberLevelName || '-'
 
+        // 课时：如果有实际时长调整，显示实际分钟数；否则显示预约小时数
+        const hoursDisplay = isAdjusted 
+          ? `${order.actualMinutes}分钟` 
+          : (order.hours || 1)
+
+        // 单价：调整后的单价（已按实际时长折算）
+        const unitPriceDisplay = order.originalPrice 
+          ? (Number(order.originalPrice) / 100).toFixed(2) 
+          : '0.00'
+
+        // 妹妹收入和客服提成
+        const girlIncomeDisplay = order.girlIncome ? Number(order.girlIncome).toFixed(2) : '0.00'
+        const serviceCommissionDisplay = order.serviceCommission ? Number(order.serviceCommission).toFixed(2) : '0.00'
+
         return {
           '序号': index + 1,
           '订单号': order.orderNo,
@@ -92,11 +110,13 @@ export function ExportPage() {
           '预约时间': appointmentTimeStr,
           '结束时间': endTime,
           '课程': order.packageName || '-',
-          '课时': order.hours || 1,
-          '单价': order.originalPrice ? (Number(order.originalPrice) / 100).toFixed(2) : '0.00',
+          '课时': hoursDisplay,
+          '单价': unitPriceDisplay,
           '优惠券来源': order.couponSource || '-',
           '优惠总计': order.discountAmount ? (Number(order.discountAmount) / 100).toFixed(2) : '0.00',
-          '实收': order.finalPrice ? Number(order.finalPrice).toFixed(2) : '0.00', // finalPrice是元，不除100
+          '实收': order.finalPrice ? Number(order.finalPrice).toFixed(2) : '0.00',
+          '妹妹收入': girlIncomeDisplay,
+          '客服提成': serviceCommissionDisplay,
           '会员余额(下单时)': order.balanceAtOrder ? (Number(order.balanceAtOrder) / 100).toFixed(2) : '0.00',
           '状态': statusMap[order.status]?.label || order.status,
           '备注': order.remark || '-',
@@ -119,11 +139,13 @@ export function ExportPage() {
         { wch: 10 },  // 预约时间
         { wch: 10 },  // 结束时间
         { wch: 12 },  // 课程
-        { wch: 6 },   // 课时
+        { wch: 10 },  // 课时
         { wch: 10 },  // 单价
         { wch: 15 },  // 优惠券来源
         { wch: 10 },  // 优惠总计
         { wch: 10 },  // 实收
+        { wch: 10 },  // 妹妹收入
+        { wch: 10 },  // 客服提成
         { wch: 15 },  // 会员余额
         { wch: 8 },   // 状态
         { wch: 20 },  // 备注
@@ -215,7 +237,10 @@ export function ExportPage() {
           <CuteCard variant="yellow" className="p-4">
             <h3 className="font-bold text-chiikawa-brown mb-2">导出字段说明</h3>
             <div className="text-sm text-apple-600 space-y-1">
-              <p>• 结束时间：根据预约时间自动计算（预约时间+课时）</p>
+              <p>• 课时：如果实际未上满，显示实际分钟数（如"30分钟"）</p>
+              <p>• 单价：根据实际时长折算后的单价</p>
+              <p>• 结束时间：根据实际服务时长计算</p>
+              <p>• 妹妹收入/客服提成：按实际时长折算后的金额</p>
               <p>• 优惠券来源：显示订单中记录的优惠券来源信息</p>
               <p>• 会员余额：下单时顾客的余额（从余额流水记录获取）</p>
               <p>• 导出格式：Excel (.xlsx)</p>
