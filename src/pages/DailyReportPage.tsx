@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '@/stores/appStore'
+import { useApi } from '@/hooks/useApi'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -68,6 +69,7 @@ function getDateString(date: Date): string {
 
 export function DailyReportPage() {
   const { currentStore } = useAppStore()
+  const { getDailyReport } = useApi()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
   // 获取日报数据
@@ -75,10 +77,7 @@ export function DailyReportPage() {
     queryKey: ['dailyReport', currentStore?.id, formatDate(selectedDate)],
     queryFn: async (): Promise<DailyReportData> => {
       if (!currentStore?.id) return { summary: { totalRevenue: 0, totalOrders: 0, totalGirlIncome: 0, totalServiceCommission: 0 }, girlStats: [], orders: [] }
-      const res = await fetch(`https://cs-order-api.550759734-d15.workers.dev/api/daily-report?storeId=${currentStore.id}&date=${formatDate(selectedDate)}`)
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      return json.data
+      return getDailyReport(currentStore.id, formatDate(selectedDate))
     },
     enabled: !!currentStore?.id,
   })

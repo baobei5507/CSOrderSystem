@@ -13,14 +13,24 @@
 - **excludeFromDiscount**: 妹妹级别的不参与优惠开关
 
 ## 关键文件
-- 前端入口: `src/App.tsx`
+- 前端入口: `src/App.tsx`（含登录守卫）
+- 登录页: `src/pages/LoginPage.tsx`
 - 订单页: `src/pages/OrdersPage.tsx`（最复杂的页面）
 - 妹妹管理: `src/pages/GirlsPage.tsx`
 - 底部导航: `src/components/BottomNav.tsx`（tabs 数组定义页面入口）
-- API 路由: `CSOrderSystem-api/src/routes/`（orders.ts, girls.ts, dashboard.ts 等）
+- API 路由: `CSOrderSystem-api/src/routes/`（orders.ts, girls.ts, auth.ts 等）
+- Auth路由: `CSOrderSystem-api/src/routes/auth.ts`（login/register/init/me + authMiddleware）
 - DB Schema: `CSOrderSystem-api/src/db/schema.ts`
 - 类型定义: `src/types/index.ts`
 - 迁移文件: `CSOrderSystem-api/migrations/`
+
+## 认证系统
+- JWT HMAC-SHA256，7天有效期，JWT_SECRET 在 wrangler.toml vars
+- PBKDF2 密码哈希（100000次迭代 + SHA-256 + UUID salt）
+- authMiddleware: /api/auth/* 跳过鉴权，其他 /api/* 需 Bearer token
+- 前端: localStorage 存 token，useApi/useQueryHooks 自动带 Authorization header
+- 首次使用: LoginPage 初始化模式创建管理员账号
+- 退出登录: SettingsPage 底部按钮 → clearAuth
 
 ## 部署流程
 1. API: `cd CSOrderSystem-api && npx wrangler deploy`

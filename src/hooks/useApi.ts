@@ -319,6 +319,38 @@ export function useApi() {
     return fetchApi(`/recharge/transactions?customerId=${customerId}`)
   }, [])
 
+  // Analysis
+  const getCustomerPreferences = useCallback(async (storeId: string, range: string): Promise<{
+    customerRankings: any[]
+    girlPreferences: any[]
+    packagePreferences: any[]
+    inactiveCustomers: any[]
+  }> => {
+    return fetchApi(`/analysis/customer-preferences?storeId=${storeId}&range=${range}`)
+  }, [])
+
+  const getCustomerDetail = useCallback(async (storeId: string, customerId: string): Promise<any> => {
+    return fetchApi(`/analysis/customer-detail?storeId=${storeId}&customerId=${customerId}`)
+  }, [])
+
+  // Trends
+  const getGirlTrends = useCallback(async (storeId: string, range: string): Promise<{
+    trendData: any[]
+    girlLegend: any[]
+    groupBy: 'day' | 'week' | 'month'
+  }> => {
+    return fetchApi(`/trends/girl-trends?storeId=${storeId}&range=${range}`)
+  }, [])
+
+  // Daily Report
+  const getDailyReport = useCallback(async (storeId: string, date: string): Promise<{
+    summary: any
+    girlStats: any[]
+    orders: any[]
+  }> => {
+    return fetchApi(`/daily-report?storeId=${storeId}&date=${date}`)
+  }, [])
+
   // Order Calculation
   const calculateOrderPrice = useCallback(async (data: {
     storeId: string
@@ -396,6 +428,13 @@ export function useApi() {
     getBalanceTransactions,
     // Order Calculation
     calculateOrderPrice,
+    // Analysis
+    getCustomerPreferences,
+    getCustomerDetail,
+    // Trends
+    getGirlTrends,
+    // Daily Report
+    getDailyReport,
   }
 }
 

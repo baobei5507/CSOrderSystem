@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '@/stores/appStore'
+import { useApi } from '@/hooks/useApi'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
@@ -123,6 +124,7 @@ const timeRangeOptions: { value: TimeRange; label: string }[] = [
 
 export function AnalysisPage() {
   const { currentStore } = useAppStore()
+  const { getCustomerPreferences, getGirlTrends, getCustomerDetail } = useApi()
   const [timeRange, setTimeRange] = useState<TimeRange>('month')
   const [trendDimension, setTrendDimension] = useState<TrendDimension>('count')
   const [searchQuery, setSearchQuery] = useState('')
@@ -133,10 +135,7 @@ export function AnalysisPage() {
     queryKey: ['customerAnalysis', currentStore?.id, timeRange],
     queryFn: async (): Promise<AnalysisData> => {
       if (!currentStore?.id) return { customerRankings: [], girlPreferences: [], packagePreferences: [], inactiveCustomers: [] }
-      const res = await fetch(`https://cs-order-api.550759734-d15.workers.dev/api/analysis/customer-preferences?storeId=${currentStore.id}&range=${timeRange}`)
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      return json.data
+      return getCustomerPreferences(currentStore.id, timeRange)
     },
     enabled: !!currentStore?.id,
   })
@@ -146,10 +145,7 @@ export function AnalysisPage() {
     queryKey: ['girlTrends', currentStore?.id, timeRange],
     queryFn: async (): Promise<TrendData> => {
       if (!currentStore?.id) return { trendData: [], girlLegend: [], groupBy: 'month' }
-      const res = await fetch(`https://cs-order-api.550759734-d15.workers.dev/api/trends/girl-trends?storeId=${currentStore.id}&range=${timeRange}`)
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      return json.data
+      return getGirlTrends(currentStore.id, timeRange)
     },
     enabled: !!currentStore?.id,
   })
@@ -159,10 +155,7 @@ export function AnalysisPage() {
     queryKey: ['customerDetail', currentStore?.id, selectedCustomer?.customerId],
     queryFn: async (): Promise<CustomerDetailData> => {
       if (!currentStore?.id || !selectedCustomer?.customerId) throw new Error('Missing params')
-      const res = await fetch(`https://cs-order-api.550759734-d15.workers.dev/api/analysis/customer-detail?storeId=${currentStore.id}&customerId=${selectedCustomer.customerId}`)
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      return json.data
+      return getCustomerDetail(currentStore.id, selectedCustomer.customerId)
     },
     enabled: !!currentStore?.id && !!selectedCustomer?.customerId,
   })

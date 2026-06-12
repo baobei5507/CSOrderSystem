@@ -12,7 +12,6 @@ async function hashPassword(password: string, salt: string): Promise<string> {
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
     encoder.encode(password),
-    'PBKDF2',
     { name: 'PBKDF2' },
     false,
     ['deriveBits']
