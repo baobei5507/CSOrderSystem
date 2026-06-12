@@ -56,12 +56,7 @@ app.post('/', async (c) => {
       db.select().from(customers).where(eq(customers.storeId, storeId)).all(),
       db.select().from(girls).where(eq(girls.storeId, storeId)).all(),
       db.select().from(packages).where(eq(packages.storeId, storeId)).all(),
-      db.select().from(balanceTransactions)
-        .where(and(
-          eq(balanceTransactions.type, 'consume'),
-          // 使用 IN 查询而不是数组参数
-        ))
-        .all()
+      db.select().from(balanceTransactions).all()
     ])
 
     // 过滤出订单相关的交易记录
