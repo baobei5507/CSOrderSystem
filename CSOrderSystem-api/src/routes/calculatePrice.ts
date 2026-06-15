@@ -212,11 +212,15 @@ app.post('/', async (c) => {
     let memberTotalPrice = 0
     let usedMemberDayBenefit = false
     
+    // 检查余额是否满足会员日条件
+    const minBalanceRequired = (customer.totalRecharge || 0) * (memberConfig.minBalancePercent || 50) / 100
+    const balanceEligibleForMemberDay = (customer.balance || 0) >= minBalanceRequired
+
     for (let i = 0; i < hours; i++) {
       const hour = i + 1
       
-      // 只有首钟、是会员日、且今天未使用过会员日权益，才享受会员日特惠
-      const isFirstHourMemberDay = isMemberDay && i === 0 && !hasUsedMemberDay
+      // 只有首钟、是会员日、今天未使用过会员日权益、且余额满足比例，才享受会员日特惠
+      const isFirstHourMemberDay = isMemberDay && i === 0 && !hasUsedMemberDay && balanceEligibleForMemberDay
       const hourDiscountPercent = isFirstHourMemberDay 
         ? levelConfig.memberDayDiscount 
         : levelConfig.regularDiscount
