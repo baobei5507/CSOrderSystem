@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Search, Plus, ChevronRight, Edit2, Trash2, DollarSign } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Search, Plus, ChevronRight, Edit2, Trash2, DollarSign, Copy, ClipboardList } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -63,7 +63,9 @@ export function GirlsPage() {
   })
 
   const { currentStore } = useAppStore()
-  const { getGirls, createGirl, updateGirl, deleteGirl, getPackages } = useApi()
+  const { getGirls, createGirl, updateGirl, deleteGirl, getPackages, getOrders, getCustomers, getGirlPackagePrices, saveGirlPackagePrice } = useApi()
+  const [copiedGirlId, setCopiedGirlId] = useState<string | null>(null)
+  const [copiedAll, setCopiedAll] = useState(false)
 
   useEffect(() => {
     if (currentStore) {
@@ -93,6 +95,109 @@ export function GirlsPage() {
     }
   }
 
+  // 格式化今日预约文本
+  const formatTodaySchedule = useCallback(async (girlId?: string) => {
+    if (!currentStore) return ''
+    const [ordersData, customersData] = await Promise.all([
+      getOrders(currentStore.id),
+      getCustomers(currentStore.id),
+    ])
+
+    // 筛选今日 pending 订单
+    const today = new Date()
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
+    const todayEnd = todayStart + 24 * 60 * 60 * 1000
+
+    const todayOrders = ordersData.filter((o: any) =>
+      o.status === 'pending' &&
+      o.appointmentTime &&
+      o.appointmentTime >= todayStart &&
+      o.appointmentTime < todayEnd &&
+      (girlId ? o.girlId === girlId : true)
+    )
+
+    if (todayOrders.length === 0) return ''
+
+    // 按 girlId 分组
+    const grouped: Record<string, any[]> = {}
+    todayOrders.forEach((o: any) => {
+      if (!grouped[o.girlId]) grouped[o.girlId] = []
+      grouped[o.girlId].push(o)
+    })
+
+    const lines: string[] = []
+
+    Object.entries(grouped).forEach(([gId, orders]) => {
+      const girlName = girls.find(g => g.id === gId)?.name || '未知'
+      // 按时间排序
+      orders.sort((a: any, b: any) => (a.appointmentTime || 0) - (b.appointmentTime || 0))
+
+      if (girlId) {
+        // 单个妹妹：不显示妹妹名
+        orders.forEach((o: any) => {
+          const startTime = new Date(o.appointmentTime)
+          const hours = o.hours || 1
+          const endTime = new Date(o.appointmentTime + hours * 60 * 60 * 1000)
+          const startStr = startTime.getHours().toString().padStart(2, '0') + ':' + startTime.getMinutes().toString().padStart(2, '0')
+          const endStr = endTime.getHours().toString().padStart(2, '0') + ':' + endTime.getMinutes().toString().padStart(2, '0')
+          const customerName = customersData.find((c: any) => c.id === o.customerId)?.name || '未知顾客'
+          const packageName = packages.find(p => p.id === o.packageId)?.name || '未知套餐'
+          lines.push(`${startStr}-${endStr} ${customerName} ${packageName}`)
+        })
+      } else {
+        // 全员：显示妹妹名
+        lines.push(`【${girlName}】`)
+        orders.forEach((o: any) => {
+          const startTime = new Date(o.appointmentTime)
+          const hours = o.hours || 1
+          const endTime = new Date(o.appointmentTime + hours * 60 * 60 * 1000)
+          const startStr = startTime.getHours().toString().padStart(2, '0') + ':' + startTime.getMinutes().toString().padStart(2, '0')
+          const endStr = endTime.getHours().toString().padStart(2, '0') + ':' + endTime.getMinutes().toString().padStart(2, '0')
+          const customerName = customersData.find((c: any) => c.id === o.customerId)?.name || '未知顾客'
+          const packageName = packages.find(p => p.id === o.packageId)?.name || '未知套餐'
+          lines.push(`${startStr}-${endStr} ${customerName} ${packageName}`)
+        })
+        lines.push('')
+      }
+    })
+
+    return lines.join('\n').trim()
+  }, [currentStore, girls, packages, getOrders, getCustomers])
+
+  // 复制单个妹妹今日预约
+  const handleCopyGirlSchedule = async (girl: Girl) => {
+    try {
+      const text = await formatTodaySchedule(girl.id)
+      if (!text) {
+        setCopiedGirlId(girl.id)
+        setTimeout(() => setCopiedGirlId(null), 1500)
+        return
+      }
+      await navigator.clipboard.writeText(text)
+      setCopiedGirlId(girl.id)
+      setTimeout(() => setCopiedGirlId(null), 1500)
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }
+
+  // 复制全员今日预约
+  const handleCopyAllSchedule = async () => {
+    try {
+      const text = await formatTodaySchedule()
+      if (!text) {
+        setCopiedAll(true)
+        setTimeout(() => setCopiedAll(false), 1500)
+        return
+      }
+      await navigator.clipboard.writeText(text)
+      setCopiedAll(true)
+      setTimeout(() => setCopiedAll(false), 1500)
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }
+
   const [dailyPriceFormData, setDailyPriceFormData] = useState<Record<string, string>>({})
 
   const handleOpenPriceDialog = async (girl: Girl) => {
@@ -100,22 +205,16 @@ export function GirlsPage() {
     setPriceDialogOpen(true)
     setPriceFormData({})
     setDailyPriceFormData({})
-    // 加载该妹妹的套餐价格
     try {
-      const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
-      const response = await fetch(`${API_BASE}/girl-package-prices?girlId=${girl.id}`)
-      const result = await response.json()
-      if (result.success) {
-        // 初始化表单数据
-        const initialData: Record<string, string> = {}
-        const initialDailyData: Record<string, string> = {}
-        result.data.forEach((p: GirlPackagePrice) => {
-          initialData[p.packageId] = p.price?.toString() || ''
-          initialDailyData[p.packageId] = p.dailyPrice?.toString() || ''
-        })
-        setPriceFormData(initialData)
-        setDailyPriceFormData(initialDailyData)
-      }
+      const data = await getGirlPackagePrices(girl.id)
+      const initialData: Record<string, string> = {}
+      const initialDailyData: Record<string, string> = {}
+      data.forEach((p: GirlPackagePrice) => {
+        initialData[p.packageId] = p.price?.toString() || ''
+        initialDailyData[p.packageId] = p.dailyPrice?.toString() || ''
+      })
+      setPriceFormData(initialData)
+      setDailyPriceFormData(initialDailyData)
     } catch (err) {
       console.error('加载套餐价格失败:', err)
     }
@@ -125,23 +224,17 @@ export function GirlsPage() {
     if (!selectedGirl || !currentStore) return
     setIsSavingPrices(true)
     try {
-      const API_BASE = 'https://cs-order-api.550759734-d15.workers.dev/api'
-      // 批量保存所有价格（常规价格 + 当日价格）
       const savePromises = Object.entries(priceFormData).map(([packageId, price]) => {
         const priceValue = price === '' ? 0 : parseFloat(price)
         const dailyPriceValue = dailyPriceFormData[packageId] === '' || dailyPriceFormData[packageId] === undefined 
           ? null 
           : parseFloat(dailyPriceFormData[packageId])
-        return fetch(`${API_BASE}/girl-package-prices`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            girlId: selectedGirl.id,
-            packageId,
-            price: priceValue,
-            dailyPrice: dailyPriceValue,
-            storeId: currentStore.id,
-          }),
+        return saveGirlPackagePrice({
+          girlId: selectedGirl.id,
+          packageId,
+          price: priceValue,
+          dailyPrice: dailyPriceValue,
+          storeId: currentStore.id,
         })
       })
       
@@ -242,13 +335,30 @@ export function GirlsPage() {
             <CharacterAvatar character="hachiwareAvatar2" size="sm" />
             <h1 className="text-xl font-bold text-chiikawa-brown">妹妹管理</h1>
           </div>
-          <Button
-            onClick={() => handleOpenDialog()}
-            className="bg-chiikawa-blue text-white rounded-full px-4 h-10 hover:bg-chiikawa-blue/90"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            新增妹妹
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyAllSchedule}
+              className="rounded-full px-3 h-10 border-chiikawa-peach/30 text-chiikawa-brown hover:bg-chiikawa-cream"
+            >
+              {copiedAll ? (
+                <span className="text-green-600 text-xs">已复制</span>
+              ) : (
+                <>
+                  <ClipboardList className="w-4 h-4 mr-1" />
+                  <span className="text-xs">全员预约</span>
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={() => handleOpenDialog()}
+              className="bg-chiikawa-blue text-white rounded-full px-4 h-10 hover:bg-chiikawa-blue/90"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              新增妹妹
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -327,6 +437,22 @@ export function GirlsPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-8 px-2 text-xs",
+                      copiedGirlId === girl.id ? "text-green-500" : "text-chiikawa-brown/60 hover:text-chiikawa-pink"
+                    )}
+                    onClick={() => handleCopyGirlSchedule(girl)}
+                    title="复制今日预约"
+                  >
+                    {copiedGirlId === girl.id ? (
+                      <span className="text-green-600">✓</span>
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
