@@ -770,6 +770,11 @@ export function OrdersPage() {
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
   const [completingOrder, setCompletingOrder] = useState<OrderWithDetails | null>(null)
   const [actualMinutes, setActualMinutes] = useState<number | null>(null) // null = 全部完成
+  const [customCompleteData, setCustomCompleteData] = useState({
+    finalPrice: 0,
+    girlIncome: 0,
+    serviceCommission: 0,
+  })
 
   // 编辑订单相关状态
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -805,6 +810,12 @@ export function OrdersPage() {
       if (order) {
         setCompletingOrder(order)
         setActualMinutes(null) // 默认全部完成
+        const adjusted = getAdjustedAmounts(order, null)
+        setCustomCompleteData({
+          finalPrice: adjusted.finalPrice,
+          girlIncome: adjusted.girlIncome,
+          serviceCommission: adjusted.serviceCommission,
+        })
         setCompleteDialogOpen(true)
       }
     } else {
@@ -816,6 +827,18 @@ export function OrdersPage() {
       }
     }
   }
+
+  // 实际时长变化时，更新自定义完成数据（自动填入比例计算值，但仍允许手动修改）
+  useEffect(() => {
+    if (completingOrder) {
+      const adjusted = getAdjustedAmounts(completingOrder, actualMinutes)
+      setCustomCompleteData({
+        finalPrice: adjusted.finalPrice,
+        girlIncome: adjusted.girlIncome,
+        serviceCommission: adjusted.serviceCommission,
+      })
+    }
+  }, [actualMinutes, completingOrder])
 
   // 计算按实际时长调整后的金额
   const getAdjustedAmounts = (order: OrderWithDetails, minutes: number | null) => {
@@ -843,11 +866,16 @@ export function OrdersPage() {
     if (!completingOrder) return
     try {
       const adjusted = getAdjustedAmounts(completingOrder, actualMinutes)
+      const useCustom = actualMinutes !== null // 不全钟时使用手动编辑值
+      const finalPrice = useCustom ? customCompleteData.finalPrice : adjusted.finalPrice
+      const girlIncome = useCustom ? customCompleteData.girlIncome : adjusted.girlIncome
+      const serviceCommission = useCustom ? customCompleteData.serviceCommission : adjusted.serviceCommission
+      
       const updateData: any = {
         status: 'completed',
-        finalPrice: adjusted.finalPrice,
-        girlIncome: adjusted.girlIncome,
-        serviceCommission: adjusted.serviceCommission,
+        finalPrice,
+        girlIncome,
+        serviceCommission,
         discountAmount: Math.round(adjusted.discountAmount * 100),
         actualMinutes: actualMinutes, // null=按预约时长, 否则记录实际分钟数
       }
@@ -1339,25 +1367,65 @@ export function OrdersPage() {
                     ? '全部完成，金额不变' 
                     : `按 ${actualMinutes} 分钟折算（${(actualMinutes / ((completingOrder.hours || 1) * 60) * 100).toFixed(0)}%）`}
                 </p>
-                <div className="flex justify-between text-sm">
-                  <span className="text-chiikawa-brown/50">实付金额</span>
-                  <span className={cn("font-medium", actualMinutes !== null ? "text-orange-600" : "text-chiikawa-brown")}>
-                    ¥{getAdjustedAmounts(completingOrder, actualMinutes).finalPrice.toFixed(2)}
-                    {actualMinutes !== null && <span className="text-xs line-through ml-1 text-chiikawa-brown/30">¥{(Number(completingOrder.finalPrice ?? completingOrder.price) || 0).toFixed(2)}</span>}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-chiikawa-brown/50">妹妹收入</span>
-                  <span className={cn("font-medium", actualMinutes !== null ? "text-purple-600" : "text-purple-500")}>
-                    ¥{getAdjustedAmounts(completingOrder, actualMinutes).girlIncome.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-chiikawa-brown/50">客服提成</span>
-                  <span className={cn("font-medium", actualMinutes !== null ? "text-green-600" : "text-green-500")}>
-                    ¥{getAdjustedAmounts(completingOrder, actualMinutes).serviceCommission.toFixed(2)}
-                  </span>
-                </div>
+
+                {actualMinutes === null ? (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-chiikawa-brown/50">实付金额</span>
+                      <span className="font-medium text-chiikawa-brown">
+                        ¥{getAdjustedAmounts(completingOrder, null).finalPrice.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-chiikawa-brown/50">妹妹收入</span>
+                      <span className="font-medium text-purple-500">
+                        ¥{getAdjustedAmounts(completingOrder, null).girlIncome.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-chiikawa-brown/50">客服提成</span>
+                      <span className="font-medium text-green-500">
+                        ¥{getAdjustedAmounts(completingOrder, null).serviceCommission.toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="grid gap-2">
+                      <Label className="text-xs text-chiikawa-brown/50">实付金额 (元)</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={customCompleteData.finalPrice}
+                        onChange={(e) => setCustomCompleteData(prev => ({ ...prev, finalPrice: parseFloat(e.target.value) || 0 }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-xs text-chiikawa-brown/50">妹妹收入 (元)</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={customCompleteData.girlIncome}
+                        onChange={(e) => setCustomCompleteData(prev => ({ ...prev, girlIncome: parseFloat(e.target.value) || 0 }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-xs text-chiikawa-brown/50">客服提成 (元)</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={customCompleteData.serviceCommission}
+                        onChange={(e) => setCustomCompleteData(prev => ({ ...prev, serviceCommission: parseFloat(e.target.value) || 0 }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <p className="text-xs text-orange-500 mt-1">
+                      比例折算参考：实付 ¥{getAdjustedAmounts(completingOrder, actualMinutes).finalPrice.toFixed(2)}，妹妹 ¥{getAdjustedAmounts(completingOrder, actualMinutes).girlIncome.toFixed(2)}，客服 ¥{getAdjustedAmounts(completingOrder, actualMinutes).serviceCommission.toFixed(2)}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           )}
