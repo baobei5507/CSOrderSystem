@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
 import { eq, and, desc } from 'drizzle-orm'
 import { customers, balanceTransactions, rechargeRecords, memberDayUsage, memberLevels } from '../db/schema'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: { DB: D1Database } }>()
 
@@ -37,7 +38,8 @@ app.post('/', async (c) => {
   const body = await c.req.json()
   const now = Date.now()
   
-  const { customerId, storeId, amount, giftAmount = 0, remark = '' } = body
+  const { customerId, storeId: bodyStoreId, amount, giftAmount = 0, remark = '' } = body
+  const storeId = getStoreId(c, bodyStoreId)
   
   if (!customerId || !storeId || !amount) {
     return c.json({ success: false, error: 'Missing required fields' }, 400)
@@ -59,7 +61,7 @@ app.post('/', async (c) => {
     
     // 计算新等级
     const newTotalRecharge = beforeTotalRecharge + amount
-    const afterLevel = await calculateMemberLevel(db, body.storeId, newTotalRecharge)
+    const afterLevel = await calculateMemberLevel(db, storeId, newTotalRecharge)
     
     // 计算新余额
     const totalAdd = amount + giftAmount

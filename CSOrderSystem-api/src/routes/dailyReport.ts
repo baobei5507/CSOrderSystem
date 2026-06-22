@@ -3,16 +3,17 @@ import { drizzle } from 'drizzle-orm/d1'
 import { eq, and, gte, lt } from 'drizzle-orm'
 import { orders, girls, customers, packages } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
 // GET /api/daily-report?storeId=xxx&date=2026-06-03
 app.get('/', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
+  const storeId = getStoreId(c)
   const dateStr = c.req.query('date')
 
-  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
   // 解析日期，默认为今天
   const targetDate = dateStr ? new Date(dateStr) : new Date()

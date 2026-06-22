@@ -12,6 +12,7 @@ import {
   memberDayUsage
 } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -43,7 +44,8 @@ app.post('/', async (c) => {
       date?: string
     }
 
-    const { storeId, customerId, girlId, packageId, hours = 1, date } = body
+    const { storeId: bodyStoreId, customerId, girlId, packageId, hours = 1, date } = body
+    const storeId = getStoreId(c, bodyStoreId)
 
     if (!storeId || !customerId || !girlId || !packageId) {
       return c.json({ success: false, error: 'Missing required fields' }, 400)

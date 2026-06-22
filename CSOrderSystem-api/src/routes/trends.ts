@@ -3,16 +3,17 @@ import { drizzle } from 'drizzle-orm/d1'
 import { eq, and, gte } from 'drizzle-orm'
 import { orders, girls } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
 // GET /api/trends/girl-trends?storeId=xxx&range=month|3months|6months|year
 app.get('/girl-trends', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
+  const storeId = getStoreId(c)
   const range = c.req.query('range') || '6months'
 
-  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
   const now = new Date()
   let startTime: number

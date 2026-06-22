@@ -3,12 +3,20 @@ import { drizzle } from 'drizzle-orm/d1'
 import { eq } from 'drizzle-orm'
 import { stores } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
 // GET /api/stores
 app.get('/', async (c) => {
   const db = drizzle(c.env.DB)
+  const userStoreId = getStoreId(c)
+  if (userStoreId) {
+    // 非admin用户只能看自己的店铺
+    const store = await db.select().from(stores).where(eq(stores.id, userStoreId)).all()
+    return c.json({ success: true, data: store })
+  }
+  // admin可以看所有店铺
   const allStores = await db.select().from(stores).all()
   return c.json({ success: true, data: allStores })
 })

@@ -3,13 +3,14 @@ import { drizzle } from 'drizzle-orm/d1'
 import { eq, and, desc } from 'drizzle-orm'
 import { orders, girls, customers, packages } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
 // GET /api/analysis/customer-detail?storeId=xxx&customerId=xxx
 app.get('/customer-detail', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
+  const storeId = getStoreId(c)
   const customerId = c.req.query('customerId')
 
   if (!storeId || !customerId) {

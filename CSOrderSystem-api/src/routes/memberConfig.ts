@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
 import { eq } from 'drizzle-orm'
 import { storeMemberConfigs, memberLevels } from '../db/schema'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: { DB: D1Database } }>()
 
@@ -27,10 +28,10 @@ function yuanToFen(yuan: number): number {
 // GET /api/member-config?storeId=xxx
 app.get('/', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
-  
+  const storeId = getStoreId(c)
+
   if (!storeId) {
-    return c.json({ success: false, error: 'Missing storeId' }, 400)
+    return c.json({ success: false, error: 'No store access' }, 403)
   }
   
   try {
@@ -84,15 +85,17 @@ app.get('/', async (c) => {
 app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
+  const storeId = getStoreId(c, body.storeId)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
   const now = Date.now()
   const id = crypto.randomUUID()
-  
+
   try {
     // 检查是否已存在
     const existing = await db.select().from(storeMemberConfigs)
-      .where(eq(storeMemberConfigs.storeId, body.storeId))
+      .where(eq(storeMemberConfigs.storeId, storeId))
       .get()
-    
+
     if (existing) {
       // 更新配置
       await db.update(storeMemberConfigs)
@@ -100,19 +103,19 @@ app.post('/', async (c) => {
           memberDays: body.memberDays ? body.memberDays.join(',') : existing.memberDays,
           minBalancePercent: body.minBalancePercent !== undefined ? body.minBalancePercent : existing.minBalancePercent,
           priceMarkup: body.priceMarkup !== undefined ? body.priceMarkup : existing.priceMarkup,
-          enabled: body.enabled !== undefined ? (body.enabled ? 1 : 0) : existing.enabled,
+          enabled: body.enabled !== undefined ? body.enabled : existing.enabled,
           updatedAt: now,
         })
-        .where(eq(storeMemberConfigs.storeId, body.storeId))
+        .where(eq(storeMemberConfigs.storeId, storeId))
     } else {
       // 创建配置
       await db.insert(storeMemberConfigs).values({
         id,
-        storeId: body.storeId,
+        storeId,
         memberDays: body.memberDays ? body.memberDays.join(',') : '1,2',
         minBalancePercent: body.minBalancePercent !== undefined ? body.minBalancePercent : 50,
         priceMarkup: body.priceMarkup !== undefined ? body.priceMarkup : 0,
-        enabled: body.enabled !== undefined ? (body.enabled ? 1 : 0) : 0,
+        enabled: body.enabled !== undefined ? body.enabled : false,
         createdAt: now,
         updatedAt: now,
       })
@@ -122,13 +125,13 @@ app.post('/', async (c) => {
     if (body.levels && body.levels.length > 0) {
       // 删除旧等级
       await db.delete(memberLevels)
-        .where(eq(memberLevels.storeId, body.storeId))
+        .where(eq(memberLevels.storeId, storeId))
       
       // 插入新等级（元->分）
       for (const level of body.levels) {
         await db.insert(memberLevels).values({
           id: crypto.randomUUID(),
-          storeId: body.storeId,
+          storeId,
           level: level.level,
           name: level.name,
           minRecharge: yuanToFen(level.minRecharge),

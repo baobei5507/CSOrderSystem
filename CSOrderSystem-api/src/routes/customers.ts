@@ -3,16 +3,17 @@ import { drizzle } from 'drizzle-orm/d1'
 import { eq, and, like, or, sql } from 'drizzle-orm'
 import { customers, customerAccounts, customerTags, tags, orders } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
 // GET /api/customers?storeId=xxx&search=xxx
 app.get('/', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
+  const storeId = getStoreId(c)
   const search = c.req.query('search')
 
-  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
   let query = db.select().from(customers).where(eq(customers.storeId, storeId)) as any
 
@@ -78,12 +79,14 @@ app.get('/', async (c) => {
 app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
+  const storeId = getStoreId(c, body.storeId)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
   const id = crypto.randomUUID()
   const now = Date.now()
 
   await db.insert(customers).values({
     id,
-    storeId: body.storeId,
+    storeId,
     nickname: body.name || null,
     remark: null,
     createdAt: now,
@@ -131,6 +134,11 @@ app.put('/', async (c) => {
   const db = drizzle(c.env.DB)
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
+
+  const storeId = getStoreId(c)
+  const existing = await db.select().from(customers).where(eq(customers.id, id)).get()
+  if (!existing) return c.json({ success: false, error: 'Not found' }, 404)
+  if (storeId && existing.storeId !== storeId) return c.json({ success: false, error: 'No access' }, 403)
 
   const body = await c.req.json()
   const now = Date.now()
@@ -206,6 +214,11 @@ app.delete('/', async (c) => {
   const db = drizzle(c.env.DB)
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
+
+  const storeId = getStoreId(c)
+  const existing = await db.select().from(customers).where(eq(customers.id, id)).get()
+  if (!existing) return c.json({ success: false, error: 'Not found' }, 404)
+  if (storeId && existing.storeId !== storeId) return c.json({ success: false, error: 'No access' }, 403)
 
   // 检查是否有历史订单，如果有则不允许删除
   const orderCount = await db.select({ count: sql<number>`COUNT(*)` })

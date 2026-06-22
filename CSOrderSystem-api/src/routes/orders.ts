@@ -16,6 +16,7 @@ import {
   memberLevels,
 } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 // 计算提成（基于原价和小时数）
 function calculateCommission(price: number, type: 'percent' | 'fixed', value: number, hours: number = 1): number {
@@ -46,9 +47,9 @@ const app = new Hono<{ Bindings: Env }>()
 // GET /api/orders?storeId=xxx
 app.get('/', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
+  const storeId = getStoreId(c)
 
-  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
   const allOrders = await db.select().from(orders)
     .where(eq(orders.storeId, storeId))
@@ -61,7 +62,8 @@ app.get('/', async (c) => {
 app.post('/calculate', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
-  const { storeId, customerId, girlId, packageId, hours = 1, date } = body
+  const { customerId, girlId, packageId, hours = 1, date } = body
+  const storeId = getStoreId(c, body.storeId)
 
   if (!storeId || !customerId || !girlId || !packageId) {
     return c.json({ success: false, error: 'Missing required fields' }, 400)
@@ -273,13 +275,15 @@ app.post('/calculate', async (c) => {
 app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
+  const storeId = getStoreId(c, body.storeId)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
   // 获取关联数据
   const [customer, girl, pkg, store] = await Promise.all([
     db.select().from(customers).where(eq(customers.id, body.customerId)).get(),
     db.select().from(girls).where(eq(girls.id, body.girlId)).get(),
     db.select().from(packages).where(eq(packages.id, body.packageId)).get(),
-    db.select().from(stores).where(eq(stores.id, body.storeId)).get(),
+    db.select().from(stores).where(eq(stores.id, storeId)).get(),
   ])
 
   if (!customer || !girl || !pkg || !store) {
@@ -347,7 +351,7 @@ app.post('/', async (c) => {
   await db.insert(orders).values({
     id: orderId,
     orderNo,
-    storeId: body.storeId,
+    storeId,
     customerId: body.customerId,
     customerAccountId: body.customerAccountId || null,
     girlId: body.girlId,
@@ -404,7 +408,7 @@ app.post('/', async (c) => {
       await db.insert(memberDayUsage).values({
         id: crypto.randomUUID(),
         customerId: body.customerId,
-        storeId: body.storeId,
+        storeId,
         date: today,
         usedCount: 1,
         createdAt: nowTime,
@@ -439,6 +443,7 @@ app.put('/', async (c) => {
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
+  const storeId = getStoreId(c)
   const body = await c.req.json()
   const now = Date.now()
 
@@ -469,6 +474,7 @@ app.put('/', async (c) => {
   // 获取原订单数据，用于计算余额变动
   const oldOrder = await db.select().from(orders).where(eq(orders.id, id)).get()
   if (!oldOrder) return c.json({ success: false, error: 'Order not found' }, 404)
+  if (storeId && oldOrder.storeId !== storeId) return c.json({ success: false, error: 'No access' }, 403)
 
   // 处理余额变动
   // deductedBalance 在 DB 中存的是元（与创建时一致）

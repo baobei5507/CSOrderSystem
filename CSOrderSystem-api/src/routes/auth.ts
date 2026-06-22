@@ -285,7 +285,19 @@ export async function authMiddleware(c: any, next: any) {
 
   // 将用户信息注入上下文
   c.set('user', payload)
+  c.set('storeId', (payload as any).storeId || null)
+  c.set('role', (payload as any).role || 'staff')
   return next()
+}
+
+// 获取当前用户的 storeId（强制数据隔离）
+// - 非admin用户：强制使用JWT中的storeId，忽略请求参数
+// - admin用户：允许通过请求参数指定storeId（超级管理员可查看任意店铺）
+export function getStoreId(c: any, bodyStoreId?: string): string | null {
+  const userStoreId = c.get('storeId')
+  if (userStoreId) return userStoreId  // 非admin: 强制JWT storeId
+  // admin: 允许请求指定storeId
+  return c.req.query('storeId') || bodyStoreId || null
 }
 
 export default app

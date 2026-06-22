@@ -10,6 +10,7 @@ import {
   memberLevels
 } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -17,10 +18,11 @@ const app = new Hono<{ Bindings: Env }>()
 app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
-  const { storeId, startDate, endDate, status } = body
+  const { startDate, endDate, status } = body
+  const storeId = getStoreId(c, body.storeId)
 
   if (!storeId) {
-    return c.json({ success: false, error: 'Missing storeId' }, 400)
+    return c.json({ success: false, error: 'No store access' }, 403)
   }
 
   try {

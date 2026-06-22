@@ -3,14 +3,15 @@ import { drizzle } from 'drizzle-orm/d1'
 import { eq, sql } from 'drizzle-orm'
 import { tags, customerTags, customers, orders } from '../db/schema'
 import type { Env } from '../index'
+import { getStoreId } from './auth'
 
 const app = new Hono<{ Bindings: Env }>()
 
 // GET /api/tags/stats?storeId=xxx - 标签统计列表（必须在 / 之前）
 app.get('/stats', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
-  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
+  const storeId = getStoreId(c)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
   try {
     const tagStats = await db.select({
@@ -46,8 +47,8 @@ app.get('/stats', async (c) => {
 // GET /api/tags?storeId=xxx - 获取所有标签
 app.get('/', async (c) => {
   const db = drizzle(c.env.DB)
-  const storeId = c.req.query('storeId')
-  if (!storeId) return c.json({ success: false, error: 'Missing storeId' }, 400)
+  const storeId = getStoreId(c)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
   const allTags = await db.select().from(tags).where(eq(tags.storeId, storeId)).all()
   return c.json({ success: true, data: allTags })
@@ -59,10 +60,13 @@ app.get('/detail', async (c) => {
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
 
+  const userStoreId = getStoreId(c)
+
   try {
     // 获取标签信息
     const tagInfo = await db.select().from(tags).where(eq(tags.id, id)).get()
     if (!tagInfo) return c.json({ success: false, error: 'Tag not found' }, 404)
+    if (userStoreId && tagInfo.storeId !== userStoreId) return c.json({ success: false, error: 'No access' }, 403)
 
     // 获取关联的顾客
     const customerList = await db.select({
@@ -122,18 +126,20 @@ app.get('/detail', async (c) => {
 app.post('/', async (c) => {
   const db = drizzle(c.env.DB)
   const body = await c.req.json()
+  const storeId = getStoreId(c, body.storeId)
+  if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
   const id = crypto.randomUUID()
   const now = Date.now()
 
   await db.insert(tags).values({
     id,
-    storeId: body.storeId,
+    storeId,
     name: body.name,
     color: body.color,
     createdAt: now,
   })
 
-  return c.json({ success: true, data: { id, name: body.name, color: body.color, storeId: body.storeId, createdAt: now } }, 201)
+  return c.json({ success: true, data: { id, name: body.name, color: body.color, storeId, createdAt: now } }, 201)
 })
 
 // PUT /api/tags?id=xxx
@@ -141,6 +147,11 @@ app.put('/', async (c) => {
   const db = drizzle(c.env.DB)
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
+
+  const storeId = getStoreId(c)
+  const existing = await db.select().from(tags).where(eq(tags.id, id)).get()
+  if (!existing) return c.json({ success: false, error: 'Not found' }, 404)
+  if (storeId && existing.storeId !== storeId) return c.json({ success: false, error: 'No access' }, 403)
 
   const body = await c.req.json()
   await db.update(tags)
@@ -155,6 +166,11 @@ app.delete('/', async (c) => {
   const db = drizzle(c.env.DB)
   const id = c.req.query('id')
   if (!id) return c.json({ success: false, error: 'Missing id' }, 400)
+
+  const storeId = getStoreId(c)
+  const existing = await db.select().from(tags).where(eq(tags.id, id)).get()
+  if (!existing) return c.json({ success: false, error: 'Not found' }, 404)
+  if (storeId && existing.storeId !== storeId) return c.json({ success: false, error: 'No access' }, 403)
 
   // 先删除顾客标签关联
   await db.delete(customerTags).where(eq(customerTags.tagId, id))
