@@ -120,6 +120,8 @@ export interface Order {
   storeProfit?: number // 店家利润（分）
   actualMinutes?: number | null // 实际服务时长（分钟），null表示按预约时长完成
   couponSource?: string | null // 优惠券来源（如TG群组）
+  orderSource?: 'my' | 'other' // 订单来源: 'my'=我的预约, 'other'=其他客服预约
+  otherStaffName?: string | null // 其他客服名称
   status: 'pending' | 'completed' | 'cancelled'
   serviceStaffName?: string // 跟单客服
   remark: string | null

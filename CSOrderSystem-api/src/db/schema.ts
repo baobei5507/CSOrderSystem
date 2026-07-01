@@ -118,6 +118,8 @@ export const orders = sqliteTable('orders', {
   actualMinutes: integer('actual_minutes'), // 实际服务时长（分钟），null表示按预约时长完成
   couponSource: text('coupon_source'), // 优惠券来源（如TG群组）
   remark: text('remark'),
+  orderSource: text('order_source').default('my'), // 订单来源: 'my'=我的预约, 'other'=其他客服预约
+  otherStaffName: text('other_staff_name'), // 其他客服名称（orderSource=other时填写）
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 })

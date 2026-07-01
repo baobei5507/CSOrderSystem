@@ -41,12 +41,21 @@ app.get('/', async (c) => {
     // 免单订单(finalPrice=0)不计入收入和提成
     const paidOrders = completedOrders.filter(o => (o.finalPrice || 0) > 0)
 
-    // 计算汇总数据
+    // 计算汇总数据 - 拆分"我的"和"其他客服"
+    const myPaidOrders = paidOrders.filter(o => o.orderSource === 'my' || !o.orderSource)
+    const otherPaidOrders = paidOrders.filter(o => o.orderSource === 'other')
+
     const summary = {
       totalRevenue: paidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
       totalOrders: completedOrders.length,
       totalGirlIncome: paidOrders.reduce((sum, o) => sum + (o.girlIncome || 0), 0),
       totalServiceCommission: paidOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0),
+      // 拆分统计
+      myRevenue: myPaidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
+      myOrders: completedOrders.filter(o => o.orderSource === 'my' || !o.orderSource).length,
+      myCommission: myPaidOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0),
+      otherRevenue: otherPaidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
+      otherOrders: completedOrders.filter(o => o.orderSource === 'other').length,
     }
 
     // 计算每个妹妹的当日统计
@@ -102,6 +111,8 @@ app.get('/', async (c) => {
         serviceCommission: order.serviceCommission,
         status: order.status,
         createdAt: order.createdAt,
+        orderSource: order.orderSource || 'my',
+        otherStaffName: order.otherStaffName || null,
       }
     }).sort((a, b) => b.createdAt - a.createdAt) // 按时间倒序
 

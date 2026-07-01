@@ -186,9 +186,16 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                       {/* Order Header */}
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-mono text-chiikawa-brown/40">{order.orderNo}</span>
-                        <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
-                          {status.label}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          {order.orderSource === 'other' && (
+                            <Badge className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                              {order.otherStaffName ? `${order.otherStaffName}` : '其他客服'}
+                            </Badge>
+                          )}
+                          <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
+                            {status.label}
+                          </Badge>
+                        </div>
                       </div>
 
                       {/* Order Details */}
@@ -301,8 +308,8 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                         <span className="text-purple-500">
                           妹妹收入: ¥{(order.girlIncome || 0).toFixed(2)}
                         </span>
-                        <span className="text-green-500">
-                          客服提成: ¥{(order.serviceCommission || 0).toFixed(2)}
+                        <span className={order.orderSource === 'other' ? 'text-orange-400' : 'text-green-500'}>
+                          {order.orderSource === 'other' ? '无提成' : `客服提成: ¥${(order.serviceCommission || 0).toFixed(2)}`}
                         </span>
                       </div>
 
@@ -399,6 +406,10 @@ export function OrdersPage() {
 
   // 试钟开关
   const [isTrialOrder, setIsTrialOrder] = useState(false)
+
+  // 其他客服预约开关
+  const [isOtherStaffOrder, setIsOtherStaffOrder] = useState(false)
+  const [otherStaffName, setOtherStaffName] = useState('')
 
   // 顾客搜索和创建
   const [customerSearch, setCustomerSearch] = useState('')
@@ -609,6 +620,8 @@ export function OrdersPage() {
     setNewCustomerAccounts([])
     setIsFreeOrder(false)
     setIsTrialOrder(false)
+    setIsOtherStaffOrder(false)
+    setOtherStaffName('')
     setDialogOpen(true)
   }
 
@@ -750,6 +763,15 @@ export function OrdersPage() {
         orderData.remark = existingRemark
           ? `${existingRemark} ${autoRemark.join(' ')}`
           : autoRemark.join(' ')
+      }
+
+      // 其他客服预约标记
+      if (isOtherStaffOrder) {
+        orderData.orderSource = 'other'
+        orderData.otherStaffName = otherStaffName || null
+        if (!orderData.remark) {
+          orderData.remark = `其他客服预约${otherStaffName ? `(${otherStaffName})` : ''}`
+        }
       }
 
       await createOrder(orderData)
@@ -1804,6 +1826,46 @@ export function OrdersPage() {
               </div>
             )}
 
+            {/* Other Staff Order Toggle */}
+            <div 
+              className="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl cursor-pointer border border-orange-200"
+              onClick={() => {
+                const newIsOther = !isOtherStaffOrder
+                setIsOtherStaffOrder(newIsOther)
+                if (newIsOther) {
+                  // 其他客服预约开启：提成自动为0
+                  setOtherStaffName('')
+                }
+              }}
+            >
+              <div className={cn(
+                "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                isOtherStaffOrder ? "bg-orange-500 border-orange-500" : "border-apple-300"
+              )}>
+                {isOtherStaffOrder && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-orange-700">其他客服预约</p>
+                <p className="text-xs text-orange-400">此订单无客服提成，仅计入店铺营收</p>
+              </div>
+              {isOtherStaffOrder && (
+                <Badge className="text-xs bg-orange-500 text-white">无提成</Badge>
+              )}
+            </div>
+
+            {/* Other Staff Name Input */}
+            {isOtherStaffOrder && (
+              <div className="grid gap-2">
+                <Label className="text-sm text-orange-600">其他客服名称（可选）</Label>
+                <Input
+                  placeholder="填写客服名称方便识别"
+                  value={otherStaffName}
+                  onChange={(e) => setOtherStaffName(e.target.value)}
+                  className="bg-orange-50 border-orange-200"
+                />
+              </div>
+            )}
+
             {/* Package Selection */}
             <div className="grid gap-2">
               <Label>选择套餐</Label>
@@ -2063,15 +2125,22 @@ export function OrdersPage() {
                 {/* 客服提成预览 */}
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-apple-500">客服提成</span>
-                    <span className="text-xs text-apple-400">
-                      ({currentStore?.serviceCommissionType === 'percent'
-                        ? `${currentStore?.serviceCommissionValue}%`
-                        : `固定¥${currentStore?.serviceCommissionValue}`
-                      })
-                    </span>
+                    <span className="text-sm text-apple-500">{isOtherStaffOrder ? '客服提成（无）' : '客服提成'}</span>
+                    {!isOtherStaffOrder && (
+                      <span className="text-xs text-apple-400">
+                        ({currentStore?.serviceCommissionType === 'percent'
+                          ? `${currentStore?.serviceCommissionValue}%`
+                          : `固定¥${currentStore?.serviceCommissionValue}`
+                        })
+                      </span>
+                    )}
+                    {isOtherStaffOrder && (
+                      <span className="text-xs text-orange-400">其他客服预约，无提成</span>
+                    )}
                   </div>
-                  <span className="text-lg font-semibold text-green-600">¥{(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-green-600">
+                    {isOtherStaffOrder ? '¥0.00' : `¥${(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}`}
+                  </span>
                 </div>
 
                 {/* 妹妹提成预览 */}

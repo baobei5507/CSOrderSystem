@@ -24,6 +24,11 @@ interface DailySummary {
   totalOrders: number
   totalGirlIncome: number
   totalServiceCommission: number
+  myRevenue: number
+  myOrders: number
+  myCommission: number
+  otherRevenue: number
+  otherOrders: number
 }
 
 interface GirlDailyStats {
@@ -45,6 +50,8 @@ interface DailyOrder {
   serviceCommission: number
   status: 'pending' | 'completed' | 'cancelled'
   createdAt: number
+  orderSource: 'my' | 'other'
+  otherStaffName: string | null
 }
 
 interface DailyReportData {
@@ -76,7 +83,7 @@ export function DailyReportPage() {
   const { data: reportData, isLoading } = useQuery({
     queryKey: ['dailyReport', currentStore?.id, formatDate(selectedDate)],
     queryFn: async (): Promise<DailyReportData> => {
-      if (!currentStore?.id) return { summary: { totalRevenue: 0, totalOrders: 0, totalGirlIncome: 0, totalServiceCommission: 0 }, girlStats: [], orders: [] }
+      if (!currentStore?.id) return { summary: { totalRevenue: 0, totalOrders: 0, totalGirlIncome: 0, totalServiceCommission: 0, myRevenue: 0, myOrders: 0, myCommission: 0, otherRevenue: 0, otherOrders: 0 }, girlStats: [], orders: [] }
       return getDailyReport(currentStore.id, formatDate(selectedDate))
     },
     enabled: !!currentStore?.id,
@@ -186,9 +193,10 @@ export function DailyReportPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <DollarSign className="w-4 h-4 text-chiikawa-blue" />
-                      <span className="text-xs text-chiikawa-brown/70">今日收入</span>
+                      <span className="text-xs text-chiikawa-brown/70">总营收</span>
                     </div>
-                    <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalRevenue.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-chiikawa-brown">¥{(reportData.summary.totalRevenue || 0).toFixed(0)}</p>
+                    <p className="text-xs text-chiikawa-brown/40 mt-1">{reportData.summary.totalOrders}单</p>
                   </div>
                   <CharacterAvatar character="hachiwareFace7" size="sm" />
                 </div>
@@ -197,24 +205,13 @@ export function DailyReportPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-4 h-4 text-chiikawa-pink" />
-                      <span className="text-xs text-chiikawa-brown/70">订单数</span>
+                      <TrendingUp className="w-4 h-4 text-chiikawa-pink" />
+                      <span className="text-xs text-chiikawa-brown/70">我的营收</span>
                     </div>
-                    <p className="text-2xl font-bold text-chiikawa-brown">{reportData.summary.totalOrders}</p>
+                    <p className="text-2xl font-bold text-chiikawa-brown">¥{(reportData.summary.myRevenue || 0).toFixed(0)}</p>
+                    <p className="text-xs text-chiikawa-brown/40 mt-1">{reportData.summary.myOrders}单</p>
                   </div>
                   <CharacterAvatar character="hachiwareFace8" size="sm" />
-                </div>
-              </CuteCard>
-              <CuteCard variant="yellow" className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="w-4 h-4 text-chiikawa-yellow" />
-                      <span className="text-xs text-chiikawa-brown/70">妹妹总收入</span>
-                    </div>
-                    <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalGirlIncome.toLocaleString()}</p>
-                  </div>
-                  <CharacterAvatar character="hachiwareFace9" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="mint" className="p-4">
@@ -222,11 +219,24 @@ export function DailyReportPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-chiikawa-brown/70">客服总提成</span>
+                      <span className="text-xs text-chiikawa-brown/70">我的提成</span>
                     </div>
-                    <p className="text-2xl font-bold text-chiikawa-brown">¥{reportData.summary.totalServiceCommission.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-700">¥{(reportData.summary.myCommission || 0).toFixed(2)}</p>
                   </div>
                   <CharacterAvatar character="hachiwareFace10" size="sm" />
+                </div>
+              </CuteCard>
+              <CuteCard variant="yellow" className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-orange-500" />
+                      <span className="text-xs text-chiikawa-brown/70">其他客服营收</span>
+                    </div>
+                    <p className="text-2xl font-bold text-orange-600">¥{(reportData.summary.otherRevenue || 0).toFixed(0)}</p>
+                    <p className="text-xs text-chiikawa-brown/40 mt-1">{reportData.summary.otherOrders}单</p>
+                  </div>
+                  <CharacterAvatar character="hachiwareFace9" size="sm" />
                 </div>
               </CuteCard>
             </div>
@@ -318,6 +328,11 @@ export function DailyReportPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-chiikawa-brown/50">{order.orderNo}</span>
+                          {order.orderSource === 'other' && (
+                            <Badge className="text-xs bg-orange-100 text-orange-700 hover:bg-orange-100">
+                              {order.otherStaffName || '其他客服'}
+                            </Badge>
+                          )}
                           <Badge 
                             variant={order.status === 'completed' ? 'default' : order.status === 'cancelled' ? 'secondary' : 'outline'}
                             className={cn(
@@ -339,8 +354,10 @@ export function DailyReportPage() {
                         <span>妹妹: {order.girlName}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-chiikawa-pink">妹妹收入: ¥{order.girlIncome}</span>
-                        <span className="text-green-600">客服提成: ¥{order.serviceCommission}</span>
+                        <span className="text-chiikawa-pink">妹妹收入: ¥{order.girlIncome.toFixed(2)}</span>
+                        <span className={order.orderSource === 'other' ? 'text-orange-400' : 'text-green-600'}>
+                          {order.orderSource === 'other' ? '无提成' : `客服提成: ¥${order.serviceCommission.toFixed(2)}`}
+                        </span>
                       </div>
                     </div>
                   ))}
