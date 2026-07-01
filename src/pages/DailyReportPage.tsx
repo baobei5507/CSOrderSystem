@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { 
   Calendar, 
   TrendingUp, 
-  Users, 
   DollarSign, 
   Clock,
   ChevronLeft,
