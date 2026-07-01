@@ -167,7 +167,7 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                 ¥{dateOrders.reduce((sum, o) => {
                   const price = Number(o.finalPrice) || Number(o.price) || 0
                   return sum + price
-                }, 0).toLocaleString()}
+                }, 0).toFixed(0)}
               </span>
             </button>
 
@@ -290,7 +290,7 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                             </div>
                           ) : (
                             <span className="text-lg font-bold text-chiikawa-pink">
-                              ¥{order.price}
+                              ¥{(Number(order.finalPrice ?? order.price) || 0).toFixed(2)}
                             </span>
                           )}
                         </div>
@@ -299,10 +299,10 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                       {/* Commission Info */}
                       <div className="flex items-center justify-between mt-2 text-xs">
                         <span className="text-purple-500">
-                          妹妹收入: ¥{order.girlIncome || 0}
+                          妹妹收入: ¥{(order.girlIncome || 0).toFixed(2)}
                         </span>
                         <span className="text-green-500">
-                          客服提成: ¥{order.serviceCommission || 0}
+                          客服提成: ¥{(order.serviceCommission || 0).toFixed(2)}
                         </span>
                       </div>
 
@@ -406,7 +406,7 @@ export function OrdersPage() {
   const [newCustomerAccounts, setNewCustomerAccounts] = useState<{ platform: string; accountId: string; note?: string }[]>([])
 
   const { currentStore } = useAppStore()
-  const { getOrders, getCustomers, getGirls, getPackages, getTags, createOrder, updateOrder, createTag, updateCustomer, getGirlPackagePrices, createCustomer, getMemberConfig, calculateOrderPrice } = useApi()
+  const { getOrders, getCustomers, getGirls, getPackages, getTags, createOrder, updateOrder, deleteOrder, createTag, updateCustomer, getGirlPackagePrices, createCustomer, getMemberConfig, calculateOrderPrice } = useApi()
 
   useEffect(() => {
     if (currentStore) {
@@ -791,6 +791,26 @@ export function OrdersPage() {
     serviceCommission: 0,
   })
 
+  // 删除订单相关状态
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingOrder, setDeletingOrder] = useState<OrderWithDetails | null>(null)
+
+  // 确认删除订单
+  const handleConfirmDelete = async () => {
+    if (!deletingOrder) return
+    try {
+      await deleteOrder(deletingOrder.id)
+      setDeleteDialogOpen(false)
+      setDeletingOrder(null)
+      setEditDialogOpen(false)
+      setEditingOrder(null)
+      loadData()
+    } catch (err: any) {
+      console.error('删除订单失败:', err)
+      alert('删除订单失败: ' + (err.message || '未知错误'))
+    }
+  }
+
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     if (newStatus === 'cancelled') {
       // 显示取消原因弹窗
@@ -899,12 +919,15 @@ export function OrdersPage() {
   // 点击订单打开编辑弹窗
   const handleOrderClick = (order: OrderWithDetails) => {
     setEditingOrder(order)
-    // 解析预约时间
+    // 解析预约时间（使用本地时间，避免时区偏移）
     let appointmentDate = ''
     let appointmentTime = ''
     if (order.appointmentTime) {
       const d = new Date(order.appointmentTime)
-      appointmentDate = d.toISOString().split('T')[0]
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      appointmentDate = `${year}-${month}-${day}`
       appointmentTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
     }
     setEditFormData({
@@ -1268,16 +1291,31 @@ export function OrdersPage() {
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              取消
-            </Button>
+          <div className="flex justify-between gap-3">
             <Button
-              onClick={handleSaveEdit}
-              className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
+              variant="outline"
+              onClick={() => {
+                if (editingOrder) {
+                  setDeletingOrder(editingOrder)
+                  setDeleteDialogOpen(true)
+                }
+              }}
+              className="text-red-500 border-red-200 hover:bg-red-50"
             >
-              保存
+              <Trash2 className="w-4 h-4 mr-1" />
+              删除订单
             </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                取消
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
+              >
+                保存
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1507,6 +1545,54 @@ export function OrdersPage() {
               className="bg-red-500 text-white hover:bg-red-600"
             >
               确认取消
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Order Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>删除订单</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {deletingOrder && (
+              <div className="p-3 bg-red-50 rounded-xl text-sm space-y-1">
+                <p className="text-red-600 font-medium">⚠️ 此操作不可恢复</p>
+                <p className="text-red-600">
+                  订单号: <span className="font-mono font-medium">{deletingOrder.orderNo}</span>
+                </p>
+                <p className="text-red-600">
+                  顾客: <span className="font-medium">{deletingOrder.customerName}</span>
+                </p>
+                <p className="text-red-600">
+                  妹妹: <span className="font-medium">{deletingOrder.girlName}</span>
+                </p>
+                <p className="text-red-600">
+                  实付金额: <span className="font-medium">¥{(Number(deletingOrder.finalPrice ?? deletingOrder.price) || 0).toFixed(2)}</span>
+                </p>
+                {deletingOrder.deductedBalance && deletingOrder.deductedBalance > 0 && (
+                  <p className="text-orange-600">
+                    已扣余额 ¥{Number(deletingOrder.deductedBalance).toFixed(2)} 将退还给顾客
+                  </p>
+                )}
+              </div>
+            )}
+            <p className="text-sm text-chiikawa-brown/50">确认要永久删除此订单吗？删除后数据将无法恢复。</p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => {
+              setDeleteDialogOpen(false)
+              setDeletingOrder(null)
+            }}>
+              返回
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              确认删除
             </Button>
           </div>
         </DialogContent>
