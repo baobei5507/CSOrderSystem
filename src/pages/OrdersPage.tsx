@@ -731,6 +731,22 @@ export function OrdersPage() {
           orderData.deductedBalance = Math.max(0, priceCalculation.deductedBalance - (formData.discount || 0))
           orderData.usedMemberDayBenefit = priceCalculation.usedMemberDayBenefit ? 1 : 0
         }
+      } else {
+        // 无会员折扣的常规订单
+        const totalOriginal = calculatedPrice * formData.hours
+        orderData.totalOriginalAmount = totalOriginal
+        orderData.discountType = 'none'
+        orderData.discountPercent = 100
+        orderData.discountAmount = formData.discount || 0
+        if (isFreeOrder) {
+          orderData.finalPrice = 0
+          orderData.deductedBalance = 0
+          orderData.usedMemberDayBenefit = 0
+        } else {
+          orderData.finalPrice = finalPricePreview
+          orderData.deductedBalance = 0
+          orderData.usedMemberDayBenefit = 0
+        }
       }
       
       // 使用新建顾客的账号ID或已选择的账号ID
