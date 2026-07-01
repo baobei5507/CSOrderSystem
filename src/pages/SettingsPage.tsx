@@ -34,7 +34,6 @@ function PackagesSettings() {
   const [editingPkg, setEditingPkg] = useState<PackageType | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    code: '',
     basePrice: '',
   })
 
@@ -59,12 +58,11 @@ function PackagesSettings() {
       setEditingPkg(pkg)
       setFormData({
         name: pkg.name,
-        code: pkg.code,
         basePrice: pkg.basePrice?.toString() || '',
       })
     } else {
       setEditingPkg(null)
-      setFormData({ name: '', code: '', basePrice: '' })
+      setFormData({ name: '', basePrice: '' })
     }
     setDialogOpen(true)
   }
@@ -75,7 +73,6 @@ function PackagesSettings() {
     try {
       const data = {
         name: formData.name,
-        code: formData.code,
         basePrice: formData.basePrice === '' ? 0 : parseFloat(formData.basePrice),
         storeId: currentStore.id,
       }
@@ -127,10 +124,7 @@ function PackagesSettings() {
           {packages.map((pkg) => (
             <CuteCard key={pkg.id} variant="cream" className="p-4 flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-chiikawa-brown">{pkg.name}</h3>
-                  <Badge variant="secondary" className="text-xs bg-chiikawa-blue-light text-chiikawa-blue">{pkg.code}</Badge>
-                </div>
+                <h3 className="font-semibold text-chiikawa-brown">{pkg.name}</h3>
                 <p className="text-sm text-chiikawa-brown/60 mt-1">基础价格: ¥{pkg.basePrice}</p>
               </div>
               <div className="flex items-center gap-1">
@@ -160,14 +154,7 @@ function PackagesSettings() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
-            <div className="grid gap-2">
-              <Label>套餐代码</Label>
-              <Input
-                placeholder="如：SSS"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              />
-            </div>
+
             <div className="grid gap-2">
               <Label>基础价格 (¥)</Label>
               <Input

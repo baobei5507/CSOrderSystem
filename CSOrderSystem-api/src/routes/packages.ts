@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/d1'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { packages, orders } from '../db/schema'
 import type { Env } from '../index'
 import { getStoreId } from './auth'
@@ -24,22 +24,12 @@ app.post('/', async (c) => {
   const storeId = getStoreId(c, body.storeId)
   if (!storeId) return c.json({ success: false, error: 'No store access' }, 403)
 
-  // 检查同店同编码
-  const existing = await db.select().from(packages)
-    .where(and(eq(packages.storeId, storeId), eq(packages.code, body.code)))
-    .get()
-
-  if (existing) {
-    return c.json({ success: false, error: '该店家下已存在相同套餐编码' }, 400)
-  }
-
   const id = crypto.randomUUID()
   const now = Date.now()
 
   await db.insert(packages).values({
     id,
     storeId,
-    code: body.code,
     name: body.name,
     basePrice: body.basePrice || 0,
     status: body.status || 'active',
