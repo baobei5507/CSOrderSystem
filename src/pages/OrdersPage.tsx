@@ -1156,7 +1156,7 @@ export function OrdersPage() {
             setExpandedDates={setExpandedDates}
             onStatusChange={handleStatusChange}
             onOrderClick={handleOrderClick}
-            secondStaffName={currentStore?.secondStaffName}
+            secondStaffName={currentStore?.secondStaffName ?? undefined}
           />
         )}
       </div>
