@@ -631,7 +631,9 @@ export function OrdersPage() {
   }
 
   const handleSubmit = async () => {
-    if (!formData.girlId || !formData.packageId || !currentStore) return
+    if (!formData.girlId || !formData.packageId || !currentStore || isSubmitting) return
+
+    setIsSubmitting(true)
 
     try {
       let finalCustomerId = formData.customerId
@@ -756,6 +758,8 @@ export function OrdersPage() {
     } catch (err: any) {
       console.error('创建订单失败:', err)
       alert('创建订单失败: ' + (err.message || '未知错误'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -793,6 +797,7 @@ export function OrdersPage() {
 
   // 删除订单相关状态
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingOrder, setDeletingOrder] = useState<OrderWithDetails | null>(null)
 
   // 确认删除订单
@@ -946,7 +951,8 @@ export function OrdersPage() {
 
   // 保存订单编辑
   const handleSaveEdit = async () => {
-    if (!editingOrder || !currentStore) return
+    if (!editingOrder || !currentStore || isSubmitting) return
+    setIsSubmitting(true)
     try {
       const updateData: any = {
         status: editFormData.status,
@@ -970,6 +976,8 @@ export function OrdersPage() {
     } catch (err: any) {
       console.error('更新订单失败:', err)
       alert('更新订单失败: ' + (err.message || '未知错误'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -1311,9 +1319,10 @@ export function OrdersPage() {
               </Button>
               <Button
                 onClick={handleSaveEdit}
+                disabled={isSubmitting}
                 className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
               >
-                保存
+                {isSubmitting ? '保存中...' : '保存'}
               </Button>
             </div>
           </div>
@@ -2120,10 +2129,10 @@ export function OrdersPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={(!formData.customerId && !isCreatingCustomer) || !formData.girlId || !formData.packageId || (isCreatingCustomer && !customerSearch.trim())}
+              disabled={(!formData.customerId && !isCreatingCustomer) || !formData.girlId || !formData.packageId || (isCreatingCustomer && !customerSearch.trim()) || isSubmitting}
               className="bg-apple-blue text-white hover:bg-apple-blue/90"
             >
-              创建订单
+              {isSubmitting ? '提交中...' : '创建订单'}
             </Button>
           </div>
         </DialogContent>

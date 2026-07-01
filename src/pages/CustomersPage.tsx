@@ -137,6 +137,7 @@ export function CustomersPage() {
     totalRecharge: 0, // 累计充值（分）
     memberLevel: 0, // 会员等级
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // 自定义标签输入
   const [newTagName, setNewTagName] = useState('')
@@ -221,8 +222,9 @@ export function CustomersPage() {
   }
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !currentStore) return
+    if (!formData.name.trim() || !currentStore || isSubmitting) return
 
+    setIsSubmitting(true)
     try {
       if (editingCustomer) {
         await updateCustomer(editingCustomer.id, {
@@ -246,6 +248,8 @@ export function CustomersPage() {
       loadData()
     } catch (err) {
       console.error('保存失败:', err)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -856,10 +860,10 @@ export function CustomersPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!formData.name.trim()}
+              disabled={!formData.name.trim() || isSubmitting}
               className="bg-chiikawa-pink text-white hover:bg-chiikawa-pink/90"
             >
-              {editingCustomer ? '保存' : '创建'}
+              {isSubmitting ? '提交中...' : editingCustomer ? '保存' : '创建'}
             </Button>
           </div>
         </DialogContent>
