@@ -187,9 +187,14 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-mono text-chiikawa-brown/40">{order.orderNo}</span>
                         <div className="flex items-center gap-1.5">
+                          {order.orderSource === 'otherStaff' && (
+                            <Badge className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                              {order.otherStaffName || currentStore?.secondStaffName || '其他客服'}
+                            </Badge>
+                          )}
                           {order.orderSource === 'other' && (
                             <Badge className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
-                              {order.otherStaffName ? `${order.otherStaffName}` : '其他客服'}
+                              {order.otherStaffName ? `${order.otherStaffName}` : '其他人'}
                             </Badge>
                           )}
                           <Badge className={cn("text-xs px-2 py-0.5 rounded-full", status.bgColor, status.color)}>
@@ -308,8 +313,8 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                         <span className="text-purple-500">
                           妹妹收入: ¥{(order.girlIncome || 0).toFixed(2)}
                         </span>
-                        <span className={order.orderSource === 'other' ? 'text-orange-400' : 'text-green-500'}>
-                          {order.orderSource === 'other' ? '无提成' : `客服提成: ¥${(order.serviceCommission || 0).toFixed(2)}`}
+                        <span className={order.orderSource === 'other' ? 'text-orange-400' : order.orderSource === 'otherStaff' ? 'text-blue-500' : 'text-green-500'}>
+                          {order.orderSource === 'other' ? '无提成' : `${order.orderSource === 'otherStaff' ? (currentStore?.secondStaffName || '其他客服') : '客服'}提成: ¥${(order.serviceCommission || 0).toFixed(2)}`}
                         </span>
                       </div>
 
@@ -407,8 +412,8 @@ export function OrdersPage() {
   // 试钟开关
   const [isTrialOrder, setIsTrialOrder] = useState(false)
 
-  // 其他客服预约开关
-  const [isOtherStaffOrder, setIsOtherStaffOrder] = useState(false)
+  // 订单来源选择: 'my'=我的预约, 'otherStaff'=其他客服(有提成), 'other'=其他人(无提成)
+  const [orderSourceType, setOrderSourceType] = useState<'my' | 'otherStaff' | 'other'>('my')
   const [otherStaffName, setOtherStaffName] = useState('')
 
   // 顾客搜索和创建
@@ -620,7 +625,7 @@ export function OrdersPage() {
     setNewCustomerAccounts([])
     setIsFreeOrder(false)
     setIsTrialOrder(false)
-    setIsOtherStaffOrder(false)
+    setOrderSourceType('my')
     setOtherStaffName('')
     setDialogOpen(true)
   }
@@ -765,12 +770,16 @@ export function OrdersPage() {
           : autoRemark.join(' ')
       }
 
-      // 其他客服预约标记
-      if (isOtherStaffOrder) {
-        orderData.orderSource = 'other'
+      // 订单来源标记
+      if (orderSourceType !== 'my') {
+        orderData.orderSource = orderSourceType
         orderData.otherStaffName = otherStaffName || null
         if (!orderData.remark) {
-          orderData.remark = `其他客服预约${otherStaffName ? `(${otherStaffName})` : ''}`
+          if (orderSourceType === 'otherStaff') {
+            orderData.remark = `其他客服预约${otherStaffName ? `(${otherStaffName})` : ''}`
+          } else {
+            orderData.remark = `其他人预约${otherStaffName ? `(${otherStaffName})` : ''}`
+          }
         }
       }
 
@@ -1822,42 +1831,85 @@ export function OrdersPage() {
               </div>
             )}
 
-            {/* Other Staff Order Toggle */}
-            <div 
-              className="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl cursor-pointer border border-orange-200"
-              onClick={() => {
-                const newIsOther = !isOtherStaffOrder
-                setIsOtherStaffOrder(newIsOther)
-                if (newIsOther) {
-                  // 其他客服预约开启：提成自动为0
-                  setOtherStaffName('')
-                }
-              }}
-            >
-              <div className={cn(
-                "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                isOtherStaffOrder ? "bg-orange-500 border-orange-500" : "border-apple-300"
-              )}>
-                {isOtherStaffOrder && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+            {/* Order Source Selection */}
+            <div className="p-3 bg-gradient-to-r from-chiikawa-cream to-white rounded-xl border border-chiikawa-peach/20">
+              <Label className="text-sm text-chiikawa-brown/70 mb-2">订单来源</Label>
+              <div className="flex gap-2 mt-1">
+                {/* 我的预约 */}
+                <button
+                  onClick={() => { setOrderSourceType('my'); setOtherStaffName('') }}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl text-sm font-medium transition-all border",
+                    orderSourceType === 'my'
+                      ? "bg-chiikawa-pink text-white border-chiikawa-pink"
+                      : "bg-white text-chiikawa-brown/60 border-chiikawa-peach/30 hover:bg-chiikawa-cream"
+                  )}
+                >
+                  我的预约
+                </button>
+                {/* 其他客服（有提成） */}
+                {currentStore?.secondStaffName && (
+                  <button
+                    onClick={() => { setOrderSourceType('otherStaff'); setOtherStaffName(currentStore?.secondStaffName || '') }}
+                    className={cn(
+                      "flex-1 py-2 rounded-xl text-sm font-medium transition-all border",
+                      orderSourceType === 'otherStaff'
+                        ? "bg-blue-500 text-white border-blue-500"
+                        : "bg-white text-blue-600/60 border-blue-200 hover:bg-blue-50"
+                    )}
+                  >
+                    {currentStore.secondStaffName}
+                  </button>
+                )}
+                {/* 其他人（无提成） */}
+                <button
+                  onClick={() => { setOrderSourceType('other'); setOtherStaffName('') }}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl text-sm font-medium transition-all border",
+                    orderSourceType === 'other'
+                      ? "bg-orange-500 text-white border-orange-500"
+                      : "bg-white text-orange-600/60 border-orange-200 hover:bg-orange-50"
+                  )}
+                >
+                  其他人
+                </button>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-orange-700">其他客服预约</p>
-                <p className="text-xs text-orange-400">此订单无客服提成，仅计入店铺营收</p>
-              </div>
-              {isOtherStaffOrder && (
-                <Badge className="text-xs bg-orange-500 text-white">无提成</Badge>
+              {orderSourceType !== 'my' && (
+                <div className="mt-2 flex items-center gap-1">
+                  <Badge className={cn(
+                    "text-xs",
+                    orderSourceType === 'otherStaff' ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"
+                  )}>
+                    {orderSourceType === 'otherStaff' ? '有提成' : '无提成'}
+                  </Badge>
+                  {orderSourceType === 'otherStaff' && (
+                    <span className="text-xs text-blue-500">
+                      ({currentStore?.secondStaffCommissionType === 'percent'
+                        ? `${currentStore?.secondStaffCommissionValue}%`
+                        : `固定¥${currentStore?.secondStaffCommissionValue}`
+                      })
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Other Staff Name Input */}
-            {isOtherStaffOrder && (
+            {/* Other Staff/Person Name Input */}
+            {orderSourceType !== 'my' && (
               <div className="grid gap-2">
-                <Label className="text-sm text-orange-600">其他客服名称（可选）</Label>
+                <Label className={cn(
+                  "text-sm",
+                  orderSourceType === 'otherStaff' ? "text-blue-600" : "text-orange-600"
+                )}>
+                  名称备注（可选）
+                </Label>
                 <Input
-                  placeholder="填写客服名称方便识别"
+                  placeholder={orderSourceType === 'otherStaff' ? "默认为第二客服名称" : "填写名称方便识别"}
                   value={otherStaffName}
                   onChange={(e) => setOtherStaffName(e.target.value)}
-                  className="bg-orange-50 border-orange-200"
+                  className={cn(
+                    orderSourceType === 'otherStaff' ? "bg-blue-50 border-blue-200" : "bg-orange-50 border-orange-200"
+                  )}
                 />
               </div>
             )}
@@ -2121,8 +2173,11 @@ export function OrdersPage() {
                 {/* 客服提成预览 */}
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-apple-500">{isOtherStaffOrder ? '客服提成（无）' : '客服提成'}</span>
-                    {!isOtherStaffOrder && (
+                    <span className="text-sm text-apple-500">
+                      {orderSourceType === 'other' ? '客服提成（无）' : 
+                       orderSourceType === 'otherStaff' ? `${currentStore?.secondStaffName || '其他客服'}提成` : '客服提成'}
+                    </span>
+                    {orderSourceType === 'my' && (
                       <span className="text-xs text-apple-400">
                         ({currentStore?.serviceCommissionType === 'percent'
                           ? `${currentStore?.serviceCommissionValue}%`
@@ -2130,12 +2185,31 @@ export function OrdersPage() {
                         })
                       </span>
                     )}
-                    {isOtherStaffOrder && (
-                      <span className="text-xs text-orange-400">其他客服预约，无提成</span>
+                    {orderSourceType === 'otherStaff' && (
+                      <span className="text-xs text-blue-400">
+                        ({currentStore?.secondStaffCommissionType === 'percent'
+                          ? `${currentStore?.secondStaffCommissionValue}%`
+                          : `固定¥${currentStore?.secondStaffCommissionValue}`
+                        })
+                      </span>
+                    )}
+                    {orderSourceType === 'other' && (
+                      <span className="text-xs text-orange-400">其他人预约，无提成</span>
                     )}
                   </div>
-                  <span className="text-lg font-semibold text-green-600">
-                    {isOtherStaffOrder ? '¥0.00' : `¥${(priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)}`}
+                  <span className={cn(
+                    "text-lg font-semibold",
+                    orderSourceType === 'other' ? "text-orange-600" : 
+                    orderSourceType === 'otherStaff' ? "text-blue-600" : "text-green-600"
+                  )}>
+                    {orderSourceType === 'other' ? '¥0.00' : 
+                     `¥${orderSourceType === 'otherStaff'
+                       ? (currentStore?.secondStaffCommissionType === 'percent'
+                           ? ((priceCalculation?.totalOriginalAmount || (priceCalculation?.finalPrice || finalPricePreview)) * (currentStore?.secondStaffCommissionValue || 0) / 100)
+                           : (currentStore?.secondStaffCommissionValue || 0) * (formData.hours || 1)
+                         ).toFixed(2)
+                       : (priceCalculation?.serviceCommission || serviceCommissionPreview).toFixed(2)
+                     }`}
                   </span>
                 </div>
 

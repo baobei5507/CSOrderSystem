@@ -26,6 +26,9 @@ interface DailySummary {
   myRevenue: number
   myOrders: number
   myCommission: number
+  otherStaffRevenue: number
+  otherStaffOrders: number
+  otherStaffCommission: number
   otherRevenue: number
   otherOrders: number
 }
@@ -49,7 +52,7 @@ interface DailyOrder {
   serviceCommission: number
   status: 'pending' | 'completed' | 'cancelled'
   createdAt: number
-  orderSource: 'my' | 'other'
+  orderSource: 'my' | 'otherStaff' | 'other'
   otherStaffName: string | null
 }
 
@@ -82,7 +85,7 @@ export function DailyReportPage() {
   const { data: reportData, isLoading } = useQuery({
     queryKey: ['dailyReport', currentStore?.id, formatDate(selectedDate)],
     queryFn: async (): Promise<DailyReportData> => {
-      if (!currentStore?.id) return { summary: { totalRevenue: 0, totalOrders: 0, totalGirlIncome: 0, totalServiceCommission: 0, myRevenue: 0, myOrders: 0, myCommission: 0, otherRevenue: 0, otherOrders: 0 }, girlStats: [], orders: [] }
+      if (!currentStore?.id) return { summary: { totalRevenue: 0, totalOrders: 0, totalGirlIncome: 0, totalServiceCommission: 0, myRevenue: 0, myOrders: 0, myCommission: 0, otherStaffRevenue: 0, otherStaffOrders: 0, otherStaffCommission: 0, otherRevenue: 0, otherOrders: 0 }, girlStats: [], orders: [] }
       return getDailyReport(currentStore.id, formatDate(selectedDate))
     },
     enabled: !!currentStore?.id,
@@ -184,6 +187,7 @@ export function DailyReportPage() {
               <Skeleton className="h-24" />
               <Skeleton className="h-24" />
               <Skeleton className="h-24" />
+              <Skeleton className="h-24" />
             </div>
           ) : reportData?.summary ? (
             <div className="grid grid-cols-2 gap-3">
@@ -225,17 +229,30 @@ export function DailyReportPage() {
                   <CharacterAvatar character="hachiwareFace10" size="sm" />
                 </div>
               </CuteCard>
-              <CuteCard variant="yellow" className="p-4">
+              <CuteCard variant="cream" className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs text-chiikawa-brown/70">{currentStore?.secondStaffName || '其他客服'}营收</span>
+                    </div>
+                    <p className="text-2xl font-bold text-blue-600">¥{(reportData.summary.otherStaffRevenue || 0).toFixed(0)}</p>
+                    <p className="text-xs text-blue-400 mt-1">{reportData.summary.otherStaffOrders}单 | 提成 ¥{(reportData.summary.otherStaffCommission || 0).toFixed(2)}</p>
+                  </div>
+                  <CharacterAvatar character="hachiwareFace9" size="sm" />
+                </div>
+              </CuteCard>
+              <CuteCard variant="yellow" className="p-4 col-span-2">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <DollarSign className="w-4 h-4 text-orange-500" />
-                      <span className="text-xs text-chiikawa-brown/70">其他客服营收</span>
+                      <span className="text-xs text-chiikawa-brown/70">其他人营收（无提成）</span>
                     </div>
                     <p className="text-2xl font-bold text-orange-600">¥{(reportData.summary.otherRevenue || 0).toFixed(0)}</p>
                     <p className="text-xs text-chiikawa-brown/40 mt-1">{reportData.summary.otherOrders}单</p>
                   </div>
-                  <CharacterAvatar character="hachiwareFace9" size="sm" />
+                  <CharacterAvatar character="hachiwareFace6" size="sm" />
                 </div>
               </CuteCard>
             </div>
@@ -327,9 +344,14 @@ export function DailyReportPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-chiikawa-brown/50">{order.orderNo}</span>
+                          {order.orderSource === 'otherStaff' && (
+                            <Badge className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-100">
+                              {order.otherStaffName || '其他客服'}
+                            </Badge>
+                          )}
                           {order.orderSource === 'other' && (
                             <Badge className="text-xs bg-orange-100 text-orange-700 hover:bg-orange-100">
-                              {order.otherStaffName || '其他客服'}
+                              {order.otherStaffName || '其他人'}
                             </Badge>
                           )}
                           <Badge 
@@ -354,8 +376,8 @@ export function DailyReportPage() {
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-chiikawa-pink">妹妹收入: ¥{order.girlIncome.toFixed(2)}</span>
-                        <span className={order.orderSource === 'other' ? 'text-orange-400' : 'text-green-600'}>
-                          {order.orderSource === 'other' ? '无提成' : `客服提成: ¥${order.serviceCommission.toFixed(2)}`}
+                        <span className={order.orderSource === 'other' ? 'text-orange-400' : order.orderSource === 'otherStaff' ? 'text-blue-500' : 'text-green-600'}>
+                          {order.orderSource === 'other' ? '无提成' : `${order.orderSource === 'otherStaff' ? '其他客服提成' : '客服提成'}: ¥${order.serviceCommission.toFixed(2)}`}
                         </span>
                       </div>
                     </div>

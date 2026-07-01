@@ -187,11 +187,18 @@ function CommissionSettings() {
   const { updateStore: updateStoreApi } = useApi()
   const [commissionType, setCommissionType] = useState<'percent' | 'fixed'>('fixed')
   const [commissionValue, setCommissionValue] = useState('10')
+  const [secondStaffName, setSecondStaffName] = useState('')
+  const [secondStaffCommissionType, setSecondStaffCommissionType] = useState<'percent' | 'fixed'>('fixed')
+  const [secondStaffCommissionValue, setSecondStaffCommissionValue] = useState('0')
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (currentStore) {
       setCommissionType(currentStore.serviceCommissionType as 'percent' | 'fixed' || 'fixed')
+      setCommissionValue(currentStore.serviceCommissionValue?.toString() || '10')
+      setSecondStaffName(currentStore.secondStaffName || '')
+      setSecondStaffCommissionType(currentStore.secondStaffCommissionType as 'percent' | 'fixed' || 'fixed')
+      setSecondStaffCommissionValue(currentStore.secondStaffCommissionValue?.toString() || '0')
       setCommissionValue(currentStore.serviceCommissionValue?.toString() || '10')
     }
   }, [currentStore])
@@ -203,12 +210,18 @@ function CommissionSettings() {
       await updateStoreApi(currentStore.id, {
         serviceCommissionType: commissionType,
         serviceCommissionValue: commissionValue === '' ? 0 : parseFloat(commissionValue),
+        secondStaffName: secondStaffName || null,
+        secondStaffCommissionType: secondStaffName ? secondStaffCommissionType : null,
+        secondStaffCommissionValue: secondStaffName ? (secondStaffCommissionValue === '' ? 0 : parseFloat(secondStaffCommissionValue)) : null,
       })
       // 更新本地状态
       updateStore({
         ...currentStore,
         serviceCommissionType: commissionType,
         serviceCommissionValue: commissionValue === '' ? 0 : parseFloat(commissionValue),
+        secondStaffName: secondStaffName || null,
+        secondStaffCommissionType: secondStaffName ? secondStaffCommissionType : null,
+        secondStaffCommissionValue: secondStaffName ? (secondStaffCommissionValue === '' ? 0 : parseFloat(secondStaffCommissionValue)) : null,
       })
       alert('保存成功')
     } catch (err) {
@@ -227,6 +240,7 @@ function CommissionSettings() {
     <div className="space-y-4">
       <h2 className="text-lg font-bold text-chiikawa-brown">客服提成设置</h2>
       <CuteCard variant="cream" className="p-4">
+        <h3 className="font-semibold text-chiikawa-brown mb-3">我的提成</h3>
         <div className="grid gap-4">
           <div>
             <Label className="text-chiikawa-brown/70">提成类型</Label>
@@ -257,15 +271,66 @@ function CommissionSettings() {
               className="mt-2"
             />
           </div>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-chiikawa-blue text-white hover:bg-chiikawa-blue/90"
-          >
-            {isSaving ? '保存中...' : '保存设置'}
-          </Button>
         </div>
       </CuteCard>
+
+      {/* 第二客服提成配置 */}
+      <CuteCard variant="cream" className="p-4">
+        <h3 className="font-semibold text-chiikawa-brown mb-3">第二客服提成</h3>
+        <p className="text-sm text-chiikawa-brown/50 mb-3">配置第二客服的提成规则，创建订单时可选择其他客服预约</p>
+        <div className="grid gap-4">
+          <div>
+            <Label className="text-chiikawa-brown/70">客服名称</Label>
+            <Input
+              placeholder="填写第二客服名称"
+              value={secondStaffName}
+              onChange={(e) => setSecondStaffName(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          {secondStaffName && (
+            <>
+              <div>
+                <Label className="text-chiikawa-brown/70">提成类型</Label>
+                <Select
+                  value={secondStaffCommissionType}
+                  onValueChange={(v: 'percent' | 'fixed') => setSecondStaffCommissionType(v)}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">固定金额 (¥)</SelectItem>
+                    <SelectItem value="percent">按比例 (%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="secondCommissionValue" className="text-chiikawa-brown/70">
+                  {secondStaffCommissionType === 'percent' ? '提成比例 (%)' : '提成金额 (¥)'}
+                </Label>
+                <Input
+                  id="secondCommissionValue"
+                  type="number"
+                  min={0}
+                  step={secondStaffCommissionType === 'percent' ? 1 : 0.01}
+                  value={secondStaffCommissionValue}
+                  onChange={(e) => setSecondStaffCommissionValue(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </CuteCard>
+
+      <Button
+        onClick={handleSave}
+        disabled={isSaving}
+        className="w-full bg-chiikawa-blue text-white hover:bg-chiikawa-blue/90"
+      >
+        {isSaving ? '保存中...' : '保存设置'}
+      </Button>
     </div>
   )
 }

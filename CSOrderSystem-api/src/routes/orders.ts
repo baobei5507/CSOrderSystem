@@ -322,6 +322,10 @@ app.post('/', async (c) => {
     // 提成基于 trialPrice
     girlIncome = calculateCommission(girl.trialPrice, girl.commissionType, girl.commissionValue, 1)
     serviceCommission = body.orderSource === 'other' ? 0 : calculateCommission(girl.trialPrice, store.serviceCommissionType, store.serviceCommissionValue, 1)
+    // otherStaff 提成用第二客服配置
+    if (body.orderSource === 'otherStaff' && store.secondStaffCommissionType && store.secondStaffCommissionValue) {
+      serviceCommission = calculateCommission(girl.trialPrice, store.secondStaffCommissionType, store.secondStaffCommissionValue, 1)
+    }
     isFreeOrder = false
     storeProfit = girl.trialPrice - girlIncome - serviceCommission
   } else {
@@ -335,6 +339,10 @@ app.post('/', async (c) => {
     // 提成计算（基于原价和小时数，免单也照常计算提成）
     girlIncome = calculateCommission(totalOriginalAmountYuan, girl.commissionType, girl.commissionValue, hours)
     serviceCommission = body.orderSource === 'other' ? 0 : calculateCommission(totalOriginalAmountYuan, store.serviceCommissionType, store.serviceCommissionValue, hours)
+    // otherStaff 提成用第二客服配置
+    if (body.orderSource === 'otherStaff' && store.secondStaffCommissionType && store.secondStaffCommissionValue) {
+      serviceCommission = calculateCommission(totalOriginalAmountYuan, store.secondStaffCommissionType, store.secondStaffCommissionValue, hours)
+    }
     isFreeOrder = finalPriceYuan === 0
     storeProfit = isFreeOrder ? 0 : finalPriceYuan - girlIncome - serviceCommission
   }

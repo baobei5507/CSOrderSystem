@@ -41,8 +41,9 @@ app.get('/', async (c) => {
     // 免单订单(finalPrice=0)不计入收入和提成
     const paidOrders = completedOrders.filter(o => (o.finalPrice || 0) > 0)
 
-    // 计算汇总数据 - 拆分"我的"和"其他客服"
+    // 计算汇总数据 - 拆分"我的"、"其他客服(有提成)"和"其他人(无提成)"
     const myPaidOrders = paidOrders.filter(o => o.orderSource === 'my' || !o.orderSource)
+    const otherStaffPaidOrders = paidOrders.filter(o => o.orderSource === 'otherStaff')
     const otherPaidOrders = paidOrders.filter(o => o.orderSource === 'other')
 
     const summary = {
@@ -54,6 +55,9 @@ app.get('/', async (c) => {
       myRevenue: myPaidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
       myOrders: completedOrders.filter(o => o.orderSource === 'my' || !o.orderSource).length,
       myCommission: myPaidOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0),
+      otherStaffRevenue: otherStaffPaidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
+      otherStaffOrders: completedOrders.filter(o => o.orderSource === 'otherStaff').length,
+      otherStaffCommission: otherStaffPaidOrders.reduce((sum, o) => sum + (o.serviceCommission || 0), 0),
       otherRevenue: otherPaidOrders.reduce((sum, o) => sum + (o.finalPrice || 0), 0),
       otherOrders: completedOrders.filter(o => o.orderSource === 'other').length,
     }
@@ -111,7 +115,7 @@ app.get('/', async (c) => {
         serviceCommission: order.serviceCommission,
         status: order.status,
         createdAt: order.createdAt,
-        orderSource: order.orderSource || 'my',
+        orderSource: order.orderSource || 'my', // 'my' | 'otherStaff' | 'other'
         otherStaffName: order.otherStaffName || null,
       }
     }).sort((a, b) => b.createdAt - a.createdAt) // 按时间倒序

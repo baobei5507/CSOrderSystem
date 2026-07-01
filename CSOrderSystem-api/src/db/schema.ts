@@ -7,6 +7,10 @@ export const stores = sqliteTable('stores', {
   name: text('name').notNull(),
   serviceCommissionType: text('service_commission_type', { enum: ['percent', 'fixed'] }).notNull(),
   serviceCommissionValue: real('service_commission_value').notNull(),
+  // 第二客服提成配置
+  secondStaffName: text('second_staff_name'),
+  secondStaffCommissionType: text('second_staff_commission_type', { enum: ['percent', 'fixed'] }),
+  secondStaffCommissionValue: real('second_staff_commission_value'),
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
 })
@@ -118,7 +122,7 @@ export const orders = sqliteTable('orders', {
   actualMinutes: integer('actual_minutes'), // 实际服务时长（分钟），null表示按预约时长完成
   couponSource: text('coupon_source'), // 优惠券来源（如TG群组）
   remark: text('remark'),
-  orderSource: text('order_source').default('my'), // 订单来源: 'my'=我的预约, 'other'=其他客服预约
+  orderSource: text('order_source').default('my'), // 订单来源: 'my'=我的预约, 'otherStaff'=其他客服预约(有提成), 'other'=其他人预约(无提成)
   otherStaffName: text('other_staff_name'), // 其他客服名称（orderSource=other时填写）
   createdAt: integer('created_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
