@@ -66,9 +66,10 @@ interface OrderListByDateProps {
   setExpandedDates: (dates: Set<string>) => void
   onStatusChange: (orderId: string, status: OrderStatus) => void
   onOrderClick: (order: OrderWithDetails) => void
+  secondStaffName?: string
 }
 
-function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChange, onOrderClick }: OrderListByDateProps) {
+function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChange, onOrderClick, secondStaffName }: OrderListByDateProps) {
   // 按日期分组
   const groupedOrders = useMemo(() => {
     const groups: Record<string, OrderWithDetails[]> = {}
@@ -189,7 +190,7 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                         <div className="flex items-center gap-1.5">
                           {order.orderSource === 'otherStaff' && (
                             <Badge className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                              {order.otherStaffName || currentStore?.secondStaffName || '其他客服'}
+                              {order.otherStaffName || secondStaffName || '其他客服'}
                             </Badge>
                           )}
                           {order.orderSource === 'other' && (
@@ -314,7 +315,7 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                           妹妹收入: ¥{(order.girlIncome || 0).toFixed(2)}
                         </span>
                         <span className={order.orderSource === 'other' ? 'text-orange-400' : order.orderSource === 'otherStaff' ? 'text-blue-500' : 'text-green-500'}>
-                          {order.orderSource === 'other' ? '无提成' : `${order.orderSource === 'otherStaff' ? (currentStore?.secondStaffName || '其他客服') : '客服'}提成: ¥${(order.serviceCommission || 0).toFixed(2)}`}
+                          {order.orderSource === 'other' ? '无提成' : `${order.orderSource === 'otherStaff' ? (secondStaffName || '其他客服') : '客服'}提成: ¥${(order.serviceCommission || 0).toFixed(2)}`}
                         </span>
                       </div>
 
@@ -1155,6 +1156,7 @@ export function OrdersPage() {
             setExpandedDates={setExpandedDates}
             onStatusChange={handleStatusChange}
             onOrderClick={handleOrderClick}
+            secondStaffName={currentStore?.secondStaffName}
           />
         )}
       </div>
