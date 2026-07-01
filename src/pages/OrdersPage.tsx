@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2, Crown, Wallet, ChevronDown, ChevronRight } from 'lucide-react'
+import { Search, Plus, Clock, CheckCircle2, XCircle, UserPlus, Trash2, Crown, Wallet, ChevronDown, ChevronRight, Pencil } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -66,10 +66,12 @@ interface OrderListByDateProps {
   setExpandedDates: (dates: Set<string>) => void
   onStatusChange: (orderId: string, status: OrderStatus) => void
   onOrderClick: (order: OrderWithDetails) => void
+  onEdit: (order: OrderWithDetails) => void
+  onDelete: (order: OrderWithDetails) => void
   secondStaffName?: string
 }
 
-function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChange, onOrderClick, secondStaffName }: OrderListByDateProps) {
+function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChange, onOrderClick, onEdit, onDelete, secondStaffName }: OrderListByDateProps) {
   // 按日期分组
   const groupedOrders = useMemo(() => {
     const groups: Record<string, OrderWithDetails[]> = {}
@@ -320,8 +322,8 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                       </div>
 
                       {/* Actions */}
-                      {order.status === 'pending' && (
-                        <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                        {order.status === 'pending' && (
                           <Button
                             size="sm"
                             className="flex-1 bg-green-400 text-white hover:bg-green-500 rounded-xl"
@@ -330,6 +332,8 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                             <CheckCircle2 className="w-4 h-4 mr-1" />
                             完成
                           </Button>
+                        )}
+                        {order.status === 'pending' && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -339,8 +343,26 @@ function OrderListByDate({ orders, expandedDates, setExpandedDates, onStatusChan
                             <XCircle className="w-4 h-4 mr-1" />
                             取消
                           </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-xl border-chiikawa-blue/30 text-chiikawa-blue hover:bg-chiikawa-blue/10"
+                          onClick={() => onEdit(order)}
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-1" />
+                          编辑
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-xl border-red-200 text-red-500 hover:bg-red-50"
+                          onClick={() => onDelete(order)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          删除
+                        </Button>
+                      </div>
                     </CuteCard>
                   )
                 })}
@@ -1172,6 +1194,8 @@ export function OrdersPage() {
             setExpandedDates={setExpandedDates}
             onStatusChange={handleStatusChange}
             onOrderClick={handleOrderClick}
+            onEdit={handleOrderClick}
+            onDelete={(order) => { setDeletingOrder(order); setDeleteDialogOpen(true) }}
             secondStaffName={currentStore?.secondStaffName ?? undefined}
           />
         )}
