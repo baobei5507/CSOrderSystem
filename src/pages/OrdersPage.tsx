@@ -1603,11 +1603,7 @@ export function OrdersPage() {
                 <p className="text-red-600">
                   实付金额: <span className="font-medium">¥{(Number(deletingOrder.finalPrice ?? deletingOrder.price) || 0).toFixed(2)}</span>
                 </p>
-                {deletingOrder.deductedBalance && deletingOrder.deductedBalance > 0 && (
-                  <p className="text-orange-600">
-                    已扣余额 ¥{Number(deletingOrder.deductedBalance).toFixed(2)} 将退还给顾客
-                  </p>
-                )}
+
               </div>
             )}
             <p className="text-sm text-chiikawa-brown/50">确认要永久删除此订单吗？删除后数据将无法恢复。</p>

@@ -571,35 +571,7 @@ app.delete('/', async (c) => {
   if (!order) return c.json({ success: false, error: 'Order not found' }, 404)
   if (storeId && order.storeId !== storeId) return c.json({ success: false, error: 'No access' }, 403)
 
-  const now = Date.now()
-
-  // 如果订单有扣除余额，需要退还
-  if (order.deductedBalance && order.deductedBalance > 0 && order.status !== 'cancelled') {
-    const refundFen = Math.round(order.deductedBalance * 100) // 元转分（deductedBalance存元）
-    const customer = await db.select().from(customers).where(eq(customers.id, order.customerId)).get()
-    if (customer) {
-      const beforeBalance = customer.balance || 0
-      const afterBalance = beforeBalance + refundFen
-
-      await db.update(customers)
-        .set({ balance: afterBalance, updatedAt: now })
-        .where(eq(customers.id, order.customerId))
-
-      await db.insert(balanceTransactions).values({
-        id: crypto.randomUUID(),
-        customerId: order.customerId,
-        orderId: id,
-        type: 'refund',
-        amount: refundFen,
-        balanceBefore: beforeBalance,
-        balanceAfter: afterBalance,
-        remark: `订单删除退款 ${order.orderNo}`,
-        createdAt: now,
-      })
-    }
-  }
-
-  // 删除订单快照
+  // 删除订单快照（仅清理数据，不退款）
   await db.delete(orderSnapshots).where(eq(orderSnapshots.orderId, id))
 
   // 删除订单
