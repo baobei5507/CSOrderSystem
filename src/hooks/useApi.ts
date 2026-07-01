@@ -100,7 +100,6 @@ export function useApi() {
   const createPackage = useCallback(async (data: {
     storeId: string
     name: string
-    code: string
     basePrice: number
   }): Promise<Package> => {
     return fetchApi('/packages', {

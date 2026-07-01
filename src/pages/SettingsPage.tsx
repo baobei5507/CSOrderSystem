@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ChevronRight, Percent, Package, Plus, Edit2, Trash2, Crown } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { useAppStore } from '@/stores/appStore'
