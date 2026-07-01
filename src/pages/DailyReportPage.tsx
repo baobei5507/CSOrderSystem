@@ -209,24 +209,12 @@ export function DailyReportPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <TrendingUp className="w-4 h-4 text-chiikawa-pink" />
-                      <span className="text-xs text-chiikawa-brown/70">我的营收</span>
+                      <span className="text-xs text-chiikawa-brown/70">我的提成</span>
                     </div>
-                    <p className="text-2xl font-bold text-chiikawa-brown">¥{(reportData.summary.myRevenue || 0).toFixed(0)}</p>
+                    <p className="text-2xl font-bold text-chiikawa-brown">¥{(reportData.summary.myCommission || 0).toFixed(2)}</p>
                     <p className="text-xs text-chiikawa-brown/40 mt-1">{reportData.summary.myOrders}单</p>
                   </div>
                   <CharacterAvatar character="hachiwareFace8" size="sm" />
-                </div>
-              </CuteCard>
-              <CuteCard variant="mint" className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-chiikawa-brown/70">我的提成</span>
-                    </div>
-                    <p className="text-2xl font-bold text-green-700">¥{(reportData.summary.myCommission || 0).toFixed(2)}</p>
-                  </div>
-                  <CharacterAvatar character="hachiwareFace10" size="sm" />
                 </div>
               </CuteCard>
               <CuteCard variant="cream" className="p-4">
@@ -234,10 +222,10 @@ export function DailyReportPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <TrendingUp className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs text-chiikawa-brown/70">{currentStore?.secondStaffName || '其他客服'}营收</span>
+                      <span className="text-xs text-chiikawa-brown/70">{currentStore?.secondStaffName || '其他客服'}提成</span>
                     </div>
-                    <p className="text-2xl font-bold text-blue-600">¥{(reportData.summary.otherStaffRevenue || 0).toFixed(0)}</p>
-                    <p className="text-xs text-blue-400 mt-1">{reportData.summary.otherStaffOrders}单 | 提成 ¥{(reportData.summary.otherStaffCommission || 0).toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-blue-600">¥{(reportData.summary.otherStaffCommission || 0).toFixed(2)}</p>
+                    <p className="text-xs text-blue-400 mt-1">{reportData.summary.otherStaffOrders}单</p>
                   </div>
                   <CharacterAvatar character="hachiwareFace9" size="sm" />
                 </div>
