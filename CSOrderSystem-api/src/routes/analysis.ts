@@ -113,7 +113,7 @@ app.get('/customer-preferences', async (c) => {
         packageCounts: new Map(),
       }
 
-      stats.totalSpent += order.price || 0
+      stats.totalSpent += (order.finalPrice ?? order.price) || 0
       stats.orderCount += 1
       if (order.createdAt > stats.lastOrderDate) {
         stats.lastOrderDate = order.createdAt
@@ -233,7 +233,7 @@ app.get('/customer-preferences', async (c) => {
       }
 
       stats.orderCount += 1
-      stats.totalRevenue += order.price || 0
+      stats.totalRevenue += (order.finalPrice ?? order.price) || 0
       packageStats.set(order.packageId, stats)
     }
 
@@ -277,7 +277,7 @@ app.get('/customer-preferences', async (c) => {
       for (const tagId of customerTagIds) {
         const stats = tagStats.get(tagId)
         if (stats) {
-          stats.totalSpent += order.price || 0
+          stats.totalSpent += (order.finalPrice ?? order.price) || 0
           stats.orderCount += 1
         }
       }
@@ -312,13 +312,13 @@ app.get('/customer-preferences', async (c) => {
       if (!existing || order.createdAt > existing.date) {
         lastOrderMap.set(order.customerId, {
           date: order.createdAt,
-          totalSpent: (existing?.totalSpent || 0) + (order.price || 0),
+          totalSpent: (existing?.totalSpent || 0) + ((order.finalPrice ?? order.price) || 0),
           orderCount: (existing?.orderCount || 0) + 1,
         })
       } else {
         lastOrderMap.set(order.customerId, {
           date: existing.date,
-          totalSpent: existing.totalSpent + (order.price || 0),
+          totalSpent: existing.totalSpent + ((order.finalPrice ?? order.price) || 0),
           orderCount: existing.orderCount + 1,
         })
       }

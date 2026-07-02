@@ -66,7 +66,8 @@ app.get('/customer-detail', async (c) => {
     let totalSpent = 0
 
     for (const order of customerOrders) {
-      totalSpent += order.price || 0
+      const paidAmount = (order.finalPrice ?? order.price) || 0
+      totalSpent += paidAmount
 
       // 统计妹妹
       const girl = allGirls.find(g => g.id === order.girlId)
@@ -78,7 +79,7 @@ app.get('/customer-detail', async (c) => {
           totalSpent: 0,
         }
         stats.orderCount += 1
-        stats.totalSpent += order.price || 0
+        stats.totalSpent += paidAmount
         girlStatsMap.set(order.girlId, stats)
       }
 
@@ -93,7 +94,7 @@ app.get('/customer-detail', async (c) => {
           totalSpent: 0,
         }
         stats.orderCount += 1
-        stats.totalSpent += order.price || 0
+        stats.totalSpent += paidAmount
         packageStatsMap.set(order.packageId, stats)
       }
     }
@@ -121,7 +122,7 @@ app.get('/customer-detail', async (c) => {
           orderNo: order.orderNo,
           girlName: allGirls.find(g => g.id === order.girlId)?.name || '未知',
           packageName: allPackages.find(p => p.id === order.packageId)?.name || '未知',
-          price: order.price,
+          price: order.finalPrice ?? order.price,
           createdAt: order.createdAt,
         })),
       },
